@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Variáveis de ambiente (NUNCA commitar)
+.env
+!.env.example
+
+# Banco de dados
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Uploads e backups (dados reais)
+uploads/
+backups/
+
+# SSL
+certbot/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testes
+.pytest_cache/
+.coverage
+htmlcov/
