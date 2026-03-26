@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import auth
+from app.routers.admin import cardapio as admin_cardapio
+from app.routers.publico import cardapio as publico_cardapio
 
 
 @asynccontextmanager
@@ -30,6 +32,8 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(admin_cardapio.router)
+app.include_router(publico_cardapio.router)
 
 
 @app.get("/health")
