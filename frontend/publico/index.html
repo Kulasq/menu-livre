@@ -1,0 +1,219 @@
+<!-- frontend/publico/index.html -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pão de Mão — Hamburgueria Caseira</title>
+  <meta name="description" content="Cardápio digital da Pão de Mão, hamburgueria caseira em Bonito, PE." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- HEADER fixo com info da loja -->
+  <header id="header" class="header">
+    <div class="header-loja">
+      <img id="header-logo" src="" alt="Logo Pão de Mão" class="header-logo hidden" />
+      <div class="header-info">
+        <h1 id="header-nome" class="header-nome">Pão de Mão</h1>
+        <div id="header-status" class="header-status">
+          <span id="status-badge" class="status-badge status-aberto">● Aberto</span>
+          <span id="header-entrega" class="header-entrega">🕐 30–50 min</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-acoes">
+      <a id="header-whatsapp" href="#" target="_blank" class="icon-btn" aria-label="WhatsApp">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.859L.057 23.428a.75.75 0 0 0 .921.921l5.569-1.476A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.853 0-3.601-.5-5.112-1.376l-.366-.214-3.802 1.007 1.007-3.802-.214-.366A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      </a>
+      <a id="header-instagram" href="#" target="_blank" class="icon-btn" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+      </a>
+      <button id="btn-carrinho" class="btn-carrinho" aria-label="Ver carrinho">
+        🛒 <span id="carrinho-count" class="carrinho-count hidden">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- BANNER da loja -->
+  <div id="banner" class="banner hidden">
+    <img id="banner-img" src="" alt="Banner Pão de Mão" />
+  </div>
+
+  <!-- NAV de categorias (sticky) -->
+  <nav id="nav-categorias" class="nav-categorias">
+    <div id="nav-lista" class="nav-lista">
+      <!-- categorias injetadas via JS -->
+    </div>
+  </nav>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main id="main" class="main">
+    <div id="cardapio-container" class="cardapio-container">
+      <!-- seções de categoria injetadas via JS -->
+    </div>
+
+    <!-- estado de carregamento -->
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Carregando cardápio…</p>
+    </div>
+
+    <!-- estado de erro -->
+    <div id="erro" class="erro hidden">
+      <p>😕 Não foi possível carregar o cardápio.</p>
+      <button onclick="window.cardapio.carregar()">Tentar novamente</button>
+    </div>
+  </main>
+
+  <!-- AVISO loja fechada -->
+  <div id="aviso-fechado" class="aviso-fechado hidden">
+    <div class="aviso-fechado-conteudo">
+      <span class="aviso-fechado-icon">🔒</span>
+      <p id="aviso-fechado-msg"></p>
+    </div>
+  </div>
+
+  <!-- MODAL detalhe do produto -->
+  <div id="modal-produto" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-produto-nome">
+    <div class="modal-overlay" id="modal-produto-overlay"></div>
+    <div class="modal-box">
+      <button class="modal-fechar" id="modal-produto-fechar" aria-label="Fechar">✕</button>
+      <div id="modal-produto-foto-wrap" class="modal-foto-wrap hidden">
+        <img id="modal-produto-foto" src="" alt="" />
+      </div>
+      <div class="modal-corpo">
+        <h2 id="modal-produto-nome" class="modal-produto-nome"></h2>
+        <p id="modal-produto-desc" class="modal-produto-desc"></p>
+        <p id="modal-produto-preco" class="modal-produto-preco"></p>
+
+        <!-- grupos de modificadores injetados via JS -->
+        <div id="modal-modificadores"></div>
+
+        <div class="modal-observacao">
+          <label for="modal-obs-input">Observação (opcional)</label>
+          <textarea id="modal-obs-input" placeholder="Ex: sem cebola, ponto bem passado…" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-rodape">
+        <div class="quantidade-controle">
+          <button id="modal-qty-menos" class="qty-btn" aria-label="Diminuir">−</button>
+          <span id="modal-qty-valor">1</span>
+          <button id="modal-qty-mais" class="qty-btn" aria-label="Aumentar">+</button>
+        </div>
+        <button id="modal-btn-adicionar" class="btn-primario btn-adicionar-carrinho">
+          Adicionar R$ 0,00
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER carrinho -->
+  <div id="drawer-carrinho" class="drawer hidden" role="dialog" aria-modal="true" aria-label="Carrinho">
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    <div class="drawer-box">
+      <div class="drawer-header">
+        <h2>Sua sacola</h2>
+        <button class="modal-fechar" id="drawer-fechar" aria-label="Fechar carrinho">✕</button>
+      </div>
+      <div id="drawer-itens" class="drawer-itens">
+        <!-- itens injetados via JS -->
+      </div>
+      <div id="drawer-vazio" class="drawer-vazio hidden">
+        <p>Sua sacola está vazia 🛒</p>
+      </div>
+      <div id="drawer-rodape" class="drawer-rodape hidden">
+        <div class="drawer-total">
+          <span>Total</span>
+          <strong id="drawer-total-valor">R$ 0,00</strong>
+        </div>
+        <div class="drawer-tipo-servico">
+          <p>Tipo de serviço:</p>
+          <div class="tipo-servico-btns">
+            <button class="btn-tipo-servico" data-tipo="retirada">🏪 Retirada</button>
+            <button class="btn-tipo-servico" data-tipo="delivery">🛵 Delivery</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL finalização (identificação + agendamento + pagamento) -->
+  <div id="modal-pedido" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-pedido-titulo">
+    <div class="modal-overlay" id="modal-pedido-overlay"></div>
+    <div class="modal-box modal-box-pedido">
+      <div class="modal-pedido-header">
+        <button class="modal-voltar" id="modal-pedido-voltar" aria-label="Voltar">←</button>
+        <h2 id="modal-pedido-titulo">Finalizar pedido</h2>
+        <span id="modal-pedido-total-header" class="modal-pedido-total-header"></span>
+      </div>
+
+      <!-- PASSO 1: identificação -->
+      <div id="passo-identificacao" class="passo">
+        <label for="input-nome">Seu nome</label>
+        <input type="text" id="input-nome" placeholder="Ex: Maria" autocomplete="given-name" />
+
+        <label for="input-telefone">Telefone (WhatsApp)</label>
+        <input type="tel" id="input-telefone" placeholder="(81) 99999-9999" autocomplete="tel" />
+      </div>
+
+      <!-- PASSO 2: endereço (só delivery) -->
+      <div id="passo-endereco" class="passo hidden">
+        <label for="input-endereco">Endereço de entrega</label>
+        <input type="text" id="input-endereco" placeholder="Rua, número, bairro…" autocomplete="street-address" />
+      </div>
+
+      <!-- PASSO 3: agendamento -->
+      <div id="passo-agendamento" class="passo">
+        <label for="input-tipo-pedido">Tipo do pedido</label>
+        <select id="input-tipo-pedido">
+          <option value="imediato">Agora (imediato)</option>
+          <option value="agendado">Agendar para depois</option>
+        </select>
+
+        <div id="campo-agendamento" class="hidden">
+          <label for="input-data">Data</label>
+          <input type="date" id="input-data" />
+          <label for="input-hora">Horário</label>
+          <input type="time" id="input-hora" step="1800" />
+        </div>
+      </div>
+
+      <!-- PASSO 4: pagamento -->
+      <div id="passo-pagamento" class="passo">
+        <label for="input-pagamento">Forma de pagamento</label>
+        <select id="input-pagamento">
+          <option value="">Selecione…</option>
+          <option value="pix">PIX</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="cartao">Cartão (maquineta)</option>
+        </select>
+        <p id="info-pix" class="info-pagamento hidden">
+          🔑 Chave PIX: <strong id="info-pix-chave"></strong>
+        </p>
+      </div>
+
+      <!-- PASSO 5: observação geral -->
+      <div id="passo-obs" class="passo">
+        <label for="input-obs-pedido">Observação geral (opcional)</label>
+        <textarea id="input-obs-pedido" placeholder="Algo que devemos saber sobre o pedido?" rows="2"></textarea>
+      </div>
+
+      <div class="modal-rodape">
+        <button id="btn-confirmar-pedido" class="btn-primario">
+          Confirmar pedido
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/carrinho.js"></script>
+  <script src="js/cardapio.js"></script>
+  <script src="js/pedido.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
