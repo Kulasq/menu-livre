@@ -1,8 +1,13 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 from sqlalchemy import String, Boolean, DateTime, Integer, Float, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.categoria import Categoria
+    from app.models.modificador import GrupoModificador
 
 
 class Produto(Base):
