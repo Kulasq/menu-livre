@@ -204,7 +204,7 @@ window.pedido = (() => {
       const telefone = _limparTelefone(els.inputTelefone().value);
 
       // 1. identificar/criar cliente
-      const { cliente, token } = await _identificarCliente(nome, telefone);
+      const { cliente, access_token: token } = await _identificarCliente(nome, telefone);
       _salvarCliente({ id: cliente.id, nome: cliente.nome, telefone: cliente.telefone });
       _salvarToken(token);
 
