@@ -25,19 +25,47 @@ def get_current_admin(
     )
 
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         if payload.get("type") != "access":
             raise erro
         user_id = int(payload["sub"])
     except (JWTError, ValueError):
         raise erro
 
-    usuario = db.get(Usuario, user_id)
+    usuario = db.query(Usuario).filter(Usuario.id == user_id).first()
     if not usuario or not usuario.ativo:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Usuário não encontrado ou inativo",
         )
     return usuario
+
+
+def get_current_cliente(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+):
+    """Valida token de sessão do cliente (cardápio público)."""
+    from app.models.cliente import Cliente
+
+    token = credentials.credentials
+    erro = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Sessão inválida ou expirada",
+    )
+
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "cliente":
+            raise erro
+        cliente_id = int(payload["sub"])
+    except (JWTError, ValueError):
+        raise erro
+
+    cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
+    if not cliente or not cliente.ativo:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Cliente não encontrado",
+        )
+    return cliente
