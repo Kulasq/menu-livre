@@ -135,6 +135,7 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
         metodo_pagamento=dados.metodo_pagamento,
         status_pagamento="pendente",
         observacao=dados.observacao,
+        agendado_para=dados.agendado_para,
         itens=itens_db,
     )
 

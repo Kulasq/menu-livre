@@ -20,6 +20,7 @@ class PedidoCreate(BaseModel):
     endereco_entrega: str | None = None
     metodo_pagamento: str = Field(pattern="^(pix|dinheiro|cartao)$")
     observacao: str | None = None
+    agendado_para: datetime | None = None
     itens: list[PedidoItemCreate] = Field(min_length=1)
 
 
@@ -77,6 +78,7 @@ class PedidoResponse(BaseModel):
     metodo_pagamento: str | None
     status_pagamento: str
     observacao: str | None
+    agendado_para: datetime | None
     criado_em: datetime
     itens: list[PedidoItemResponse] = []
 
