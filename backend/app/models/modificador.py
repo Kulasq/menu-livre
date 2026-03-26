@@ -17,7 +17,10 @@ class GrupoModificador(Base):
     selecao_maxima: Mapped[int] = mapped_column(Integer, default=1)
     ordem: Mapped[int] = mapped_column(Integer, default=0)
 
-    modificadores: Mapped[list[Modificador]] = relationship(
+    produto: Mapped["Produto"] = relationship(  # <- isso estava faltando
+        "Produto", back_populates="grupos_modificadores"
+    )
+    modificadores: Mapped[list["Modificador"]] = relationship(
         "Modificador", back_populates="grupo", cascade="all, delete-orphan"
     )
 
@@ -34,4 +37,6 @@ class Modificador(Base):
     disponivel: Mapped[bool] = mapped_column(Boolean, default=True)
     ordem: Mapped[int] = mapped_column(Integer, default=0)
 
-    grupo: Mapped[GrupoModificador] = relationship("GrupoModificador", back_populates="modificadores")
+    grupo: Mapped["GrupoModificador"] = relationship(
+        "GrupoModificador", back_populates="modificadores"
+    )

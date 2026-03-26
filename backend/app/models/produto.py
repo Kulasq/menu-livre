@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy import String, Boolean, DateTime, Integer, Float, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone
@@ -28,4 +29,10 @@ class Produto(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    categoria: Mapped["Categoria"] = relationship("Categoria", lazy="select") # pyright: ignore[reportUndefinedVariable]
+    categoria: Mapped["Categoria"] = relationship("Categoria", lazy="select")
+    grupos_modificadores: Mapped[list["GrupoModificador"]] = relationship(
+        "GrupoModificador",
+        back_populates="produto",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
