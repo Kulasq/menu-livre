@@ -27,6 +27,11 @@ def formatar_mensagem(pedido) -> str:
     if pedido.tipo == "delivery" and pedido.endereco_entrega:
         lines.append(f"📍 *Endereço:* {pedido.endereco_entrega}")
 
+    if pedido.agendado_para:
+        agendado_brt = pedido.agendado_para.replace(tzinfo=timezone.utc).astimezone(BRT)
+        agendado_str = agendado_brt.strftime("%d/%m/%Y às %H:%M")
+        lines.append(f"📅 *Agendado para:* {agendado_str}")
+
     lines += ["", "🛍️ *Produtos:*"]
 
     for item in pedido.itens:
