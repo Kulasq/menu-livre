@@ -70,15 +70,19 @@ def login_admin(email: str, senha: str, db: Session) -> dict:
             detail="Conta desativada",
         )
 
+    user_id = usuario.id
+    user_nome = usuario.nome
+    user_role = usuario.role
+
     usuario.ultimo_acesso = datetime.now(timezone.utc)
     db.commit()
 
     return {
-        "access_token": criar_access_token(usuario.id),
-        "refresh_token": criar_refresh_token(usuario.id),
+        "access_token": criar_access_token(user_id),
+        "refresh_token": criar_refresh_token(user_id),
         "token_type": "bearer",
-        "usuario_nome": usuario.nome,
-        "usuario_role": usuario.role,
+        "usuario_nome": user_nome,
+        "usuario_role": user_role,
     }
 
 
@@ -104,7 +108,7 @@ def renovar_access_token(refresh_token: str, db: Session) -> dict:
             detail="Refresh token inválido ou expirado",
         )
 
-    usuario = db.get(Usuario, user_id)
+    usuario = db.query(Usuario).filter(Usuario.id == user_id).first()
     if not usuario or not usuario.ativo:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -112,7 +116,7 @@ def renovar_access_token(refresh_token: str, db: Session) -> dict:
         )
 
     return {
-        "access_token": criar_access_token(usuario.id),
+        "access_token": criar_access_token(user_id),
         "token_type": "bearer",
     }
 
