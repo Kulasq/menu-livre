@@ -1,5 +1,3 @@
-// frontend/publico/js/cardapio.js
-
 window.cardapio = (() => {
   // ─── estado ───────────────────────────────────────────────
   let _dados = [];         // [{ categoria, produtos }]
