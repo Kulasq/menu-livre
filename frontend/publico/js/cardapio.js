@@ -128,9 +128,9 @@ window.cardapio = (() => {
     _dados.forEach((cat, idx) => {
       const btn = document.createElement('button');
       btn.className = `nav-item${idx === 0 ? ' ativo' : ''}`;
-      btn.textContent = cat.categoria.nome;
-      btn.dataset.id = cat.categoria.id;
-      btn.addEventListener('click', () => _scrollParaCategoria(cat.categoria.id));
+      btn.textContent = cat.nome;
+      btn.dataset.id = cat.id;
+      btn.addEventListener('click', () => _scrollParaCategoria(cat.id));
       lista.appendChild(btn);
     });
   }
@@ -144,7 +144,6 @@ window.cardapio = (() => {
     window.scrollTo({ top: offsetTop - headerH - navH - 8, behavior: 'smooth' });
   }
 
-  // ─── renderizar cardápio completo ─────────────────────────
   function _renderCardapio() {
     const container = els.container();
     container.innerHTML = '';
@@ -152,11 +151,11 @@ window.cardapio = (() => {
     _dados.forEach((cat) => {
       const secao = document.createElement('section');
       secao.className = 'categoria-secao';
-      secao.id = `cat-${cat.categoria.id}`;
+      secao.id = `cat-${cat.id}`;
 
       const titulo = document.createElement('h2');
       titulo.className = 'categoria-titulo';
-      titulo.textContent = cat.categoria.nome;
+      titulo.textContent = cat.nome;
       secao.appendChild(titulo);
 
       const destaques = cat.produtos.filter(p => p.destaque);
