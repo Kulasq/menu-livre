@@ -1,0 +1,89 @@
+from __future__ import annotations
+from pydantic import BaseModel, Field
+from datetime import datetime
+
+
+class PedidoItemModificadorCreate(BaseModel):
+    modificador_id: int
+
+
+class PedidoItemCreate(BaseModel):
+    produto_id: int | None = None
+    variante_id: int | None = None
+    quantidade: int = Field(default=1, ge=1)
+    observacao: str | None = None
+    modificadores: list[PedidoItemModificadorCreate] = []
+
+
+class PedidoCreate(BaseModel):
+    tipo: str = Field(pattern="^(delivery|retirada)$")
+    endereco_entrega: str | None = None
+    metodo_pagamento: str = Field(pattern="^(pix|dinheiro|cartao)$")
+    observacao: str | None = None
+    itens: list[PedidoItemCreate] = Field(min_length=1)
+
+
+class PedidoStatusUpdate(BaseModel):
+    status: str = Field(
+        pattern="^(confirmado|em_preparo|pronto|entregue|cancelado)$"
+    )
+
+
+class PedidoPagamentoUpdate(BaseModel):
+    status_pagamento: str = Field(pattern="^(pendente|pago)$")
+
+
+class PedidoItemModificadorResponse(BaseModel):
+    id: int
+    modificador_id: int
+    nome_snapshot: str
+    preco_snapshot: float
+
+    model_config = {"from_attributes": True}
+
+
+class PedidoItemResponse(BaseModel):
+    id: int
+    produto_id: int | None
+    variante_id: int | None
+    nome_snapshot: str
+    preco_snapshot: float
+    quantidade: int
+    subtotal: float
+    observacao: str | None
+    modificadores: list[PedidoItemModificadorResponse] = []
+
+    model_config = {"from_attributes": True}
+
+
+class PedidoClienteResponse(BaseModel):
+    id: int
+    nome: str
+    telefone: str
+
+    model_config = {"from_attributes": True}
+
+
+class PedidoResponse(BaseModel):
+    id: int
+    numero: str
+    cliente: PedidoClienteResponse
+    tipo: str
+    status: str
+    endereco_entrega: str | None
+    subtotal: float
+    taxa_entrega: float
+    total: float
+    metodo_pagamento: str | None
+    status_pagamento: str
+    observacao: str | None
+    criado_em: datetime
+    itens: list[PedidoItemResponse] = []
+
+    model_config = {"from_attributes": True}
+
+
+class NovoPedidoResponse(BaseModel):
+    pedido: PedidoResponse
+    mensagem_whatsapp: str
+    whatsapp_url: str
