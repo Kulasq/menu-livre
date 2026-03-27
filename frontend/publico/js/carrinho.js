@@ -83,7 +83,23 @@ window.carrinho = (() => {
   // ─── atualizar UI ─────────────────────────────────────────
   function _atualizar() {
     _atualizarBotaoHeader();
+    _atualizarBotaoFlutuante();
     _renderDrawer();
+  }
+
+  function _atualizarBotaoFlutuante() {
+    const btn   = document.getElementById('btn-flutuante-carrinho');
+    const qty   = document.getElementById('btn-flutuante-qty');
+    const total = document.getElementById('btn-flutuante-total');
+    const q     = quantidade();
+
+    if (q > 0) {
+      qty.textContent   = q;
+      total.textContent = brl(window.carrinho.total());
+      btn.classList.remove('hidden');
+    } else {
+      btn.classList.add('hidden');
+    }
   }
 
   function _atualizarBotaoHeader() {
@@ -222,6 +238,7 @@ window.carrinho = (() => {
     document.getElementById('btn-carrinho').addEventListener('click', abrirDrawer);
     document.getElementById('drawer-fechar').addEventListener('click', fecharDrawer);
     document.getElementById('drawer-overlay').addEventListener('click', fecharDrawer);
+    document.getElementById('btn-flutuante-inner').addEventListener('click', abrirDrawer);
 
     document.querySelectorAll('.btn-tipo-servico').forEach(btn => {
       btn.addEventListener('click', () => {

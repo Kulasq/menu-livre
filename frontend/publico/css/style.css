@@ -1,7 +1,5 @@
-/* frontend/publico/css/style.css */
-
 /* =============================================
-  RESET & BASE
+   RESET & BASE
    ============================================= */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -46,7 +44,7 @@ a {
 }
 
 /* =============================================
-  TOKENS DE DESIGN
+   TOKENS DE DESIGN
    ============================================= */
 :root {
   /* Paleta Pão de Mão */
@@ -79,7 +77,7 @@ a {
   --radius-xl:  28px;
 
   /* Alturas fixas */
-  --header-h:   60px;
+  --header-h:   64px;
   --nav-h:      48px;
 }
 
@@ -95,63 +93,104 @@ a {
   height: var(--header-h);
   background: var(--bg-nav);
   border-bottom: 1px solid var(--borda);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  gap: 12px;
   box-shadow: var(--sombra-sm);
+}
+
+.header-inner {
+  height: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 0 12px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
 }
 
 .header-loja {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
   min-width: 0;
+  overflow: hidden;
+}
+
+/* ── Esquerda: status + entrega ── */
+.header-esquerda {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* ── Centro: logo + nome ── */
+.header-centro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* ── Direita: ações ── */
+.header-direita {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
 .header-logo {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  flex-shrink: 0;
   border: 2px solid var(--borda);
 }
 
 .header-info {
   min-width: 0;
+  overflow: hidden;
 }
 
 .header-nome {
-  font-family: 'Syne', sans-serif;
-  font-size: 1rem;
-  font-weight: 800;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
   color: var(--marrom-escuro);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.1;
+  text-align: center;
+  letter-spacing: .01em;
+}
+
+.header-logo:not(.hidden) + .header-nome {
+  font-size: .8rem;
 }
 
 .header-status {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 1px;
+  gap: 6px;
+  margin-top: 3px;
+  white-space: nowrap;
 }
 
 .status-badge {
-  font-size: .7rem;
-  font-weight: 600;
-  letter-spacing: .02em;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
 }
 
 .status-aberto  { color: var(--verde); }
 .status-fechado { color: var(--vermelho); }
 
 .header-entrega {
-  font-size: .7rem;
+  font-size: .68rem;
   color: var(--texto-sec);
+  white-space: nowrap;
 }
 
 .header-acoes {
@@ -179,18 +218,18 @@ a {
 }
 
 .btn-carrinho {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 4px;
-  height: 36px;
-  padding: 0 12px;
+  height: 34px;
+  padding: 0 10px;
   background: var(--marrom-btn);
   color: #fff;
   border-radius: var(--radius-xl);
-  font-size: .85rem;
+  font-size: .82rem;
   font-weight: 600;
   transition: background .15s;
+  white-space: nowrap;
 }
 
 .btn-carrinho:hover,
@@ -208,7 +247,7 @@ a {
   background: #fff;
   color: var(--marrom-btn);
   border-radius: 99px;
-  font-size: .7rem;
+  font-size: .68rem;
   font-weight: 700;
 }
 
@@ -241,6 +280,12 @@ a {
   border-bottom: 1px solid var(--borda);
   height: var(--nav-h);
   overflow: hidden;
+}
+
+.nav-categorias:empty,
+.nav-categorias--vazio,
+.nav-categorias--carregando {
+  display: none;
 }
 
 .nav-lista {
@@ -299,7 +344,7 @@ a {
 }
 
 .categoria-titulo {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: .06em;
@@ -635,7 +680,7 @@ a {
 }
 
 .modal-produto-nome {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.2rem;
   font-weight: 800;
   color: var(--marrom-escuro);
@@ -831,6 +876,7 @@ a {
   z-index: 200;
   display: flex;
   align-items: flex-end;
+  padding: 0 8px 8px;
 }
 
 .drawer-overlay {
@@ -840,13 +886,16 @@ a {
   backdrop-filter: blur(2px);
 }
 
+/* ─── FIX: overflow hidden garante que o border-radius
+       seja respeitado pelos filhos (header, rodapé) ─── */
 .drawer-box {
   position: relative;
   z-index: 1;
   width: 100%;
   max-height: 90dvh;
   background: var(--bg);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   animation: slideUp .22s ease-out;
@@ -862,7 +911,7 @@ a {
 }
 
 .drawer-header h2 {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1.1rem;
   font-weight: 800;
   color: var(--marrom-escuro);
@@ -1045,7 +1094,7 @@ a {
 
 .modal-pedido-header h2 {
   flex: 1;
-  font-family: 'Syne', sans-serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 1rem;
   font-weight: 800;
   color: var(--marrom-escuro);
@@ -1111,45 +1160,91 @@ a {
 }
 
 /* =============================================
+   BOTÃO FLUTUANTE CARRINHO
+   ============================================= */
+.btn-flutuante-carrinho {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  width: calc(100% - 32px);
+  max-width: 480px;
+  animation: slideUp .2s ease-out;
+}
+
+.btn-flutuante-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--marrom-btn);
+  color: #fff;
+  border-radius: var(--radius-xl);
+  font-size: .95rem;
+  font-weight: 700;
+  box-shadow: var(--sombra-lg);
+  transition: background .15s;
+  gap: 12px;
+}
+
+.btn-flutuante-inner:hover,
+.btn-flutuante-inner:active {
+  background: var(--marrom-hover);
+}
+
+.btn-flutuante-qty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  background: rgba(255,255,255,.25);
+  border-radius: 99px;
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.btn-flutuante-total {
+  font-size: .9rem;
+  font-weight: 700;
+  opacity: .9;
+}
+
+/* =============================================
    UTILITÁRIOS
    ============================================= */
 .hidden { display: none !important; }
 
 /* =============================================
-   DESKTOP (≥ 600px) — ajustes mínimos
+   RESPONSIVO — DESKTOP (≥ 600px)
    ============================================= */
 @media (min-width: 600px) {
-  .header { padding: 0 24px; }
+  .header-inner { padding: 0 24px; }
+
+  .header-nome { font-size: 32px; }
+
+  .status-badge { font-size: .78rem; }
+  .header-entrega { font-size: .74rem; }
 
   .main {
-    max-width: 680px;
+    max-width: 1024px;
     margin-left: auto;
     margin-right: auto;
   }
 
   .nav-categorias {
-    max-width: 680px;
+    max-width: 1024px;
     left: 50%;
     transform: translateX(-50%);
     border-left: 1px solid var(--borda);
     border-right: 1px solid var(--borda);
   }
 
-  .modal-box,
-  .drawer-box {
-    max-width: 480px;
-    margin: 0 auto;
-    border-radius: var(--radius-lg);
-    bottom: auto;
-    top: 50%;
-    transform: translateY(-50%);
-    animation: fadeScale .2s ease-out;
-  }
-
-  @keyframes fadeScale {
-    from { opacity: 0; transform: translateY(-50%) scale(.97); }
-    to   { opacity: 1; transform: translateY(-50%) scale(1); }
-  }
+  .banner { max-height: 240px; }
+  .banner img { height: 240px; }
 
   .modal,
   .drawer {
@@ -1157,6 +1252,47 @@ a {
     justify-content: center;
   }
 
-  .banner { max-height: 240px; }
-  .banner img { height: 240px; }
+  .modal-box,
+  .drawer-box {
+    max-width: 480px;
+    margin: 0 auto;
+    border-radius: var(--radius-lg);
+    animation: fadeScale .2s ease-out;
+  }
+
+  .btn-flutuante-carrinho {
+    max-width: 560px;
+  }
+
+  @keyframes fadeScale {
+    from { opacity: 0; transform: scale(.97); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+}
+
+/* =============================================
+   RESPONSIVO — MOBILE (< 600px)
+   ============================================= */
+@media (max-width: 599px) {
+  :root {
+    --header-h: 72px;
+  }
+
+  .header-nome { font-size: 24px; }
+
+  .header-inner {
+    padding: 0 10px;
+    gap: 4px;
+  }
+
+  .icon-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .btn-carrinho {
+    padding: 0 8px;
+    height: 30px;
+    font-size: .75rem;
+  }
 }
