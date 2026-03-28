@@ -1,3 +1,9 @@
+/* frontend/admin/js/auth.js */
+
+/**
+ * Cliente HTTP centralizado com interceptor de 401 + refresh automático.
+ * Todas as chamadas à API passam por aqui.
+ */
 const api = {
   _refreshPromise: null,
 
@@ -224,4 +230,9 @@ function initLogin() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initLogin)
+/* Só inicializa o form de login se estiver na página de login */
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('form-login')) {
+    initLogin()
+  }
+})
