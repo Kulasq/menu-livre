@@ -77,6 +77,7 @@ class ProdutoCreate(BaseModel):
     nome: str = Field(min_length=2, max_length=150)
     descricao: str | None = None
     preco: float = Field(gt=0)
+    foto_url: str | None = None
     disponivel: bool = True
     destaque: bool = False
     ordem: int = 0
@@ -87,6 +88,7 @@ class ProdutoUpdate(BaseModel):
     nome: str | None = Field(default=None, min_length=2)
     descricao: str | None = None
     preco: float | None = Field(default=None, gt=0)
+    foto_url: str | None = None
     disponivel: bool | None = None
     destaque: bool | None = None
     ordem: int | None = None

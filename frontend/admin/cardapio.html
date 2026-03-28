@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cardápio — Pão de Mão</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🍔</div>
+        <div>
+          <h2>Pão de Mão</h2>
+          <small>Painel Admin</small>
+        </div>
+      </div>
+      <nav class="sidebar-nav" aria-label="Navegação do painel">
+        <a href="dashboard.html" class="sidebar-link">
+          <span class="sidebar-link-icon">📊</span> Dashboard
+        </a>
+        <a href="cardapio.html" class="sidebar-link ativo">
+          <span class="sidebar-link-icon">🍽️</span> Cardápio
+        </a>
+        <a href="pedidos.html" class="sidebar-link">
+          <span class="sidebar-link-icon">📋</span> Pedidos
+        </a>
+      </nav>
+      <div class="sidebar-logout">
+        <button class="sidebar-link" id="btn-logout" type="button">
+          <span class="sidebar-link-icon">🚪</span> Sair
+        </button>
+      </div>
+    </aside>
+
+    <!-- HEADER -->
+    <header class="admin-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn-menu-mobile" id="btn-menu" type="button" aria-label="Abrir menu">☰</button>
+        <h1 class="admin-header-titulo">Cardápio</h1>
+      </div>
+      <div class="admin-header-usuario">
+        <span class="admin-header-nome" id="header-usuario-nome"></span>
+        <div class="admin-header-avatar" id="header-usuario-avatar"></div>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO -->
+    <main class="admin-conteudo">
+
+      <!-- ── CATEGORIAS ── -->
+      <section class="card mb-4">
+        <div class="card-header">
+          <h3>Categorias</h3>
+          <button class="btn btn-primary btn-sm" id="btn-nova-categoria">+ Nova categoria</button>
+        </div>
+        <div class="card-body">
+          <div id="categorias-loading" class="loading-spinner hidden">
+            <div class="spinner-admin"></div>
+          </div>
+          <div id="categorias-vazio" class="estado-vazio hidden">
+            <div class="estado-vazio-icon">📂</div>
+            <p>Nenhuma categoria criada ainda.</p>
+          </div>
+          <div class="tabela-wrap">
+            <table class="tabela" id="categorias-tabela">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Ordem</th>
+                  <th>Status</th>
+                  <th style="width:100px">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="categorias-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── PRODUTOS ── -->
+      <section class="card">
+        <div class="card-header">
+          <h3>Produtos</h3>
+          <div style="display:flex;align-items:center;gap:10px">
+            <select id="filtro-categoria" class="form-input" style="width:auto;padding:7px 12px;font-size:.85rem">
+              <option value="">Todas as categorias</option>
+            </select>
+            <button class="btn btn-primary btn-sm" id="btn-novo-produto">+ Novo produto</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="produtos-loading" class="loading-spinner hidden">
+            <div class="spinner-admin"></div>
+          </div>
+          <div id="produtos-vazio" class="estado-vazio hidden">
+            <div class="estado-vazio-icon">🍽️</div>
+            <p>Nenhum produto cadastrado.</p>
+          </div>
+          <div class="tabela-wrap">
+            <table class="tabela" id="produtos-tabela">
+              <thead>
+                <tr>
+                  <th style="width:60px">Foto</th>
+                  <th>Nome</th>
+                  <th>Preço</th>
+                  <th>Categoria</th>
+                  <th style="width:80px">Ativo</th>
+                  <th style="width:80px">Destaque</th>
+                  <th style="width:100px">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="produtos-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Overlay sidebar mobile -->
+  <div class="sidebar-overlay hidden" id="sidebar-overlay"></div>
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       MODAIS
+       ═══════════════════════════════════════════════════════ -->
+
+  <!-- Modal Categoria -->
+  <div id="modal-categoria" class="modal-admin hidden">
+    <div class="modal-admin-overlay" id="modal-categoria-overlay"></div>
+    <div class="modal-admin-box">
+      <div class="modal-admin-header">
+        <h3 id="modal-categoria-titulo">Nova categoria</h3>
+        <button class="modal-admin-fechar" id="modal-categoria-fechar" aria-label="Fechar">✕</button>
+      </div>
+      <form id="form-categoria">
+        <div class="modal-admin-body">
+          <div class="form-group">
+            <label class="form-label" for="categoria-nome">Nome *</label>
+            <input id="categoria-nome" class="form-input" type="text" required minlength="2" maxlength="100" placeholder="Ex: Hamburgueres" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="categoria-descricao">Descrição</label>
+            <textarea id="categoria-descricao" class="form-input" rows="2" placeholder="Descrição opcional…"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="categoria-ordem">Ordem</label>
+            <input id="categoria-ordem" class="form-input" type="number" value="0" min="0" />
+          </div>
+          <div class="form-group hidden" id="categoria-ativo-group">
+            <label class="form-label form-checkbox">
+              <input id="categoria-ativo" type="checkbox" checked />
+              Categoria ativa
+            </label>
+          </div>
+        </div>
+        <div class="modal-admin-footer">
+          <button type="button" class="btn btn-secondary" id="modal-categoria-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-salvar-categoria">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Produto -->
+  <div id="modal-produto" class="modal-admin hidden">
+    <div class="modal-admin-overlay" id="modal-produto-overlay"></div>
+    <div class="modal-admin-box modal-admin-lg">
+      <div class="modal-admin-header">
+        <h3 id="modal-produto-titulo">Novo produto</h3>
+        <button class="modal-admin-fechar" id="modal-produto-fechar" aria-label="Fechar">✕</button>
+      </div>
+      <form id="form-produto">
+        <div class="modal-admin-body">
+          <div class="form-row">
+            <div class="form-group form-flex">
+              <label class="form-label" for="produto-categoria">Categoria *</label>
+              <select id="produto-categoria" class="form-input" required>
+                <option value="">Selecione…</option>
+              </select>
+            </div>
+            <div class="form-group form-flex">
+              <label class="form-label" for="produto-preco">Preço (R$) *</label>
+              <input id="produto-preco" class="form-input" type="number" step="0.01" min="0.01" required placeholder="0,00" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="produto-nome">Nome *</label>
+            <input id="produto-nome" class="form-input" type="text" required minlength="2" maxlength="150" placeholder="Ex: Gorgonzolisson" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="produto-descricao">Descrição</label>
+            <textarea id="produto-descricao" class="form-input" rows="3" placeholder="Ingredientes, modo de preparo…"></textarea>
+          </div>
+
+          <!-- Upload de foto -->
+          <div class="form-group">
+            <label class="form-label">Foto do produto</label>
+            <div class="foto-upload-area">
+              <div id="produto-foto-placeholder" class="foto-placeholder">
+                <span>📷</span>
+                <span>Clique para selecionar</span>
+              </div>
+              <img id="produto-foto-preview" class="foto-preview hidden" alt="Preview" />
+              <button type="button" class="btn btn-danger btn-sm foto-remover hidden" id="produto-foto-remover">Remover</button>
+              <input type="file" id="produto-foto-input" accept="image/jpeg,image/png,image/webp" hidden />
+              <button type="button" class="btn btn-secondary btn-sm" id="produto-foto-btn">Escolher imagem</button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group form-flex">
+              <label class="form-label" for="produto-ordem">Ordem</label>
+              <input id="produto-ordem" class="form-input" type="number" value="0" min="0" />
+            </div>
+          </div>
+
+          <div class="form-row" style="gap:24px">
+            <label class="form-label form-checkbox">
+              <input id="produto-disponivel" type="checkbox" checked />
+              Disponível
+            </label>
+            <label class="form-label form-checkbox">
+              <input id="produto-destaque" type="checkbox" />
+              Destaque
+            </label>
+          </div>
+        </div>
+        <div class="modal-admin-footer">
+          <button type="button" class="btn btn-secondary" id="modal-produto-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-salvar-produto">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Confirmação -->
+  <div id="modal-confirmar" class="modal-admin hidden">
+    <div class="modal-admin-overlay" id="modal-confirmar-overlay"></div>
+    <div class="modal-admin-box modal-admin-sm">
+      <div class="modal-admin-header">
+        <h3>Confirmar exclusão</h3>
+      </div>
+      <div class="modal-admin-body">
+        <p id="modal-confirmar-msg" style="font-size:.95rem"></p>
+      </div>
+      <div class="modal-admin-footer">
+        <button class="btn btn-secondary" id="modal-confirmar-nao">Cancelar</button>
+        <button class="btn btn-danger" id="modal-confirmar-sim">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/cardapio.js"></script>
+</body>
+</html>
