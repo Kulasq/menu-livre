@@ -340,7 +340,7 @@ a {
    SEÇÃO DE CATEGORIA
    ============================================= */
 .categoria-secao {
-  padding: 24px 16px 8px;
+  padding: 0px 16px 8px;
 }
 
 .categoria-titulo {
@@ -606,7 +606,7 @@ a {
 }
 
 /* =============================================
-   MODAL (base)
+   MODAL (base) — flutuante como o drawer
    ============================================= */
 .modal {
   position: fixed;
@@ -614,6 +614,7 @@ a {
   z-index: 200;
   display: flex;
   align-items: flex-end;
+  padding: 0 8px 8px;
 }
 
 .modal-overlay {
@@ -629,10 +630,18 @@ a {
   width: 100%;
   max-height: 92dvh;
   background: var(--bg);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp .22s ease-out;
+}
+
+/* Área scrollável (foto + corpo / passos) */
+.modal-scroll {
+  flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
-  animation: slideUp .22s ease-out;
 }
 
 @keyframes slideUp {
@@ -796,10 +805,9 @@ a {
   border-color: var(--marrom-btn);
 }
 
-/* rodapé do modal produto */
+/* rodapé do modal (fixo embaixo via flexbox) */
 .modal-rodape {
-  position: sticky;
-  bottom: 0;
+  flex-shrink: 0;
   background: var(--bg);
   border-top: 1px solid var(--borda);
   padding: 12px 16px;
@@ -886,8 +894,6 @@ a {
   backdrop-filter: blur(2px);
 }
 
-/* ─── FIX: overflow hidden garante que o border-radius
-       seja respeitado pelos filhos (header, rodapé) ─── */
 .drawer-box {
   position: relative;
   z-index: 1;
@@ -1068,7 +1074,7 @@ a {
    MODAL FINALIZAÇÃO DE PEDIDO
    ============================================= */
 .modal-box-pedido {
-  padding-bottom: 24px;
+  padding-bottom: 0;
 }
 
 .modal-pedido-header {
@@ -1077,8 +1083,7 @@ a {
   gap: 10px;
   padding: 16px 16px 12px;
   border-bottom: 1px solid var(--borda);
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   background: var(--bg);
   z-index: 2;
 }
@@ -1235,12 +1240,13 @@ a {
     margin-right: auto;
   }
 
+  /* Nav centralizada com bordas arredondadas embaixo */
   .nav-categorias {
     max-width: 1024px;
-    left: 50%;
-    transform: translateX(-50%);
+    margin: 0 auto;
     border-left: 1px solid var(--borda);
     border-right: 1px solid var(--borda);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
   }
 
   .banner { max-height: 240px; }
