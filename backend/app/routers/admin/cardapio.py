@@ -7,6 +7,8 @@ from app.deps import get_current_admin
 from app.schemas.cardapio import (
     CategoriaCreate, CategoriaUpdate, CategoriaResponse,
     ProdutoCreate, ProdutoUpdate, ProdutoResponse,
+    GrupoModificadorCreate, GrupoModificadorUpdate, GrupoModificadorResponse,
+    ModificadorCreate, ModificadorUpdate, ModificadorResponse,
 )
 from app.services import cardapio_service
 
@@ -87,3 +89,78 @@ def deletar_produto(
     _=Depends(get_current_admin),
 ):
     cardapio_service.deletar_produto(produto_id, db)
+
+# ── Grupos de Modificadores ──────────────────────────────────────────────────
+ 
+@router.post(
+    "/produtos/{produto_id}/modificadores",
+    response_model=GrupoModificadorResponse,
+    status_code=201,
+)
+def criar_grupo_modificador(
+    produto_id: int,
+    dados: GrupoModificadorCreate,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    return cardapio_service.criar_grupo_modificador(produto_id, dados, db)
+ 
+ 
+@router.put(
+    "/modificadores/{grupo_id}",
+    response_model=GrupoModificadorResponse,
+)
+def atualizar_grupo_modificador(
+    grupo_id: int,
+    dados: GrupoModificadorUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    return cardapio_service.atualizar_grupo_modificador(grupo_id, dados, db)
+ 
+ 
+@router.delete("/modificadores/{grupo_id}", status_code=204)
+def deletar_grupo_modificador(
+    grupo_id: int,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    cardapio_service.deletar_grupo_modificador(grupo_id, db)
+ 
+ 
+# ── Modificadores (opções individuais) ───────────────────────────────────────
+ 
+@router.post(
+    "/modificadores/{grupo_id}/opcoes",
+    response_model=ModificadorResponse,
+    status_code=201,
+)
+def criar_modificador(
+    grupo_id: int,
+    dados: ModificadorCreate,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    return cardapio_service.criar_modificador(grupo_id, dados, db)
+ 
+ 
+@router.put(
+    "/modificadores/opcoes/{modificador_id}",
+    response_model=ModificadorResponse,
+)
+def atualizar_modificador(
+    modificador_id: int,
+    dados: ModificadorUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    return cardapio_service.atualizar_modificador(modificador_id, dados, db)
+ 
+ 
+@router.delete("/modificadores/opcoes/{modificador_id}", status_code=204)
+def deletar_modificador(
+    modificador_id: int,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    cardapio_service.deletar_modificador(modificador_id, db)

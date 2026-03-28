@@ -37,6 +37,13 @@ class ModificadorCreate(BaseModel):
     ordem: int = 0
 
 
+class ModificadorUpdate(BaseModel):
+    nome: str | None = Field(default=None, min_length=1, max_length=100)
+    preco_adicional: float | None = None
+    disponivel: bool | None = None
+    ordem: int | None = None
+
+
 class ModificadorResponse(BaseModel):
     id: int
     nome: str
@@ -55,6 +62,14 @@ class GrupoModificadorCreate(BaseModel):
     selecao_maxima: int = 1
     ordem: int = 0
     modificadores: list[ModificadorCreate] = []
+
+
+class GrupoModificadorUpdate(BaseModel):
+    nome: str | None = Field(default=None, min_length=2, max_length=100)
+    obrigatorio: bool | None = None
+    selecao_minima: int | None = None
+    selecao_maxima: int | None = None
+    ordem: int | None = None
 
 
 class GrupoModificadorResponse(BaseModel):
