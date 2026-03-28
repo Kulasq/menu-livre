@@ -1,3 +1,5 @@
+/* frontend/admin/css/admin.css */
+
 /* =============================================
    RESET & BASE
    ============================================= */
@@ -661,6 +663,278 @@ a {
 }
 
 /* =============================================
+   PEDIDOS
+   ============================================= */
+
+/* Filtros */
+.pedidos-filtros {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.pedidos-auto-refresh {
+  font-size: .78rem;
+  color: var(--texto-terc);
+  margin-left: auto;
+}
+
+/* Grid de cards */
+.pedidos-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Card de pedido */
+.pedido-card {
+  background: var(--bg-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: box-shadow var(--trans-fast), border-color var(--trans-fast);
+  box-shadow: var(--sombra-card);
+}
+
+.pedido-card:hover {
+  box-shadow: var(--sombra-md);
+  border-color: var(--accent);
+}
+
+.pedido-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.pedido-card-numero {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pedido-card-numero strong {
+  font-size: 1rem;
+  color: var(--texto);
+}
+
+.pedido-card-hora {
+  font-size: .82rem;
+  color: var(--texto-terc);
+}
+
+.pedido-card-cliente {
+  font-size: .85rem;
+  color: var(--texto-sec);
+  margin-top: 2px;
+}
+
+.pedido-card-meio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+  border-top: 1px solid var(--borda);
+  border-bottom: 1px solid var(--borda);
+  margin-bottom: 10px;
+}
+
+.pedido-card-tipo {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--texto-sec);
+}
+
+.pedido-card-itens {
+  font-size: .82rem;
+  color: var(--texto-terc);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pedido-agendado {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.pedido-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pedido-card-valores {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pedido-card-total {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.pedido-card-pagamento {
+  font-size: .82rem;
+  color: var(--texto-terc);
+}
+
+.pedido-card-acoes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Badges extras para status */
+.badge-info {
+  background: rgba(59,130,246,.1);
+  color: #3b82f6;
+}
+
+.badge-preparo {
+  background: rgba(249,115,22,.1);
+  color: #f97316;
+}
+
+.badge-entregue {
+  background: rgba(107,114,128,.1);
+  color: #6b7280;
+}
+
+/* ── Modal detalhe do pedido ── */
+.detalhe-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.detalhe-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.detalhe-info-label {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--texto-terc);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.detalhe-info-item > span:last-child {
+  font-size: .9rem;
+  color: var(--texto);
+}
+
+.detalhe-secao {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--borda);
+}
+
+.detalhe-secao h4 {
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--texto);
+  margin-bottom: 12px;
+}
+
+.detalhe-itens-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.detalhe-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--borda);
+  gap: 12px;
+}
+
+.detalhe-item:last-child {
+  border-bottom: none;
+}
+
+.detalhe-item-info {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+}
+
+.detalhe-item-qty {
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 24px;
+}
+
+.detalhe-item-info strong {
+  font-size: .9rem;
+  color: var(--texto);
+}
+
+.detalhe-item-mods {
+  font-size: .78rem;
+  color: var(--texto-terc);
+  margin-top: 2px;
+}
+
+.detalhe-item-obs {
+  font-size: .78rem;
+  color: var(--texto-sec);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.detalhe-item-preco {
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--texto);
+  white-space: nowrap;
+}
+
+.detalhe-totais {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detalhe-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: .88rem;
+  color: var(--texto-sec);
+}
+
+.detalhe-total-final {
+  padding-top: 8px;
+  border-top: 1px solid var(--borda);
+  font-size: 1rem;
+  color: var(--texto);
+}
+
+/* =============================================
    UTILITÁRIOS
    ============================================= */
 .hidden { display: none !important; }
@@ -915,5 +1189,24 @@ textarea.form-input {
   .form-row {
     flex-direction: column;
     gap: 12px;
+  }
+
+  .pedido-card-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .pedidos-filtros {
+    gap: 8px;
+  }
+
+  .pedidos-auto-refresh {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .detalhe-info-grid {
+    grid-template-columns: 1fr;
   }
 }
