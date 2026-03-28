@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Pão de Mão</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🍔</div>
+        <div>
+          <h2>Pão de Mão</h2>
+          <small>Painel Admin</small>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navegação do painel">
+        <a href="dashboard.html" class="sidebar-link ativo">
+          <span class="sidebar-link-icon">📊</span>
+          Dashboard
+        </a>
+        <a href="cardapio.html" class="sidebar-link">
+          <span class="sidebar-link-icon">🍽️</span>
+          Cardápio
+        </a>
+        <a href="pedidos.html" class="sidebar-link">
+          <span class="sidebar-link-icon">📋</span>
+          Pedidos
+        </a>
+      </nav>
+
+      <div class="sidebar-logout">
+        <button class="sidebar-link" id="btn-logout" type="button">
+          <span class="sidebar-link-icon">🚪</span>
+          Sair
+        </button>
+      </div>
+    </aside>
+
+    <!-- HEADER -->
+    <header class="admin-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="btn-menu-mobile" id="btn-menu" type="button" aria-label="Abrir menu">
+          ☰
+        </button>
+        <h1 class="admin-header-titulo">Dashboard</h1>
+      </div>
+
+      <div class="admin-header-usuario">
+        <span class="admin-header-nome" id="header-usuario-nome"></span>
+        <div class="admin-header-avatar" id="header-usuario-avatar"></div>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO -->
+    <main class="admin-conteudo">
+      <div class="card">
+        <div class="card-body">
+          <div class="estado-vazio">
+            <div class="estado-vazio-icon">👋</div>
+            <p>Bem-vinda ao painel, <strong id="welcome-nome"></strong>!</p>
+            <p class="text-sec mt-4">Em breve aqui terá o resumo dos pedidos do dia.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Overlay para mobile -->
+  <div class="sidebar-overlay hidden" id="sidebar-overlay"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      /* Proteger rota — redireciona se não autenticado */
+      if (!auth.proteger()) return
+
+      /* Preencher dados do usuário */
+      const usuario = auth.getUsuario()
+      document.getElementById('header-usuario-nome').textContent = usuario.nome
+      document.getElementById('welcome-nome').textContent = usuario.nome
+
+      /* Avatar com iniciais */
+      const iniciais = usuario.nome
+        .split(' ')
+        .map(p => p[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+      document.getElementById('header-usuario-avatar').textContent = iniciais
+
+      /* Logout */
+      document.getElementById('btn-logout').addEventListener('click', () => {
+        auth.logout()
+      })
+
+      /* Menu mobile */
+      const sidebar = document.getElementById('sidebar')
+      const overlay = document.getElementById('sidebar-overlay')
+      const btnMenu = document.getElementById('btn-menu')
+
+      function abrirMenu() {
+        sidebar.classList.add('aberto')
+        overlay.classList.remove('hidden')
+      }
+
+      function fecharMenu() {
+        sidebar.classList.remove('aberto')
+        overlay.classList.add('hidden')
+      }
+
+      btnMenu.addEventListener('click', abrirMenu)
+      overlay.addEventListener('click', fecharMenu)
+    })
+  </script>
+</body>
+</html>

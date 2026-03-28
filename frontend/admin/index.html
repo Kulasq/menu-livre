@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel — Pão de Mão</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body class="login-page">
+
+  <div class="login-container">
+    <div class="login-card">
+
+      <div class="login-brand">
+        <div class="login-brand-icon">🍔</div>
+        <h1>Pão de Mão</h1>
+        <p>Painel de controle</p>
+      </div>
+
+      <form id="form-login" class="login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="input-email">E-mail</label>
+          <input
+            id="input-email"
+            class="form-input"
+            type="email"
+            placeholder="seu@email.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="input-senha">Senha</label>
+          <input
+            id="input-senha"
+            class="form-input"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+
+        <p id="login-erro" class="login-erro hidden" role="alert"></p>
+
+        <button id="btn-entrar" class="btn-login" type="submit">
+          Entrar
+        </button>
+      </form>
+
+    </div>
+
+    <p class="login-footer">Pão de Mão · Hamburgueria Caseira · Bonito, PE</p>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
