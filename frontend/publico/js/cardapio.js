@@ -55,6 +55,7 @@ window.cardapio = (() => {
     els.erro().classList.add('hidden');
     els.container().innerHTML = '';
     els.navLista().innerHTML = '';
+    document.getElementById('nav-categorias').classList.add('nav-categorias--carregando');
 
     try {
       const [resCardapio, resConfig] = await Promise.all([
@@ -79,6 +80,10 @@ window.cardapio = (() => {
       els.erro().classList.remove('hidden');
     } finally {
       els.loading().classList.add('hidden');
+      document.getElementById('nav-categorias').classList.remove('nav-categorias--carregando');
+      if (_dados.length === 0) {
+        document.getElementById('nav-categorias').style.display = 'none';
+      }
     }
   }
 
