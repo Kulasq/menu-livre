@@ -676,6 +676,178 @@ a {
 .gap-4 { gap: 1rem; }
 
 /* =============================================
+   MODAL ADMIN
+   ============================================= */
+.modal-admin {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-admin-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(2px);
+}
+
+.modal-admin-box {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--sombra-lg);
+  display: flex;
+  flex-direction: column;
+  animation: modalIn .2s ease-out;
+}
+
+.modal-admin-lg { max-width: 560px; }
+.modal-admin-sm { max-width: 380px; }
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--borda);
+  flex-shrink: 0;
+}
+
+.modal-admin-header h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.modal-admin-fechar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  color: var(--texto-terc);
+  font-size: .85rem;
+  transition: background var(--trans-fast), color var(--trans-fast);
+}
+
+.modal-admin-fechar:hover {
+  background: var(--borda);
+  color: var(--texto);
+}
+
+.modal-admin-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-admin-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--borda);
+  flex-shrink: 0;
+}
+
+/* =============================================
+   FORM HELPERS
+   ============================================= */
+.form-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.form-flex {
+  flex: 1;
+}
+
+.form-checkbox {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.form-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+textarea.form-input {
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* =============================================
+   UPLOAD DE FOTO
+   ============================================= */
+.foto-upload-area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.foto-placeholder {
+  width: 100px;
+  height: 100px;
+  border: 2px dashed var(--borda-input);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--texto-terc);
+  font-size: .75rem;
+  cursor: pointer;
+  transition: border-color var(--trans-fast);
+}
+
+.foto-placeholder span:first-child {
+  font-size: 1.5rem;
+}
+
+.foto-placeholder:hover {
+  border-color: var(--accent);
+}
+
+.foto-preview {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--borda);
+}
+
+.foto-remover {
+  align-self: flex-end;
+}
+
+/* =============================================
    RESPONSIVO — TABLET (≤ 1024px)
    ============================================= */
 @media (max-width: 1024px) {
@@ -730,5 +902,18 @@ a {
 
   .login-card {
     padding: 32px 24px 28px;
+  }
+
+  .modal-admin {
+    padding: 12px;
+  }
+
+  .modal-admin-box {
+    max-width: 100%;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 12px;
   }
 }
