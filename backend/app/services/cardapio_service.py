@@ -8,8 +8,8 @@ from app.models.modificador import GrupoModificador, Modificador
 from app.schemas.cardapio import (
     CategoriaCreate, CategoriaUpdate,
     ProdutoCreate, ProdutoUpdate,
-    GrupoModificadorCreate,
-    ModificadorCreate,
+    GrupoModificadorCreate, GrupoModificadorUpdate,
+    ModificadorCreate, ModificadorUpdate,
 )
 
 
@@ -133,3 +133,101 @@ def obter_cardapio_publico(db: Session) -> dict:
         })
 
     return {"categorias": resultado, "destaques": destaques}
+
+def criar_grupo_modificador(produto_id: int, dados: GrupoModificadorCreate, db: Session) -> GrupoModificador:
+    produto = db.get(Produto, produto_id)
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+ 
+    grupo = GrupoModificador(
+        produto_id=produto_id,
+        nome=dados.nome,
+        obrigatorio=dados.obrigatorio,
+        selecao_minima=dados.selecao_minima,
+        selecao_maxima=dados.selecao_maxima,
+        ordem=dados.ordem,
+    )
+    db.add(grupo)
+    db.flush()
+ 
+    for mod_dados in dados.modificadores:
+        mod = Modificador(
+            grupo_id=grupo.id,
+            nome=mod_dados.nome,
+            preco_adicional=mod_dados.preco_adicional,
+            disponivel=mod_dados.disponivel,
+            ordem=mod_dados.ordem,
+        )
+        db.add(mod)
+ 
+    db.commit()
+    grupo_id = grupo.id
+    return db.query(GrupoModificador).options(
+        joinedload(GrupoModificador.modificadores)
+    ).filter(GrupoModificador.id == grupo_id).first()
+ 
+ 
+def atualizar_grupo_modificador(
+    grupo_id: int, dados: "GrupoModificadorUpdate", db: Session
+) -> GrupoModificador:
+    grupo = db.get(GrupoModificador, grupo_id)
+    if not grupo:
+        raise HTTPException(status_code=404, detail="Grupo de modificador não encontrado")
+ 
+    for campo, valor in dados.model_dump(exclude_unset=True).items():
+        setattr(grupo, campo, valor)
+ 
+    db.commit()
+    return db.query(GrupoModificador).options(
+        joinedload(GrupoModificador.modificadores)
+    ).filter(GrupoModificador.id == grupo_id).first()
+ 
+ 
+def deletar_grupo_modificador(grupo_id: int, db: Session) -> None:
+    grupo = db.get(GrupoModificador, grupo_id)
+    if not grupo:
+        raise HTTPException(status_code=404, detail="Grupo de modificador não encontrado")
+    db.delete(grupo)
+    db.commit()
+ 
+ 
+# ── Modificadores (opções individuais) ────────────────────────────────────────
+ 
+def criar_modificador(grupo_id: int, dados: ModificadorCreate, db: Session) -> Modificador:
+    grupo = db.get(GrupoModificador, grupo_id)
+    if not grupo:
+        raise HTTPException(status_code=404, detail="Grupo de modificador não encontrado")
+ 
+    mod = Modificador(
+        grupo_id=grupo_id,
+        nome=dados.nome,
+        preco_adicional=dados.preco_adicional,
+        disponivel=dados.disponivel,
+        ordem=dados.ordem,
+    )
+    db.add(mod)
+    db.commit()
+    mod_id = mod.id
+    return db.get(Modificador, mod_id)
+ 
+ 
+def atualizar_modificador(
+    modificador_id: int, dados: "ModificadorUpdate", db: Session
+) -> Modificador:
+    mod = db.get(Modificador, modificador_id)
+    if not mod:
+        raise HTTPException(status_code=404, detail="Modificador não encontrado")
+ 
+    for campo, valor in dados.model_dump(exclude_unset=True).items():
+        setattr(mod, campo, valor)
+ 
+    db.commit()
+    return db.get(Modificador, modificador_id)
+ 
+ 
+def deletar_modificador(modificador_id: int, db: Session) -> None:
+    mod = db.get(Modificador, modificador_id)
+    if not mod:
+        raise HTTPException(status_code=404, detail="Modificador não encontrado")
+    db.delete(mod)
+    db.commit()
