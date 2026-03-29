@@ -1,7 +1,5 @@
-/* frontend/admin/js/pedidos.js */
-
 /**
- * Gestão de pedidos — listagem, filtros, status, pagamento.
+ * Gestão de pedidos — listagem, filtros, status, pagamento, notificação sonora.
  * Depende de: config.js, auth.js (api, auth), utils.js (toast, formatarPreco, $)
  */
 
@@ -13,6 +11,13 @@ let filtroStatus = ''
 let filtroTipo = ''
 let paginaAtual = 1
 let autoRefreshTimer = null
+
+/* Notificação */
+let idsConhecidos = new Set()
+let primeiroCarregamento = true
+let alertaTocando = false
+let alertaInterval = null
+let audioCtx = null
 
 const STATUS_LABELS = {
   pendente:   { label: 'Pendente',    classe: 'badge-aviso',   icon: '🕐' },
@@ -52,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventos()
   carregarPedidos()
 
-  /* Auto-refresh a cada 30 segundos */
-  autoRefreshTimer = setInterval(carregarPedidos, 30000)
+  /* Polling a cada 5 segundos */
+  autoRefreshTimer = setInterval(carregarPedidos, 5000)
 })
 
 function setupUsuario() {
@@ -97,10 +102,84 @@ function setupEventos() {
   /* Modal detalhe */
   $('#modal-pedido-fechar').addEventListener('click', fecharModalPedido)
   $('#modal-pedido-overlay').addEventListener('click', fecharModalPedido)
+
+  /* Banner de alerta */
+  $('#alerta-novos').addEventListener('click', dispensarAlerta)
 }
 
 
-/* ── Carregar pedidos ───────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   NOTIFICAÇÃO SONORA
+   ══════════════════════════════════════════════════════════ */
+
+function getAudioContext() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+  }
+  return audioCtx
+}
+
+/**
+ * Toca um "beep-beep" usando Web Audio API (sem arquivo externo).
+ */
+function tocarBeep() {
+  try {
+    const ctx = getAudioContext()
+    if (ctx.state === 'suspended') ctx.resume()
+
+    const tocar = (startTime) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = 880
+      osc.type = 'sine'
+      gain.gain.setValueAtTime(0.3, startTime)
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.15)
+      osc.start(startTime)
+      osc.stop(startTime + 0.15)
+    }
+
+    const now = ctx.currentTime
+    tocar(now)
+    tocar(now + 0.2)
+  } catch {
+    /* Navegador pode bloquear áudio antes da primeira interação */
+  }
+}
+
+function iniciarAlerta(novos) {
+  if (alertaTocando) return
+  alertaTocando = true
+
+  /* Mostra banner */
+  const count = novos.length
+  $('#alerta-novos-texto').textContent = count === 1
+    ? '🔔 1 pedido novo!'
+    : `🔔 ${count} pedidos novos!`
+  $('#alerta-novos').classList.remove('hidden')
+
+  /* Toca imediatamente e repete a cada 3 segundos */
+  tocarBeep()
+  alertaInterval = setInterval(tocarBeep, 3000)
+
+  /* Para sozinho depois de 30 segundos */
+  setTimeout(dispensarAlerta, 30000)
+}
+
+function dispensarAlerta() {
+  alertaTocando = false
+  if (alertaInterval) {
+    clearInterval(alertaInterval)
+    alertaInterval = null
+  }
+  $('#alerta-novos').classList.add('hidden')
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   CARREGAR PEDIDOS
+   ══════════════════════════════════════════════════════════ */
 
 async function carregarPedidos() {
   try {
@@ -109,15 +188,30 @@ async function carregarPedidos() {
     if (filtroTipo) url += `&tipo=${filtroTipo}`
 
     const data = await api.get(url)
+
+    /* Detectar pedidos novos */
+    if (primeiroCarregamento) {
+      data.forEach(p => idsConhecidos.add(p.id))
+      primeiroCarregamento = false
+    } else {
+      const novos = data.filter(p => !idsConhecidos.has(p.id))
+      if (novos.length > 0) {
+        novos.forEach(p => idsConhecidos.add(p.id))
+        iniciarAlerta(novos)
+      }
+    }
+
     pedidos = data
     renderPedidos()
   } catch (err) {
-    toast.erro('Erro ao carregar pedidos: ' + err.message)
+    console.error('Erro ao carregar pedidos:', err.message)
   }
 }
 
 
-/* ── Renderização ───────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   RENDERIZAÇÃO
+   ══════════════════════════════════════════════════════════ */
 
 function renderPedidos() {
   const container = $('#pedidos-lista')
@@ -194,7 +288,9 @@ function renderCardPedido(pedido) {
 }
 
 
-/* ── Modal de detalhe ───────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   MODAL DE DETALHE
+   ══════════════════════════════════════════════════════════ */
 
 function abrirDetalhe(id) {
   const pedido = pedidos.find(p => p.id === id)
@@ -213,7 +309,6 @@ function abrirDetalhe(id) {
   $('#detalhe-horario').textContent = formatarDataHora(pedido.criado_em)
   $('#detalhe-pagamento').textContent = `${pagLabel} — ${pagStatus}`
 
-  /* Endereço */
   const enderecoEl = $('#detalhe-endereco')
   if (pedido.endereco_entrega) {
     enderecoEl.textContent = pedido.endereco_entrega
@@ -222,7 +317,6 @@ function abrirDetalhe(id) {
     enderecoEl.parentElement.classList.add('hidden')
   }
 
-  /* Agendamento */
   const agendaEl = $('#detalhe-agendado')
   if (pedido.agendado_para) {
     agendaEl.textContent = formatarDataHora(pedido.agendado_para)
@@ -231,7 +325,6 @@ function abrirDetalhe(id) {
     agendaEl.parentElement.classList.add('hidden')
   }
 
-  /* Observação */
   const obsEl = $('#detalhe-obs')
   if (pedido.observacao) {
     obsEl.textContent = pedido.observacao
@@ -240,7 +333,6 @@ function abrirDetalhe(id) {
     obsEl.parentElement.classList.add('hidden')
   }
 
-  /* Itens */
   $('#detalhe-itens').innerHTML = pedido.itens.map(item => {
     const modsHtml = item.modificadores.length > 0
       ? `<div class="detalhe-item-mods">${item.modificadores.map(m => `${esc(m.nome_snapshot)} (+${formatarPreco(m.preco_snapshot)})`).join(', ')}</div>`
@@ -264,7 +356,6 @@ function abrirDetalhe(id) {
     `
   }).join('')
 
-  /* Totais */
   $('#detalhe-subtotal').textContent = formatarPreco(pedido.subtotal)
   const taxaRow = $('#detalhe-taxa-row')
   if (pedido.taxa_entrega > 0) {
@@ -284,7 +375,9 @@ function fecharModalPedido() {
 }
 
 
-/* ── Ações ──────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   AÇÕES
+   ══════════════════════════════════════════════════════════ */
 
 async function avancarStatus(id) {
   const pedido = pedidos.find(p => p.id === id)
@@ -333,7 +426,9 @@ async function togglePagamento(id) {
 }
 
 
-/* ── Helpers ────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   HELPERS
+   ══════════════════════════════════════════════════════════ */
 
 function formatarHora(iso) {
   if (!iso) return '—'
