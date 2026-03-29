@@ -933,6 +933,42 @@ a {
 }
 
 /* =============================================
+   ALERTA DE PEDIDO NOVO
+   ============================================= */
+.alerta-novos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 14px 24px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: var(--sombra-md);
+  animation: alertaPulse 1s ease-in-out infinite;
+  transition: opacity var(--trans-fast);
+}
+
+.alerta-novos:hover {
+  opacity: .9;
+}
+
+.alerta-novos-hint {
+  font-size: .78rem;
+  font-weight: 500;
+  opacity: .8;
+}
+
+@keyframes alertaPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.015); box-shadow: 0 4px 20px rgba(245,158,11,.4); }
+}
+
+/* =============================================
    UTILITÁRIOS
    ============================================= */
 .hidden { display: none !important; }
