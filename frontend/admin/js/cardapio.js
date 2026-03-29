@@ -2,11 +2,17 @@
 
 let categorias = []
 let produtos = []
-let categoriaEditando = null   // null = criando, obj = editando
-let produtoEditando = null     // null = criando, obj = editando
-let fotoParaUpload = null      // File selecionado para upload
-let filtroCategoria = ''       // id da categoria para filtrar produtos
-let confirmacaoCallback = null // callback do modal de confirmação
+let categoriaEditando = null
+let produtoEditando = null
+let fotoParaUpload = null
+let filtroCategoria = ''
+let confirmacaoCallback = null
+
+/* Estado dos modificadores */
+let modProdutoId = null        // produto cujos modificadores estão abertos
+let grupoEditando = null       // null = criando, obj = editando
+let opcaoEditando = null       // null = criando, obj = editando
+let opcaoGrupoId = null        // grupo ao qual a opção pertence
 
 
 /* ── Inicialização ──────────────────────────────────────── */
@@ -29,7 +35,6 @@ function setupUsuario() {
 
 function setupSidebar() {
   $('#btn-logout').addEventListener('click', () => auth.logout())
-
   const sidebar = $('#sidebar')
   const overlay = $('#sidebar-overlay')
   $('#btn-menu').addEventListener('click', () => {
@@ -62,11 +67,28 @@ function setupEventos() {
   $('#produto-foto-btn').addEventListener('click', () => $('#produto-foto-input').click())
   $('#produto-foto-remover').addEventListener('click', removerFoto)
 
-  /* Filtro de categoria */
+  /* Filtro */
   $('#filtro-categoria').addEventListener('change', (e) => {
     filtroCategoria = e.target.value
     renderProdutos()
   })
+
+  /* Modificadores */
+  $('#modal-modificadores-fechar').addEventListener('click', fecharModalModificadores)
+  $('#modal-modificadores-overlay').addEventListener('click', fecharModalModificadores)
+  $('#btn-novo-grupo').addEventListener('click', () => abrirModalGrupo())
+
+  /* Grupo */
+  $('#form-grupo').addEventListener('submit', handleSubmitGrupo)
+  $('#modal-grupo-fechar').addEventListener('click', fecharModalGrupo)
+  $('#modal-grupo-overlay').addEventListener('click', fecharModalGrupo)
+  $('#modal-grupo-cancelar').addEventListener('click', fecharModalGrupo)
+
+  /* Opção */
+  $('#form-opcao').addEventListener('submit', handleSubmitOpcao)
+  $('#modal-opcao-fechar').addEventListener('click', fecharModalOpcao)
+  $('#modal-opcao-overlay').addEventListener('click', fecharModalOpcao)
+  $('#modal-opcao-cancelar').addEventListener('click', fecharModalOpcao)
 
   /* Confirmação */
   $('#modal-confirmar-sim').addEventListener('click', () => {
@@ -103,7 +125,9 @@ async function carregarDados() {
 }
 
 
-/* ── Renderização — Categorias ──────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   CATEGORIAS
+   ══════════════════════════════════════════════════════════ */
 
 function renderCategorias() {
   const tbody = $('#categorias-tbody')
@@ -138,79 +162,8 @@ function renderCategorias() {
   `).join('')
 }
 
-
-/* ── Renderização — Produtos ────────────────────────────── */
-
-function renderProdutos() {
-  const tbody = $('#produtos-tbody')
-  const vazio = $('#produtos-vazio')
-
-  let lista = produtos
-  if (filtroCategoria) {
-    lista = lista.filter(p => p.categoria_id === Number(filtroCategoria))
-  }
-
-  if (lista.length === 0) {
-    tbody.innerHTML = ''
-    vazio.classList.remove('hidden')
-    return
-  }
-
-  vazio.classList.add('hidden')
-  tbody.innerHTML = lista.map(prod => {
-    const cat = categorias.find(c => c.id === prod.categoria_id)
-    const fotoHtml = prod.foto_url
-      ? `<img src="${CONFIG.API_URL}${prod.foto_url}" alt="${esc(prod.nome)}" style="width:48px;height:48px;object-fit:cover;border-radius:6px">`
-      : `<div style="width:48px;height:48px;border-radius:6px;background:var(--borda);display:flex;align-items:center;justify-content:center;font-size:1.2rem">🍔</div>`
-
-    return `
-      <tr>
-        <td>${fotoHtml}</td>
-        <td>
-          <strong>${esc(prod.nome)}</strong>
-          ${prod.descricao ? `<br><span class="text-terc" style="font-size:.82rem">${esc(prod.descricao).substring(0, 60)}${prod.descricao.length > 60 ? '…' : ''}</span>` : ''}
-        </td>
-        <td>${formatarPreco(prod.preco)}</td>
-        <td><span class="badge badge-aviso">${cat ? esc(cat.nome) : '—'}</span></td>
-        <td>
-          <button class="btn btn-sm ${prod.disponivel ? 'btn-secondary' : 'btn-danger'}" onclick="toggleDisponivel(${prod.id})" title="${prod.disponivel ? 'Desativar' : 'Ativar'}">
-            ${prod.disponivel ? '✅' : '❌'}
-          </button>
-        </td>
-        <td>
-          <button class="btn btn-sm ${prod.destaque ? 'btn-primary' : 'btn-secondary'}" onclick="toggleDestaque(${prod.id})" title="${prod.destaque ? 'Remover destaque' : 'Destacar'}">
-            ${prod.destaque ? '⭐' : '☆'}
-          </button>
-        </td>
-        <td>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-secondary btn-sm" onclick="abrirModalProduto(${prod.id})" title="Editar">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="confirmarExcluirProduto(${prod.id}, '${esc(prod.nome)}')" title="Excluir">🗑️</button>
-          </div>
-        </td>
-      </tr>
-    `
-  }).join('')
-}
-
-function atualizarFiltroCategorias() {
-  const select = $('#filtro-categoria')
-  select.innerHTML = '<option value="">Todas as categorias</option>'
-    + categorias.map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join('')
-}
-
-function atualizarSelectCategoria() {
-  const select = $('#produto-categoria')
-  select.innerHTML = '<option value="">Selecione…</option>'
-    + categorias.filter(c => c.ativo).map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join('')
-}
-
-
-/* ── Modal Categoria ────────────────────────────────────── */
-
 function abrirModalCategoria(id = null) {
   categoriaEditando = id ? categorias.find(c => c.id === id) : null
-
   $('#modal-categoria-titulo').textContent = categoriaEditando ? 'Editar categoria' : 'Nova categoria'
   $('#categoria-nome').value = categoriaEditando?.nome || ''
   $('#categoria-descricao').value = categoriaEditando?.descricao || ''
@@ -244,10 +197,7 @@ async function handleSubmitCategoria(e) {
     descricao: $('#categoria-descricao').value.trim() || null,
     ordem: parseInt($('#categoria-ordem').value) || 0,
   }
-
-  if (categoriaEditando) {
-    dados.ativo = $('#categoria-ativo').checked
-  }
+  if (categoriaEditando) dados.ativo = $('#categoria-ativo').checked
 
   try {
     if (categoriaEditando) {
@@ -267,9 +217,89 @@ async function handleSubmitCategoria(e) {
   }
 }
 
+function confirmarExcluirCategoria(id, nome) {
+  abrirConfirmacao(`Excluir a categoria "${nome}"?`, async () => {
+    try {
+      await api.delete(`/api/admin/categorias/${id}`)
+      toast.sucesso('Categoria excluída!')
+      await carregarDados()
+    } catch (err) { toast.erro(err.message) }
+  })
+}
 
-/* ── Modal Produto ──────────────────────────────────────── */
 
+/* ══════════════════════════════════════════════════════════
+   PRODUTOS
+   ══════════════════════════════════════════════════════════ */
+
+function renderProdutos() {
+  const tbody = $('#produtos-tbody')
+  const vazio = $('#produtos-vazio')
+
+  let lista = produtos
+  if (filtroCategoria) lista = lista.filter(p => p.categoria_id === Number(filtroCategoria))
+
+  if (lista.length === 0) {
+    tbody.innerHTML = ''
+    vazio.classList.remove('hidden')
+    return
+  }
+
+  vazio.classList.add('hidden')
+  tbody.innerHTML = lista.map(prod => {
+    const cat = categorias.find(c => c.id === prod.categoria_id)
+    const fotoHtml = prod.foto_url
+      ? `<img src="${CONFIG.API_URL}${prod.foto_url}" alt="${esc(prod.nome)}" style="width:48px;height:48px;object-fit:cover;border-radius:6px">`
+      : `<div style="width:48px;height:48px;border-radius:6px;background:var(--borda);display:flex;align-items:center;justify-content:center;font-size:1.2rem">🍔</div>`
+
+    const modCount = prod.grupos_modificadores?.length || 0
+
+    return `
+      <tr>
+        <td>${fotoHtml}</td>
+        <td>
+          <strong>${esc(prod.nome)}</strong>
+          ${prod.descricao ? `<br><span class="text-terc" style="font-size:.82rem">${esc(prod.descricao).substring(0, 60)}${prod.descricao.length > 60 ? '…' : ''}</span>` : ''}
+        </td>
+        <td>${formatarPreco(prod.preco)}</td>
+        <td><span class="badge badge-aviso">${cat ? esc(cat.nome) : '—'}</span></td>
+        <td>
+          <button class="btn btn-sm ${prod.disponivel ? 'btn-secondary' : 'btn-danger'}" onclick="toggleDisponivel(${prod.id})">
+            ${prod.disponivel ? '✅' : '❌'}
+          </button>
+        </td>
+        <td>
+          <button class="btn btn-sm ${prod.destaque ? 'btn-primary' : 'btn-secondary'}" onclick="toggleDestaque(${prod.id})">
+            ${prod.destaque ? '⭐' : '☆'}
+          </button>
+        </td>
+        <td>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-secondary btn-sm" onclick="abrirModalModificadores(${prod.id})" title="Modificadores">
+              🔧${modCount > 0 ? `<span class="mod-badge">${modCount}</span>` : ''}
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="abrirModalProduto(${prod.id})" title="Editar">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmarExcluirProduto(${prod.id}, '${esc(prod.nome)}')" title="Excluir">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `
+  }).join('')
+}
+
+function atualizarFiltroCategorias() {
+  const select = $('#filtro-categoria')
+  select.innerHTML = '<option value="">Todas as categorias</option>'
+    + categorias.map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join('')
+}
+
+function atualizarSelectCategoria() {
+  const select = $('#produto-categoria')
+  select.innerHTML = '<option value="">Selecione…</option>'
+    + categorias.filter(c => c.ativo).map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join('')
+}
+
+/* Modal Produto */
 function abrirModalProduto(id = null) {
   produtoEditando = id ? produtos.find(p => p.id === id) : null
   fotoParaUpload = null
@@ -282,11 +312,7 @@ function abrirModalProduto(id = null) {
   $('#produto-ordem').value = produtoEditando?.ordem ?? 0
   $('#produto-disponivel').checked = produtoEditando?.disponivel ?? true
   $('#produto-destaque').checked = produtoEditando?.destaque ?? false
-
-  /* Foto preview */
   atualizarPreviewFoto(produtoEditando?.foto_url || null)
-
-  /* Resetar file input */
   $('#produto-foto-input').value = ''
 
   $('#modal-produto').classList.remove('hidden')
@@ -305,8 +331,7 @@ function atualizarPreviewFoto(url) {
   const placeholder = $('#produto-foto-placeholder')
 
   if (url) {
-    const src = url.startsWith('blob:') ? url : `${CONFIG.API_URL}${url}`
-    preview.src = src
+    preview.src = url.startsWith('blob:') ? url : `${CONFIG.API_URL}${url}`
     preview.classList.remove('hidden')
     btnRemover.classList.remove('hidden')
     placeholder.classList.add('hidden')
@@ -320,18 +345,14 @@ function atualizarPreviewFoto(url) {
 function handleFotoChange(e) {
   const file = e.target.files[0]
   if (!file) return
-
-  const tipos = ['image/jpeg', 'image/png', 'image/webp']
-  if (!tipos.includes(file.type)) {
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
     toast.erro('Use JPEG, PNG ou WebP.')
     return
   }
-
   if (file.size > 5 * 1024 * 1024) {
     toast.erro('Imagem muito grande. Máximo: 5MB.')
     return
   }
-
   fotoParaUpload = file
   atualizarPreviewFoto(URL.createObjectURL(file))
 }
@@ -340,11 +361,7 @@ function removerFoto() {
   fotoParaUpload = null
   $('#produto-foto-input').value = ''
   atualizarPreviewFoto(null)
-
-  /* Marca para remover a foto ao salvar */
-  if (produtoEditando && produtoEditando.foto_url) {
-    produtoEditando._removerFoto = true
-  }
+  if (produtoEditando?.foto_url) produtoEditando._removerFoto = true
 }
 
 async function uploadImagem(file) {
@@ -357,14 +374,11 @@ async function uploadImagem(file) {
     headers: { 'Authorization': `Bearer ${token}` },
     body: formData,
   })
-
   if (!res.ok) {
     const erro = await res.json().catch(() => null)
     throw new Error(erro?.detail || 'Erro no upload da imagem')
   }
-
-  const data = await res.json()
-  return data.url
+  return (await res.json()).url
 }
 
 async function handleSubmitProduto(e) {
@@ -374,13 +388,9 @@ async function handleSubmitProduto(e) {
   btn.textContent = 'Salvando…'
 
   try {
-    /* Upload da foto se houver */
     let fotoUrl = produtoEditando?.foto_url || null
-    if (fotoParaUpload) {
-      fotoUrl = await uploadImagem(fotoParaUpload)
-    } else if (produtoEditando?._removerFoto) {
-      fotoUrl = null
-    }
+    if (fotoParaUpload) fotoUrl = await uploadImagem(fotoParaUpload)
+    else if (produtoEditando?._removerFoto) fotoUrl = null
 
     const dados = {
       categoria_id: parseInt($('#produto-categoria').value),
@@ -393,10 +403,7 @@ async function handleSubmitProduto(e) {
       foto_url: fotoUrl,
     }
 
-    if (!dados.categoria_id) {
-      toast.erro('Selecione uma categoria.')
-      return
-    }
+    if (!dados.categoria_id) { toast.erro('Selecione uma categoria.'); return }
 
     if (produtoEditando) {
       await api.put(`/api/admin/produtos/${produtoEditando.id}`, dados)
@@ -405,7 +412,6 @@ async function handleSubmitProduto(e) {
       await api.post('/api/admin/produtos', dados)
       toast.sucesso('Produto criado!')
     }
-
     fecharModalProduto()
     await carregarDados()
   } catch (err) {
@@ -416,9 +422,6 @@ async function handleSubmitProduto(e) {
   }
 }
 
-
-/* ── Toggles rápidos ────────────────────────────────────── */
-
 async function toggleDisponivel(id) {
   const prod = produtos.find(p => p.id === id)
   if (!prod) return
@@ -427,9 +430,7 @@ async function toggleDisponivel(id) {
     prod.disponivel = !prod.disponivel
     renderProdutos()
     toast.sucesso(prod.disponivel ? 'Produto ativado!' : 'Produto desativado!')
-  } catch (err) {
-    toast.erro(err.message)
-  }
+  } catch (err) { toast.erro(err.message) }
 }
 
 async function toggleDestaque(id) {
@@ -440,24 +441,7 @@ async function toggleDestaque(id) {
     prod.destaque = !prod.destaque
     renderProdutos()
     toast.sucesso(prod.destaque ? 'Produto destacado!' : 'Destaque removido!')
-  } catch (err) {
-    toast.erro(err.message)
-  }
-}
-
-
-/* ── Exclusão ───────────────────────────────────────────── */
-
-function confirmarExcluirCategoria(id, nome) {
-  abrirConfirmacao(`Excluir a categoria "${nome}"?`, async () => {
-    try {
-      await api.delete(`/api/admin/categorias/${id}`)
-      toast.sucesso('Categoria excluída!')
-      await carregarDados()
-    } catch (err) {
-      toast.erro(err.message)
-    }
-  })
+  } catch (err) { toast.erro(err.message) }
 }
 
 function confirmarExcluirProduto(id, nome) {
@@ -466,14 +450,248 @@ function confirmarExcluirProduto(id, nome) {
       await api.delete(`/api/admin/produtos/${id}`)
       toast.sucesso('Produto excluído!')
       await carregarDados()
-    } catch (err) {
-      toast.erro(err.message)
-    }
+    } catch (err) { toast.erro(err.message) }
   })
 }
 
 
-/* ── Modal Confirmação ──────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   MODIFICADORES
+   ══════════════════════════════════════════════════════════ */
+
+function getProdutoAtual() {
+  return produtos.find(p => p.id === modProdutoId)
+}
+
+function abrirModalModificadores(produtoId) {
+  modProdutoId = produtoId
+  const prod = getProdutoAtual()
+  if (!prod) return
+
+  $('#modal-modificadores-titulo').textContent = `Modificadores — ${prod.nome}`
+  renderModificadores()
+  $('#modal-modificadores').classList.remove('hidden')
+}
+
+function fecharModalModificadores() {
+  $('#modal-modificadores').classList.add('hidden')
+  modProdutoId = null
+}
+
+function renderModificadores() {
+  const prod = getProdutoAtual()
+  if (!prod) return
+
+  const grupos = prod.grupos_modificadores || []
+  const lista = $('#modificadores-lista')
+  const vazio = $('#modificadores-vazio')
+
+  if (grupos.length === 0) {
+    lista.innerHTML = ''
+    vazio.classList.remove('hidden')
+    return
+  }
+
+  vazio.classList.add('hidden')
+  lista.innerHTML = grupos.map(grupo => {
+    const obrigTag = grupo.obrigatorio
+      ? '<span class="badge badge-erro" style="font-size:.7rem">Obrigatório</span>'
+      : '<span class="badge badge-aviso" style="font-size:.7rem">Opcional</span>'
+
+    const selecaoInfo = `Selecionar ${grupo.selecao_minima}–${grupo.selecao_maxima}`
+
+    const opcoesHtml = (grupo.modificadores || []).map(mod => `
+      <div class="mod-opcao">
+        <div class="mod-opcao-info">
+          <span class="${mod.disponivel ? '' : 'text-terc'}">${esc(mod.nome)}</span>
+          ${mod.preco_adicional > 0 ? `<span class="mod-opcao-preco">+${formatarPreco(mod.preco_adicional)}</span>` : ''}
+          ${!mod.disponivel ? '<span class="badge badge-erro" style="font-size:.65rem">Indisponível</span>' : ''}
+        </div>
+        <div class="mod-opcao-acoes">
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalOpcao(${grupo.id}, ${mod.id})" title="Editar">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmarExcluirOpcao(${mod.id}, '${esc(mod.nome)}')" title="Excluir">🗑️</button>
+        </div>
+      </div>
+    `).join('')
+
+    return `
+      <div class="mod-grupo">
+        <div class="mod-grupo-header">
+          <div class="mod-grupo-info">
+            <strong>${esc(grupo.nome)}</strong>
+            ${obrigTag}
+            <span class="text-terc" style="font-size:.78rem">${selecaoInfo}</span>
+          </div>
+          <div class="mod-grupo-acoes">
+            <button class="btn btn-secondary btn-sm" onclick="abrirModalOpcao(${grupo.id})" title="Nova opção">+ Opção</button>
+            <button class="btn btn-secondary btn-sm" onclick="abrirModalGrupo(${grupo.id})" title="Editar grupo">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmarExcluirGrupo(${grupo.id}, '${esc(grupo.nome)}')" title="Excluir grupo">🗑️</button>
+          </div>
+        </div>
+        <div class="mod-opcoes">
+          ${opcoesHtml || '<p class="text-terc" style="padding:8px 0;font-size:.85rem">Nenhuma opção adicionada.</p>'}
+        </div>
+      </div>
+    `
+  }).join('')
+}
+
+
+/* ── Modal Grupo ── */
+
+function abrirModalGrupo(grupoId = null) {
+  const prod = getProdutoAtual()
+  if (!prod) return
+
+  grupoEditando = grupoId
+    ? (prod.grupos_modificadores || []).find(g => g.id === grupoId)
+    : null
+
+  $('#modal-grupo-titulo').textContent = grupoEditando ? 'Editar grupo' : 'Novo grupo'
+  $('#grupo-nome').value = grupoEditando?.nome || ''
+  $('#grupo-selecao-min').value = grupoEditando?.selecao_minima ?? 0
+  $('#grupo-selecao-max').value = grupoEditando?.selecao_maxima ?? 1
+  $('#grupo-ordem').value = grupoEditando?.ordem ?? 0
+  $('#grupo-obrigatorio').checked = grupoEditando?.obrigatorio ?? false
+
+  $('#modal-grupo').classList.remove('hidden')
+  $('#grupo-nome').focus()
+}
+
+function fecharModalGrupo() {
+  $('#modal-grupo').classList.add('hidden')
+  grupoEditando = null
+}
+
+async function handleSubmitGrupo(e) {
+  e.preventDefault()
+  const btn = $('#btn-salvar-grupo')
+  btn.disabled = true
+  btn.textContent = 'Salvando…'
+
+  const dados = {
+    nome: $('#grupo-nome').value.trim(),
+    obrigatorio: $('#grupo-obrigatorio').checked,
+    selecao_minima: parseInt($('#grupo-selecao-min').value) || 0,
+    selecao_maxima: parseInt($('#grupo-selecao-max').value) || 1,
+    ordem: parseInt($('#grupo-ordem').value) || 0,
+  }
+
+  try {
+    if (grupoEditando) {
+      await api.put(`/api/admin/modificadores/${grupoEditando.id}`, dados)
+      toast.sucesso('Grupo atualizado!')
+    } else {
+      await api.post(`/api/admin/produtos/${modProdutoId}/modificadores`, dados)
+      toast.sucesso('Grupo criado!')
+    }
+    fecharModalGrupo()
+    await recarregarModificadores()
+  } catch (err) {
+    toast.erro(err.message)
+  } finally {
+    btn.disabled = false
+    btn.textContent = 'Salvar'
+  }
+}
+
+function confirmarExcluirGrupo(grupoId, nome) {
+  abrirConfirmacao(`Excluir o grupo "${nome}" e todas suas opções?`, async () => {
+    try {
+      await api.delete(`/api/admin/modificadores/${grupoId}`)
+      toast.sucesso('Grupo excluído!')
+      await recarregarModificadores()
+    } catch (err) { toast.erro(err.message) }
+  })
+}
+
+
+/* ── Modal Opção ── */
+
+function abrirModalOpcao(grupoId, opcaoId = null) {
+  opcaoGrupoId = grupoId
+
+  if (opcaoId) {
+    const prod = getProdutoAtual()
+    const grupo = (prod?.grupos_modificadores || []).find(g => g.id === grupoId)
+    opcaoEditando = (grupo?.modificadores || []).find(m => m.id === opcaoId)
+  } else {
+    opcaoEditando = null
+  }
+
+  $('#modal-opcao-titulo').textContent = opcaoEditando ? 'Editar opção' : 'Nova opção'
+  $('#opcao-nome').value = opcaoEditando?.nome || ''
+  $('#opcao-preco').value = opcaoEditando?.preco_adicional ?? 0
+  $('#opcao-disponivel').checked = opcaoEditando?.disponivel ?? true
+
+  $('#modal-opcao').classList.remove('hidden')
+  $('#opcao-nome').focus()
+}
+
+function fecharModalOpcao() {
+  $('#modal-opcao').classList.add('hidden')
+  opcaoEditando = null
+  opcaoGrupoId = null
+}
+
+async function handleSubmitOpcao(e) {
+  e.preventDefault()
+  const btn = $('#btn-salvar-opcao')
+  btn.disabled = true
+  btn.textContent = 'Salvando…'
+
+  const dados = {
+    nome: $('#opcao-nome').value.trim(),
+    preco_adicional: parseFloat($('#opcao-preco').value) || 0,
+    disponivel: $('#opcao-disponivel').checked,
+  }
+
+  try {
+    if (opcaoEditando) {
+      await api.put(`/api/admin/modificadores/opcoes/${opcaoEditando.id}`, dados)
+      toast.sucesso('Opção atualizada!')
+    } else {
+      await api.post(`/api/admin/modificadores/${opcaoGrupoId}/opcoes`, dados)
+      toast.sucesso('Opção adicionada!')
+    }
+    fecharModalOpcao()
+    await recarregarModificadores()
+  } catch (err) {
+    toast.erro(err.message)
+  } finally {
+    btn.disabled = false
+    btn.textContent = 'Salvar'
+  }
+}
+
+function confirmarExcluirOpcao(opcaoId, nome) {
+  abrirConfirmacao(`Excluir a opção "${nome}"?`, async () => {
+    try {
+      await api.delete(`/api/admin/modificadores/opcoes/${opcaoId}`)
+      toast.sucesso('Opção excluída!')
+      await recarregarModificadores()
+    } catch (err) { toast.erro(err.message) }
+  })
+}
+
+
+/* ── Recarregar modificadores ── */
+
+async function recarregarModificadores() {
+  try {
+    const produtosAtualizados = await api.get('/api/admin/produtos')
+    produtos = produtosAtualizados
+    renderProdutos()
+    renderModificadores()
+  } catch (err) {
+    toast.erro('Erro ao recarregar: ' + err.message)
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   CONFIRMAÇÃO & HELPERS
+   ══════════════════════════════════════════════════════════ */
 
 function abrirConfirmacao(mensagem, callback) {
   confirmacaoCallback = callback
@@ -485,9 +703,6 @@ function fecharConfirmacao() {
   $('#modal-confirmar').classList.add('hidden')
   confirmacaoCallback = null
 }
-
-
-/* ── Helpers ────────────────────────────────────────────── */
 
 function esc(str) {
   if (!str) return ''

@@ -115,7 +115,7 @@
                   <th>Categoria</th>
                   <th style="width:80px">Ativo</th>
                   <th style="width:80px">Destaque</th>
-                  <th style="width:100px">Ações</th>
+                  <th style="width:140px">Ações</th>
                 </tr>
               </thead>
               <tbody id="produtos-tbody"></tbody>
@@ -129,7 +129,6 @@
 
   <!-- Overlay sidebar mobile -->
   <div class="sidebar-overlay hidden" id="sidebar-overlay"></div>
-
 
   <!-- ═══════════════════════════════════════════════════════
        MODAIS
@@ -202,8 +201,6 @@
             <label class="form-label" for="produto-descricao">Descrição</label>
             <textarea id="produto-descricao" class="form-input" rows="3" placeholder="Ingredientes, modo de preparo…"></textarea>
           </div>
-
-          <!-- Upload de foto -->
           <div class="form-group">
             <label class="form-label">Foto do produto</label>
             <div class="foto-upload-area">
@@ -217,14 +214,12 @@
               <button type="button" class="btn btn-secondary btn-sm" id="produto-foto-btn">Escolher imagem</button>
             </div>
           </div>
-
           <div class="form-row">
             <div class="form-group form-flex">
               <label class="form-label" for="produto-ordem">Ordem</label>
               <input id="produto-ordem" class="form-input" type="number" value="0" min="0" />
             </div>
           </div>
-
           <div class="form-row" style="gap:24px">
             <label class="form-label form-checkbox">
               <input id="produto-disponivel" type="checkbox" checked />
@@ -244,8 +239,98 @@
     </div>
   </div>
 
+  <!-- Modal Modificadores (lista de grupos de um produto) -->
+  <div id="modal-modificadores" class="modal-admin hidden">
+    <div class="modal-admin-overlay" id="modal-modificadores-overlay"></div>
+    <div class="modal-admin-box modal-admin-lg">
+      <div class="modal-admin-header">
+        <h3 id="modal-modificadores-titulo">Modificadores</h3>
+        <button class="modal-admin-fechar" id="modal-modificadores-fechar" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-admin-body">
+        <div id="modificadores-lista" class="mod-lista"></div>
+        <div id="modificadores-vazio" class="estado-vazio hidden" style="padding:24px 0">
+          <p class="text-terc">Nenhum grupo de modificador ainda.</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm mt-4" id="btn-novo-grupo">+ Novo grupo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Novo/Editar Grupo -->
+  <div id="modal-grupo" class="modal-admin hidden" style="z-index:310">
+    <div class="modal-admin-overlay" id="modal-grupo-overlay"></div>
+    <div class="modal-admin-box">
+      <div class="modal-admin-header">
+        <h3 id="modal-grupo-titulo">Novo grupo</h3>
+        <button class="modal-admin-fechar" id="modal-grupo-fechar" aria-label="Fechar">✕</button>
+      </div>
+      <form id="form-grupo">
+        <div class="modal-admin-body">
+          <div class="form-group">
+            <label class="form-label" for="grupo-nome">Nome do grupo *</label>
+            <input id="grupo-nome" class="form-input" type="text" required minlength="2" maxlength="100" placeholder="Ex: Ponto da carne" />
+          </div>
+          <div class="form-row">
+            <div class="form-group form-flex">
+              <label class="form-label" for="grupo-selecao-min">Seleção mínima</label>
+              <input id="grupo-selecao-min" class="form-input" type="number" value="0" min="0" />
+            </div>
+            <div class="form-group form-flex">
+              <label class="form-label" for="grupo-selecao-max">Seleção máxima</label>
+              <input id="grupo-selecao-max" class="form-input" type="number" value="1" min="1" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="grupo-ordem">Ordem</label>
+            <input id="grupo-ordem" class="form-input" type="number" value="0" min="0" />
+          </div>
+          <label class="form-label form-checkbox">
+            <input id="grupo-obrigatorio" type="checkbox" />
+            Obrigatório
+          </label>
+        </div>
+        <div class="modal-admin-footer">
+          <button type="button" class="btn btn-secondary" id="modal-grupo-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-salvar-grupo">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Nova/Editar Opção -->
+  <div id="modal-opcao" class="modal-admin hidden" style="z-index:320">
+    <div class="modal-admin-overlay" id="modal-opcao-overlay"></div>
+    <div class="modal-admin-box modal-admin-sm">
+      <div class="modal-admin-header">
+        <h3 id="modal-opcao-titulo">Nova opção</h3>
+        <button class="modal-admin-fechar" id="modal-opcao-fechar" aria-label="Fechar">✕</button>
+      </div>
+      <form id="form-opcao">
+        <div class="modal-admin-body">
+          <div class="form-group">
+            <label class="form-label" for="opcao-nome">Nome *</label>
+            <input id="opcao-nome" class="form-input" type="text" required minlength="1" maxlength="100" placeholder="Ex: Bem Passado" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="opcao-preco">Preço adicional (R$)</label>
+            <input id="opcao-preco" class="form-input" type="number" step="0.01" min="0" value="0" />
+          </div>
+          <label class="form-label form-checkbox">
+            <input id="opcao-disponivel" type="checkbox" checked />
+            Disponível
+          </label>
+        </div>
+        <div class="modal-admin-footer">
+          <button type="button" class="btn btn-secondary" id="modal-opcao-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-salvar-opcao">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal Confirmação -->
-  <div id="modal-confirmar" class="modal-admin hidden">
+  <div id="modal-confirmar" class="modal-admin hidden" style="z-index:330">
     <div class="modal-admin-overlay" id="modal-confirmar-overlay"></div>
     <div class="modal-admin-box modal-admin-sm">
       <div class="modal-admin-header">
