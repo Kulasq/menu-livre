@@ -9,6 +9,7 @@ from app.config import settings
 from app.routers import auth
 from app.routers.admin import cardapio as admin_cardapio
 from app.routers.admin import pedidos as admin_pedidos
+from app.routers.admin import dashboard as admin_dashboard
 from app.routers.publico import cardapio as publico_cardapio
 from app.routers.publico import cliente as publico_clientes
 from app.routers.publico import pedidos as publico_pedidos
@@ -37,10 +38,11 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(admin_cardapio.router)
 app.include_router(admin_pedidos.router)
+app.include_router(admin_upload.router)
+app.include_router(admin_dashboard.router)
 app.include_router(publico_cardapio.router)
 app.include_router(publico_clientes.router)
 app.include_router(publico_pedidos.router)
-app.include_router(admin_upload.router)
 
 
 @app.get("/health")

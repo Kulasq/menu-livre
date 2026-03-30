@@ -12,21 +12,21 @@ from app.services.auth_service import hash_senha
 
 
 def seed_usuario(db) -> None:
-    existe = db.query(Usuario).filter_by(email="cris@paodemao.com.br").first()
+    existe = db.query(Usuario).filter_by(email="sara@paodemao.com.br").first()
     if existe:
         print("  [ok] Superadmin já existe — pulando.")
         return
 
     usuario = Usuario(
-        nome="Cris",
-        email="cris@paodemao.com.br",
+        nome="Sara",
+        email="sara@paodemao.com.br",
         senha_hash=hash_senha("paodemao2026"),
         role="superadmin",
         ativo=True,
     )
     db.add(usuario)
     db.commit()
-    print("  [criado] Superadmin: cris@paodemao.com.br / senha: paodemao2026")
+    print("  [criado] Superadmin: sara@paodemao.com.br / senha: paodemao2026")
 
 
 def seed_configuracao(db) -> None:

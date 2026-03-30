@@ -8,7 +8,7 @@ from app.services.auth_service import hash_senha
 
 def obter_token(client, usuario_admin) -> str:
     response = client.post("/api/auth/login", json={
-        "email": "cris@paodeamao.com",
+        "email": "sara@paodeamao.com",
         "senha": "senha123",
     })
     return response.json()["access_token"]

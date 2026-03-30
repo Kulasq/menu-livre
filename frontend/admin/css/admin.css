@@ -1,3 +1,5 @@
+/* frontend/admin/css/admin.css */
+
 /* =============================================
    RESET & BASE
    ============================================= */
@@ -969,6 +971,157 @@ a {
 }
 
 /* =============================================
+   DASHBOARD
+   ============================================= */
+.dash-welcome {
+  font-size: .95rem;
+  color: var(--texto-sec);
+  margin-bottom: 20px;
+}
+
+.dash-welcome strong {
+  color: var(--texto);
+}
+
+/* Cards de métricas */
+.dash-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dash-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--sombra-card);
+}
+
+.dash-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.dash-icon-pedidos { background: rgba(59,130,246,.1); }
+.dash-icon-vendas  { background: var(--sucesso-light); }
+.dash-icon-ticket  { background: var(--accent-light); }
+.dash-icon-andamento { background: rgba(249,115,22,.1); }
+
+.dash-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dash-card-valor {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--texto);
+  letter-spacing: -.02em;
+}
+
+.dash-card-label {
+  font-size: .78rem;
+  color: var(--texto-terc);
+  font-weight: 500;
+}
+
+/* Grid de cards menores */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.dash-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Status por tipo */
+.stat-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.stat-status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px;
+  border-radius: var(--radius-md);
+  background: rgba(0,0,0,.02);
+}
+
+.stat-status-icon {
+  font-size: 1.2rem;
+}
+
+.stat-status-count {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--texto);
+}
+
+.stat-status-label {
+  font-size: .75rem;
+  color: var(--texto-terc);
+  font-weight: 500;
+}
+
+.stat-pendente  { background: var(--aviso-light); }
+.stat-confirmado { background: rgba(59,130,246,.06); }
+.stat-preparo   { background: rgba(249,115,22,.06); }
+.stat-pronto    { background: var(--sucesso-light); }
+.stat-entregue  { background: rgba(107,114,128,.06); }
+.stat-cancelado { background: var(--erro-light); }
+
+/* Tipo grid */
+.stat-tipo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat-tipo-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 8px;
+  border-radius: var(--radius-md);
+  background: rgba(0,0,0,.02);
+}
+
+.stat-tipo-icon {
+  font-size: 1.3rem;
+}
+
+.stat-tipo-label {
+  font-size: .78rem;
+  color: var(--texto-terc);
+}
+
+.stat-tipo-item strong {
+  font-size: 1.2rem;
+  color: var(--texto);
+}
+
+/* =============================================
    UTILITÁRIOS
    ============================================= */
 .hidden { display: none !important; }
@@ -1260,6 +1413,10 @@ textarea.form-input {
   :root {
     --sidebar-w: 220px;
   }
+
+  .dash-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* =============================================
@@ -1340,5 +1497,17 @@ textarea.form-input {
 
   .detalhe-info-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dash-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-status-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
