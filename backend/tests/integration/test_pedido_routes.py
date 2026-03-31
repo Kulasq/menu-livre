@@ -6,7 +6,7 @@ from app.models.produto import Produto
 
 def obter_token_admin(client, usuario_admin) -> str:
     r = client.post("/api/auth/login", json={
-        "email": "cris@paodeamao.com",
+        "email": "sara@paodeamao.com",
         "senha": "senha123",
     })
     return r.json()["access_token"]

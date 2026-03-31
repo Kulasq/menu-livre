@@ -17,21 +17,21 @@ class TestSeedUsuario:
     def test_cria_superadmin(self, db_teste):
         executar_seed(db_teste)
 
-        usuario = db_teste.query(Usuario).filter_by(email="cris@paodemao.com.br").first()
+        usuario = db_teste.query(Usuario).filter_by(email="sara@paodemao.com.br").first()
         assert usuario is not None
 
     def test_superadmin_tem_campos_corretos(self, db_teste):
         executar_seed(db_teste)
 
-        usuario = db_teste.query(Usuario).filter_by(email="cris@paodemao.com.br").first()
-        assert usuario.nome == "Cris"
+        usuario = db_teste.query(Usuario).filter_by(email="sara@paodemao.com.br").first()
+        assert usuario.nome == "Sara"
         assert usuario.role == "superadmin"
         assert usuario.ativo is True
 
     def test_superadmin_senha_valida(self, db_teste):
         executar_seed(db_teste)
 
-        usuario = db_teste.query(Usuario).filter_by(email="cris@paodemao.com.br").first()
+        usuario = db_teste.query(Usuario).filter_by(email="sara@paodemao.com.br").first()
         assert verificar_senha("paodemao2026", usuario.senha_hash) is True
 
     def test_seed_idempotente_usuario(self, db_teste):
@@ -39,7 +39,7 @@ class TestSeedUsuario:
         executar_seed(db_teste)
         executar_seed(db_teste)
 
-        total = db_teste.query(Usuario).filter_by(email="cris@paodemao.com.br").count()
+        total = db_teste.query(Usuario).filter_by(email="sara@paodemao.com.br").count()
         assert total == 1
 
 

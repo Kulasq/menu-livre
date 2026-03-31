@@ -4,7 +4,7 @@ import pytest
 
 def test_login_com_credenciais_corretas(client, usuario_admin):
     response = client.post("/api/auth/login", json={
-        "email": "cris@paodeamao.com",
+        "email": "sara@paodeamao.com",
         "senha": "senha123",
     })
 
@@ -13,12 +13,12 @@ def test_login_com_credenciais_corretas(client, usuario_admin):
     assert "access_token" in data
     assert "refresh_token" in data
     assert data["token_type"] == "bearer"
-    assert data["usuario_nome"] == "Dona Cris"
+    assert data["usuario_nome"] == "Sara"
 
 
 def test_login_com_senha_errada(client, usuario_admin):
     response = client.post("/api/auth/login", json={
-        "email": "cris@paodeamao.com",
+        "email": "sara@paodeamao.com",
         "senha": "senha_errada",
     })
 
@@ -49,7 +49,7 @@ def test_health_endpoint(client):
 
 def test_refresh_com_token_valido(client, usuario_admin):
     login = client.post("/api/auth/login", json={
-        "email": "cris@paodeamao.com",
+        "email": "sara@paodeamao.com",
         "senha": "senha123",
     })
     refresh_token = login.json()["refresh_token"]
@@ -64,7 +64,7 @@ def test_refresh_com_token_valido(client, usuario_admin):
 
 def test_logout_invalida_token(client, usuario_admin):
     login = client.post("/api/auth/login", json={
-        "email": "cris@paodeamao.com",
+        "email": "sara@paodeamao.com",
         "senha": "senha123",
     })
     refresh_token = login.json()["refresh_token"]

@@ -72,7 +72,7 @@ def _mock_usuario(ativo=True):
     from app.services.auth_service import hash_senha
     usuario = MagicMock()
     usuario.id = 1
-    usuario.nome = "Dona Cris"
+    usuario.nome = "Sara"
     usuario.role = "superadmin"
     usuario.ativo = ativo
     usuario.senha_hash = hash_senha("senha123")
@@ -83,12 +83,12 @@ def test_login_retorna_tokens_com_credenciais_corretas():
     db = MagicMock()
     db.query().filter().first.return_value = _mock_usuario()
 
-    resultado = login_admin("cris@paodeamao.com", "senha123", db)
+    resultado = login_admin("sara@paodeamao.com", "senha123", db)
 
     assert "access_token" in resultado
     assert "refresh_token" in resultado
     assert resultado["token_type"] == "bearer"
-    assert resultado["usuario_nome"] == "Dona Cris"
+    assert resultado["usuario_nome"] == "Sara"
 
 
 def test_login_falha_com_senha_errada():
@@ -96,7 +96,7 @@ def test_login_falha_com_senha_errada():
     db.query().filter().first.return_value = _mock_usuario()
 
     with pytest.raises(HTTPException) as exc:
-        login_admin("cris@paodeamao.com", "senha_errada", db)
+        login_admin("sara@paodeamao.com", "senha_errada", db)
 
     assert exc.value.status_code == 401
 
@@ -116,7 +116,7 @@ def test_login_falha_com_usuario_inativo():
     db.query().filter().first.return_value = _mock_usuario(ativo=False)
 
     with pytest.raises(HTTPException) as exc:
-        login_admin("cris@paodeamao.com", "senha123", db)
+        login_admin("sara@paodeamao.com", "senha123", db)
 
     assert exc.value.status_code == 403
 
