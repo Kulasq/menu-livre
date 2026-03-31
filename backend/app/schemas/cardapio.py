@@ -37,6 +37,13 @@ class ModificadorCreate(BaseModel):
     ordem: int = 0
 
 
+class ModificadorUpdate(BaseModel):
+    nome: str | None = Field(default=None, min_length=1, max_length=100)
+    preco_adicional: float | None = None
+    disponivel: bool | None = None
+    ordem: int | None = None
+
+
 class ModificadorResponse(BaseModel):
     id: int
     nome: str
@@ -55,6 +62,14 @@ class GrupoModificadorCreate(BaseModel):
     selecao_maxima: int = 1
     ordem: int = 0
     modificadores: list[ModificadorCreate] = []
+
+
+class GrupoModificadorUpdate(BaseModel):
+    nome: str | None = Field(default=None, min_length=2, max_length=100)
+    obrigatorio: bool | None = None
+    selecao_minima: int | None = None
+    selecao_maxima: int | None = None
+    ordem: int | None = None
 
 
 class GrupoModificadorResponse(BaseModel):
@@ -77,6 +92,7 @@ class ProdutoCreate(BaseModel):
     nome: str = Field(min_length=2, max_length=150)
     descricao: str | None = None
     preco: float = Field(gt=0)
+    foto_url: str | None = None
     disponivel: bool = True
     destaque: bool = False
     ordem: int = 0
@@ -87,6 +103,7 @@ class ProdutoUpdate(BaseModel):
     nome: str | None = Field(default=None, min_length=2)
     descricao: str | None = None
     preco: float | None = Field(default=None, gt=0)
+    foto_url: str | None = None
     disponivel: bool | None = None
     destaque: bool | None = None
     ordem: int | None = None

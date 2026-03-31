@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Pão de Mão</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🍔</div>
+        <div>
+          <h2>Pão de Mão</h2>
+          <small>Painel Admin</small>
+        </div>
+      </div>
+      <nav class="sidebar-nav" aria-label="Navegação do painel">
+        <a href="dashboard.html" class="sidebar-link ativo">
+          <span class="sidebar-link-icon">📊</span> Dashboard
+        </a>
+        <a href="cardapio.html" class="sidebar-link">
+          <span class="sidebar-link-icon">🍽️</span> Cardápio
+        </a>
+        <a href="pedidos.html" class="sidebar-link">
+          <span class="sidebar-link-icon">📋</span> Pedidos
+        </a>
+      </nav>
+      <div class="sidebar-logout">
+        <button class="sidebar-link" id="btn-logout" type="button">
+          <span class="sidebar-link-icon">🚪</span> Sair
+        </button>
+      </div>
+    </aside>
+
+    <!-- HEADER -->
+    <header class="admin-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn-menu-mobile" id="btn-menu" type="button" aria-label="Abrir menu">☰</button>
+        <h1 class="admin-header-titulo">Dashboard</h1>
+      </div>
+      <div class="admin-header-usuario">
+        <span class="admin-header-nome" id="header-usuario-nome"></span>
+        <div class="admin-header-avatar" id="header-usuario-avatar"></div>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO -->
+    <main class="admin-conteudo">
+
+      <!-- Boas-vindas -->
+      <p class="dash-welcome">Olá, <strong id="welcome-nome"></strong>! Resumo de hoje:</p>
+
+      <!-- Loading -->
+      <div id="dashboard-loading" class="loading-spinner">
+        <div class="spinner-admin"></div>
+      </div>
+
+      <!-- Conteúdo do dashboard -->
+      <div id="dashboard-conteudo" class="hidden">
+
+        <!-- Cards principais -->
+        <div class="dash-cards">
+          <div class="dash-card">
+            <div class="dash-card-icon dash-icon-pedidos">📋</div>
+            <div class="dash-card-info">
+              <span class="dash-card-valor" id="stat-pedidos">0</span>
+              <span class="dash-card-label">Pedidos</span>
+            </div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-icon dash-icon-vendas">💰</div>
+            <div class="dash-card-info">
+              <span class="dash-card-valor" id="stat-vendas">R$ 0,00</span>
+              <span class="dash-card-label">Vendas</span>
+            </div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-icon dash-icon-ticket">🎫</div>
+            <div class="dash-card-info">
+              <span class="dash-card-valor" id="stat-ticket">R$ 0,00</span>
+              <span class="dash-card-label">Ticket médio</span>
+            </div>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-icon dash-icon-andamento">🔥</div>
+            <div class="dash-card-info">
+              <span class="dash-card-valor" id="stat-andamento">0</span>
+              <span class="dash-card-label">Em andamento</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linha 2: Status + Tipo + Pagamento -->
+        <div class="dash-grid">
+
+          <!-- Por status -->
+          <div class="card">
+            <div class="card-header">
+              <h3>Pedidos por status</h3>
+            </div>
+            <div class="card-body">
+              <div id="resumo-status" class="stat-status-grid">
+                <!-- renderizado via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Por tipo + Pagamento -->
+          <div class="dash-col">
+            <div class="card">
+              <div class="card-header">
+                <h3>Por tipo</h3>
+              </div>
+              <div class="card-body">
+                <div class="stat-tipo-grid">
+                  <div class="stat-tipo-item">
+                    <span class="stat-tipo-icon">🛵</span>
+                    <span class="stat-tipo-label">Delivery</span>
+                    <strong id="stat-delivery">0</strong>
+                  </div>
+                  <div class="stat-tipo-item">
+                    <span class="stat-tipo-icon">🏪</span>
+                    <span class="stat-tipo-label">Retirada</span>
+                    <strong id="stat-retirada">0</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>Pagamento</h3>
+              </div>
+              <div class="card-body">
+                <div class="stat-tipo-grid">
+                  <div class="stat-tipo-item">
+                    <span class="stat-tipo-icon">✅</span>
+                    <span class="stat-tipo-label">Pagos</span>
+                    <strong id="stat-pagos" class="text-sucesso">0</strong>
+                  </div>
+                  <div class="stat-tipo-item">
+                    <span class="stat-tipo-icon">⏳</span>
+                    <span class="stat-tipo-label">Pendentes</span>
+                    <strong id="stat-pendentes-pgto" class="text-erro">0</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Overlay sidebar mobile -->
+  <div class="sidebar-overlay hidden" id="sidebar-overlay"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
