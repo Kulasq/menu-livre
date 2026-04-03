@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configurações — Pão de Mão</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">🍔</div>
+        <div>
+          <h2>Pão de Mão</h2>
+          <small>Painel Admin</small>
+        </div>
+      </div>
+      <nav class="sidebar-nav" aria-label="Navegação do painel">
+        <a href="dashboard.html" class="sidebar-link">
+          <span class="sidebar-link-icon">📊</span> Dashboard
+        </a>
+        <a href="cardapio.html" class="sidebar-link">
+          <span class="sidebar-link-icon">🍽️</span> Cardápio
+        </a>
+        <a href="pedidos.html" class="sidebar-link">
+          <span class="sidebar-link-icon">📋</span> Pedidos
+        </a>
+        <a href="configuracoes.html" class="sidebar-link ativo">
+          <span class="sidebar-link-icon">⚙️</span> Configurações
+        </a>
+      </nav>
+      <div class="sidebar-logout">
+        <button class="sidebar-link" id="btn-logout" type="button">
+          <span class="sidebar-link-icon">🚪</span> Sair
+        </button>
+      </div>
+    </aside>
+
+    <!-- HEADER -->
+    <header class="admin-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn-menu-mobile" id="btn-menu" type="button" aria-label="Abrir menu">☰</button>
+        <h1 class="admin-header-titulo">Configurações</h1>
+      </div>
+      <div class="admin-header-usuario">
+        <span class="admin-header-nome" id="header-usuario-nome"></span>
+        <div class="admin-header-avatar" id="header-usuario-avatar"></div>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO -->
+    <main class="admin-conteudo">
+
+      <!-- Loading -->
+      <div id="config-loading" class="loading-spinner">
+        <div class="spinner-admin"></div>
+      </div>
+
+      <form id="form-config" class="hidden" novalidate>
+
+        <!-- ── Informações da loja ── -->
+        <section class="card mb-4" aria-labelledby="sec-loja">
+          <div class="card-header">
+            <h3 id="sec-loja">Informações da loja</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label" for="inp-nome-loja">Nome da loja</label>
+                <input id="inp-nome-loja" type="text" class="form-input" placeholder="Pão de Mão" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-whatsapp">WhatsApp <span aria-hidden="true">*</span></label>
+                <input id="inp-whatsapp" type="text" class="form-input" placeholder="5581996008571" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-instagram">Instagram (URL)</label>
+                <input id="inp-instagram" type="url" class="form-input" placeholder="https://instagram.com/paodemao" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Pagamento ── -->
+        <section class="card mb-4" aria-labelledby="sec-pagamento">
+          <div class="card-header">
+            <h3 id="sec-pagamento">Pagamento</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label" for="inp-chave-pix">Chave Pix</label>
+                <input id="inp-chave-pix" type="text" class="form-input" placeholder="81 99600-8571" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-tipo-pix">Tipo da chave</label>
+                <select id="inp-tipo-pix" class="form-input">
+                  <option value="">— Selecione —</option>
+                  <option value="celular">Celular</option>
+                  <option value="cpf">CPF</option>
+                  <option value="email">E-mail</option>
+                  <option value="aleatoria">Chave aleatória</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Delivery ── -->
+        <section class="card mb-4" aria-labelledby="sec-delivery">
+          <div class="card-header">
+            <h3 id="sec-delivery">Delivery</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label" for="inp-taxa">Taxa de entrega (R$)</label>
+                <input id="inp-taxa" type="number" class="form-input" min="0" step="0.50" placeholder="0,00" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-minimo">Pedido mínimo (R$)</label>
+                <input id="inp-minimo" type="number" class="form-input" min="0" step="0.50" placeholder="0,00" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-tempo-min">Tempo estimado — mínimo (min)</label>
+                <input id="inp-tempo-min" type="number" class="form-input" min="1" placeholder="30" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-tempo-max">Tempo estimado — máximo (min)</label>
+                <input id="inp-tempo-max" type="number" class="form-input" min="1" placeholder="50" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Funcionamento ── -->
+        <section class="card mb-4" aria-labelledby="sec-funcionamento">
+          <div class="card-header">
+            <h3 id="sec-funcionamento">Funcionamento</h3>
+          </div>
+          <div class="card-body">
+            <div class="toggle-row mb-3">
+              <div class="toggle-row-texto">
+                <span class="toggle-row-label">Aceitar pedidos agora</span>
+                <p class="toggle-row-desc">Quando desativado, clientes navegam normalmente mas não conseguem finalizar pedidos.</p>
+              </div>
+              <label class="toggle" aria-label="Aceitar pedidos">
+                <input type="checkbox" id="inp-aceitar-pedidos" role="switch" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inp-msg-fechado">Mensagem quando fechado</label>
+              <textarea id="inp-msg-fechado" class="form-input" rows="2" placeholder="Estamos fechados no momento."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Horários ── -->
+        <section class="card mb-4" aria-labelledby="sec-horarios">
+          <div class="card-header">
+            <h3 id="sec-horarios">Horários de funcionamento</h3>
+          </div>
+          <div class="card-body">
+            <div class="horarios-lista" id="horarios-lista">
+              <!-- Gerado via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Ações ── -->
+        <div class="form-acoes">
+          <button type="submit" class="btn btn-primary" id="btn-salvar">Salvar configurações</button>
+        </div>
+
+      </form>
+
+    </main>
+  </div>
+
+  <!-- Overlay sidebar mobile -->
+  <div class="sidebar-overlay hidden" id="sidebar-overlay"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/configuracoes.js"></script>
+</body>
+</html>
