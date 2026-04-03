@@ -1407,6 +1407,129 @@ textarea.form-input {
 }
 
 /* =============================================
+   CONFIGURAÇÕES
+   ============================================= */
+
+/* Grid de 2 colunas para campos de formulário */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  display: inline-flex;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--borda-input);
+  border-radius: 24px;
+  transition: background var(--trans-base);
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: transform var(--trans-base);
+  box-shadow: var(--sombra-sm);
+}
+
+.toggle input:checked + .toggle-slider { background: var(--sucesso); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+.toggle input:focus-visible + .toggle-slider { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Linha toggle + descrição */
+.toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.toggle-row-texto { flex: 1; }
+
+.toggle-row-label {
+  font-size: .92rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.toggle-row-desc {
+  font-size: .82rem;
+  color: var(--texto-sec);
+  margin-top: 3px;
+  line-height: 1.45;
+}
+
+/* Horários */
+.horarios-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.horario-dia {
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.horario-dia-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg);
+}
+
+.horario-dia-nome {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--texto);
+  flex: 1;
+}
+
+.horario-dia-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--borda);
+}
+
+/* Ações do formulário */
+.form-acoes {
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: 32px;
+}
+
+/* Utilitários de espaçamento */
+.mb-3 { margin-bottom: 16px; }
+.mb-4 { margin-bottom: 24px; }
+
+/* =============================================
    RESPONSIVO — TABLET (≤ 1024px)
    ============================================= */
 @media (max-width: 1024px) {
@@ -1506,6 +1629,9 @@ textarea.form-input {
   .dash-grid {
     grid-template-columns: 1fr;
   }
+
+  .form-grid-2         { grid-template-columns: 1fr; }
+  .horario-dia-campos  { grid-template-columns: 1fr 1fr; }
 
   .stat-status-grid {
     grid-template-columns: repeat(2, 1fr);
