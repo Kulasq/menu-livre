@@ -374,6 +374,173 @@ function fecharModalPedido() {
   pedidoSelecionado = null
 }
 
+function imprimirPedido() {
+  const p = pedidoSelecionado
+  if (!p) return
+
+  /* ── Helpers de formatação ──────────────────────────── */
+  const TIPO_TEXTO    = { delivery: 'Delivery', retirada: 'Retirada' }
+  const PGTO_TEXTO    = { pix: 'PIX', dinheiro: 'Dinheiro', cartao: 'Cartao' }
+  const STATUS_TEXTO  = {
+    pendente: 'Pendente', confirmado: 'Confirmado', em_preparo: 'Preparando',
+    pronto: 'Pronto', entregue: 'Entregue', cancelado: 'Cancelado',
+  }
+
+  /* Linha pontilhada preenchendo 40 colunas */
+  function linha(label, valor, cols = 40) {
+    const pontos = cols - label.length - valor.length
+    return label + '.'.repeat(Math.max(pontos, 1)) + valor
+  }
+
+  /* ── Monta os itens ─────────────────────────────────── */
+  const itensHtml = p.itens.map(item => {
+    const mods = item.modificadores.length
+      ? item.modificadores.map(m =>
+          `<div class="mod">  + ${m.nome_snapshot}</div>`
+        ).join('')
+      : ''
+    const obs = item.observacao
+      ? `<div class="obs">  Obs: ${item.observacao}</div>`
+      : ''
+    return `
+      <div class="item">
+        <div class="item-row">
+          <span>${item.quantidade}x ${item.nome_snapshot}</span>
+          <span>${formatarPreco(item.subtotal)}</span>
+        </div>
+        ${mods}${obs}
+      </div>`
+  }).join('')
+
+  /* ── Monta taxa de entrega (se houver) ──────────────── */
+  const taxaHtml = p.taxa_entrega > 0
+    ? `<div class="linha">${linha('Taxa de entrega', formatarPreco(p.taxa_entrega))}</div>`
+    : ''
+
+  /* ── Endereço (delivery) ────────────────────────────── */
+  const enderecoHtml = p.endereco_entrega
+    ? `<div class="campo"><span class="rotulo">ENDERECO</span><span>${p.endereco_entrega}</span></div>`
+    : ''
+
+  /* ── Agendamento ────────────────────────────────────── */
+  const agendadoHtml = p.agendado_para
+    ? `<div class="campo"><span class="rotulo">AGENDADO</span><span>${formatarDataHora(p.agendado_para)}</span></div>`
+    : ''
+
+  /* ── Observação ─────────────────────────────────────── */
+  const obsHtml = p.observacao
+    ? `<div class="campo"><span class="rotulo">OBS</span><span>${p.observacao}</span></div>`
+    : ''
+
+  /* ── Monta o HTML do cupom ──────────────────────────── */
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pedido ${p.numero}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 11pt;
+      width: 80mm;
+      margin: 0 auto;
+      padding: 4mm 2mm;
+      color: #000;
+    }
+
+    .centro { text-align: center; }
+    .sep { border-top: 1px dashed #000; margin: 6px 0; }
+
+    h1 { font-size: 14pt; font-weight: bold; text-align: center; }
+    .subtitulo { font-size: 9pt; text-align: center; margin-bottom: 2px; }
+
+    .pedido-num { font-size: 12pt; font-weight: bold; text-align: center; margin: 4px 0; }
+    .data { font-size: 9pt; text-align: center; margin-bottom: 4px; }
+
+    .campo {
+      display: flex;
+      gap: 6px;
+      font-size: 10pt;
+      margin: 2px 0;
+    }
+    .rotulo {
+      font-weight: bold;
+      min-width: 70px;
+    }
+
+    .item { margin: 3px 0; font-size: 10pt; }
+    .item-row { display: flex; justify-content: space-between; font-weight: bold; }
+    .mod, .obs { font-size: 9pt; padding-left: 8px; }
+
+    .linha { font-size: 10pt; margin: 2px 0; }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12pt;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    .status { text-align: center; font-weight: bold; font-size: 11pt; margin: 4px 0; }
+    .rodape { text-align: center; font-size: 8pt; margin-top: 8px; }
+
+    @media print {
+      body { width: 80mm; }
+      @page { margin: 2mm; size: 80mm auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>PAO DE MAO</h1>
+  <div class="subtitulo">Cardapio Digital</div>
+
+  <div class="sep"></div>
+
+  <div class="pedido-num">Pedido ${p.numero}</div>
+  <div class="data">${formatarDataHora(p.criado_em)}</div>
+
+  <div class="sep"></div>
+
+  <div class="campo"><span class="rotulo">CLIENTE</span><span>${p.cliente.nome}</span></div>
+  <div class="campo"><span class="rotulo">FONE</span><span>${p.cliente.telefone}</span></div>
+  <div class="campo"><span class="rotulo">TIPO</span><span>${TIPO_TEXTO[p.tipo] || p.tipo}</span></div>
+  <div class="campo"><span class="rotulo">PGTO</span><span>${PGTO_TEXTO[p.metodo_pagamento] || p.metodo_pagamento}</span></div>
+  <div class="campo"><span class="rotulo">STATUS</span><span>${STATUS_TEXTO[p.status] || p.status}</span></div>
+  ${enderecoHtml}${agendadoHtml}${obsHtml}
+
+  <div class="sep"></div>
+
+  <div style="font-weight:bold;font-size:10pt;margin-bottom:4px;">ITENS:</div>
+  ${itensHtml}
+
+  <div class="sep"></div>
+
+  <div class="linha">${linha('Subtotal', formatarPreco(p.subtotal))}</div>
+  ${taxaHtml}
+  <div class="total-row"><span>TOTAL</span><span>${formatarPreco(p.total)}</span></div>
+
+  <div class="sep"></div>
+
+  <div class="rodape">Documento sem valor fiscal.</div>
+  <div class="rodape">Pao de Mao - Bonito, PE</div>
+
+</body>
+</html>`
+
+  /* ── Abre janela, imprime e fecha ───────────────────── */
+  const janela = window.open('', '_blank', 'width=400,height=600')
+  janela.document.write(html)
+  janela.document.close()
+  janela.focus()
+  janela.onload = () => {
+    janela.print()
+    janela.close()
+  }
+}
+
 
 /* ══════════════════════════════════════════════════════════
    AÇÕES
