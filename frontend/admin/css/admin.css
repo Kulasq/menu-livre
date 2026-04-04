@@ -1637,3 +1637,13 @@ textarea.form-input {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+
+/* ─────────────────────────────────────────────────────────
+   IMPRESSÃO — oculta tudo (o cupom é gerado em janela nova
+   por imprimirPedido() com HTML próprio para papel térmico)
+   ───────────────────────────────────────────────────────── */
+
+@media print {
+  body { display: none !important; }
+}
