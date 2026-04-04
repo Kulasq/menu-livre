@@ -69,7 +69,8 @@ def formatar_mensagem(pedido) -> str:
 
 
 def gerar_url(mensagem: str) -> str:
-    return f"https://wa.me/55{settings.WHATSAPP_NUMBER}?text={quote(mensagem)}"
+    encoded = quote(mensagem, safe='')
+    return f"https://api.whatsapp.com/send/?phone={settings.WHATSAPP_NUMBER}&text={encoded}"
 
 
 def _formatar_fone(telefone: str) -> str:
