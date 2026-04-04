@@ -157,4 +157,4 @@ def test_mensagem_whatsapp_gerada():
     assert "Pão de Mão" in resultado["mensagem_whatsapp"]
     assert "PDM-" in resultado["mensagem_whatsapp"]
     assert "Bacontentão" in resultado["mensagem_whatsapp"]
-    assert resultado["whatsapp_url"].startswith("https://wa.me/")
+    assert resultado["whatsapp_url"].startswith("https://api.whatsapp.com/send/")
