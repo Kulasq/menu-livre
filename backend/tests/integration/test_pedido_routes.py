@@ -92,7 +92,7 @@ def test_criar_pedido_retirada(client, db_teste, usuario_admin):
     assert data["pedido"]["numero"].startswith("PDM-")
     assert data["pedido"]["status"] == "pendente"
     assert "whatsapp_url" in data
-    assert data["whatsapp_url"].startswith("https://wa.me/")
+    assert data["whatsapp_url"].startswith("https://api.whatsapp.com/send/")
 
 
 def test_criar_pedido_sem_token_falha(client, db_teste, usuario_admin):
