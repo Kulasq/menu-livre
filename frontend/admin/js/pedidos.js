@@ -386,12 +386,6 @@ function imprimirPedido() {
     pronto: 'Pronto', entregue: 'Entregue', cancelado: 'Cancelado',
   }
 
-  /* Linha pontilhada preenchendo 40 colunas */
-  function linha(label, valor, cols = 40) {
-    const pontos = cols - label.length - valor.length
-    return label + '.'.repeat(Math.max(pontos, 1)) + valor
-  }
-
   /* ── Monta os itens ─────────────────────────────────── */
   const itensHtml = p.itens.map(item => {
     const mods = item.modificadores.length
@@ -414,7 +408,7 @@ function imprimirPedido() {
 
   /* ── Monta taxa de entrega (se houver) ──────────────── */
   const taxaHtml = p.taxa_entrega > 0
-    ? `<div class="linha">${linha('Taxa de entrega', formatarPreco(p.taxa_entrega))}</div>`
+    ? `<div class="subtotal-row"><span>Taxa de entrega</span><span>${formatarPreco(p.taxa_entrega)}</span></div>`
     : ''
 
   /* ── Endereço (delivery) ────────────────────────────── */
@@ -474,7 +468,12 @@ function imprimirPedido() {
     .item-row { display: flex; justify-content: space-between; font-weight: bold; }
     .mod, .obs { font-size: 9pt; padding-left: 8px; }
 
-    .linha { font-size: 10pt; margin: 2px 0; }
+    .subtotal-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10pt;
+      margin: 2px 0;
+    }
     .total-row {
       display: flex;
       justify-content: space-between;
@@ -518,7 +517,7 @@ function imprimirPedido() {
 
   <div class="sep"></div>
 
-  <div class="linha">${linha('Subtotal', formatarPreco(p.subtotal))}</div>
+  <div class="subtotal-row"><span>Subtotal</span><span>${formatarPreco(p.subtotal)}</span></div>
   ${taxaHtml}
   <div class="total-row"><span>TOTAL</span><span>${formatarPreco(p.total)}</span></div>
 
