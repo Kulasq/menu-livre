@@ -43,6 +43,18 @@ window.cardapio = (() => {
     return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
+  /**
+   * Escapa caracteres HTML especiais para evitar XSS ao usar innerHTML.
+   * Usar sempre que inserir strings vindas da API dentro de innerHTML.
+   * Para texto puro, prefira textContent — mais seguro e sem necessidade de escape.
+   */
+  function esc(str) {
+    if (!str) return '';
+    const el = document.createElement('span');
+    el.textContent = str;
+    return el.innerHTML;
+  }
+
   function fotoUrl(url) {
     if (!url) return null;
     if (url.startsWith('http')) return url;
@@ -211,7 +223,7 @@ window.cardapio = (() => {
     info.className = 'card-destaque-info';
     info.innerHTML = `
       <div class="card-destaque-preco">${brl(produto.preco)}</div>
-      <div class="card-destaque-nome">${produto.nome}</div>
+      <div class="card-destaque-nome">${esc(produto.nome)}</div>
     `;
     card.appendChild(info);
 
@@ -232,8 +244,8 @@ window.cardapio = (() => {
     const info = document.createElement('div');
     info.className = 'card-produto-info';
     info.innerHTML = `
-      <div class="card-produto-nome">${produto.nome}</div>
-      ${produto.descricao ? `<div class="card-produto-desc">${produto.descricao}</div>` : ''}
+      <div class="card-produto-nome">${esc(produto.nome)}</div>
+      ${produto.descricao ? `<div class="card-produto-desc">${esc(produto.descricao)}</div>` : ''}
       <div class="card-produto-preco">${brl(produto.preco)}</div>
     `;
     card.appendChild(info);
