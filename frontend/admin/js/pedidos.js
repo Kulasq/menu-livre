@@ -20,12 +20,12 @@ let alertaInterval = null
 let audioCtx = null
 
 const STATUS_LABELS = {
-  pendente:   { label: 'Pendente',    classe: 'badge-aviso',   icon: '🕐' },
-  confirmado: { label: 'Confirmado',  classe: 'badge-info',    icon: '✅' },
-  em_preparo: { label: 'Preparando',  classe: 'badge-preparo', icon: '🔥' },
-  pronto:     { label: 'Pronto',      classe: 'badge-sucesso', icon: '📦' },
-  entregue:   { label: 'Entregue',    classe: 'badge-entregue',icon: '🎉' },
-  cancelado:  { label: 'Cancelado',   classe: 'badge-erro',    icon: '❌' },
+  pendente:   { label: 'Pendente',    classe: 'badge-aviso',   icon: () => icons.relogio },
+  confirmado: { label: 'Confirmado',  classe: 'badge-info',    icon: () => icons.check },
+  em_preparo: { label: 'Preparando',  classe: 'badge-preparo', icon: () => icons.fogo },
+  pronto:     { label: 'Pronto',      classe: 'badge-sucesso', icon: () => icons.caixa },
+  entregue:   { label: 'Entregue',    classe: 'badge-entregue',icon: () => icons.check_badge },
+  cancelado:  { label: 'Cancelado',   classe: 'badge-erro',    icon: () => icons.x_circulo },
 }
 
 const FLUXO_STATUS = {
@@ -36,14 +36,14 @@ const FLUXO_STATUS = {
 }
 
 const TIPO_LABELS = {
-  delivery:  '🛵 Delivery',
-  retirada:  '🏪 Retirada',
+  delivery:  'Delivery',
+  retirada:  'Retirada',
 }
 
 const PAGAMENTO_LABELS = {
-  pix:      '💳 PIX',
-  dinheiro: '💵 Dinheiro',
-  cartao:   '💳 Cartão',
+  pix:      'PIX',
+  dinheiro: 'Dinheiro',
+  cartao:   'Cartão',
 }
 
 
@@ -155,8 +155,8 @@ function iniciarAlerta(novos) {
   /* Mostra banner */
   const count = novos.length
   $('#alerta-novos-texto').textContent = count === 1
-    ? '🔔 1 pedido novo!'
-    : `🔔 ${count} pedidos novos!`
+    ? '1 pedido novo!'
+    : `${count} pedidos novos!`
   $('#alerta-novos').classList.remove('hidden')
 
   /* Toca imediatamente e repete a cada 3 segundos */
@@ -239,11 +239,11 @@ function renderCardPedido(pedido) {
   const proximoStatus = FLUXO_STATUS[pedido.status]
 
   const agendadoHtml = pedido.agendado_para
-    ? `<span class="pedido-agendado">📅 ${formatarDataHora(pedido.agendado_para)}</span>`
+    ? `<span class="pedido-agendado">${formatarDataHora(pedido.agendado_para)}</span>`
     : ''
 
   const pagamentoClass = pedido.status_pagamento === 'pago' ? 'badge-sucesso' : 'badge-aviso'
-  const pagamentoLabel = pedido.status_pagamento === 'pago' ? '💰 Pago' : '⏳ Pendente'
+  const pagamentoLabel = pedido.status_pagamento === 'pago' ? 'Pago' : 'Pendente'
 
   return `
     <div class="pedido-card" onclick="abrirDetalhe(${pedido.id})">
@@ -255,7 +255,7 @@ function renderCardPedido(pedido) {
           </div>
           <div class="pedido-card-cliente">${esc(pedido.cliente.nome)} · ${esc(pedido.cliente.telefone)}</div>
         </div>
-        <span class="badge ${statusInfo.classe}">${statusInfo.icon} ${statusInfo.label}</span>
+        <span class="badge ${statusInfo.classe}">${statusInfo.icon()} ${statusInfo.label}</span>
       </div>
 
       <div class="pedido-card-meio">
@@ -273,12 +273,12 @@ function renderCardPedido(pedido) {
         <div class="pedido-card-acoes" onclick="event.stopPropagation()">
           ${proximoStatus ? `
             <button class="btn btn-primary btn-sm" onclick="avancarStatus(${pedido.id})" title="Avançar para ${STATUS_LABELS[proximoStatus]?.label}">
-              ${STATUS_LABELS[proximoStatus]?.icon} ${STATUS_LABELS[proximoStatus]?.label}
+              ${STATUS_LABELS[proximoStatus]?.icon()} ${STATUS_LABELS[proximoStatus]?.label}
             </button>
           ` : ''}
           ${pedido.status !== 'cancelado' && pedido.status !== 'entregue' ? `
             <button class="btn btn-danger btn-sm" onclick="cancelarPedido(${pedido.id})" title="Cancelar pedido">
-              ❌
+              ${icons.x_circulo}
             </button>
           ` : ''}
         </div>
@@ -300,10 +300,10 @@ function abrirDetalhe(id) {
   const statusInfo = STATUS_LABELS[pedido.status] || STATUS_LABELS.pendente
   const tipoLabel = TIPO_LABELS[pedido.tipo] || pedido.tipo
   const pagLabel = PAGAMENTO_LABELS[pedido.metodo_pagamento] || pedido.metodo_pagamento || '—'
-  const pagStatus = pedido.status_pagamento === 'pago' ? '💰 Pago' : '⏳ Pagamento pendente'
+  const pagStatus = pedido.status_pagamento === 'pago' ? 'Pago' : 'Pagamento pendente'
 
   $('#detalhe-numero').textContent = pedido.numero
-  $('#detalhe-status').innerHTML = `<span class="badge ${statusInfo.classe}">${statusInfo.icon} ${statusInfo.label}</span>`
+  $('#detalhe-status').innerHTML = `<span class="badge ${statusInfo.classe}">${statusInfo.icon()} ${statusInfo.label}</span>`
   $('#detalhe-cliente').textContent = `${pedido.cliente.nome} · ${pedido.cliente.telefone}`
   $('#detalhe-tipo').textContent = tipoLabel
   $('#detalhe-horario').textContent = formatarDataHora(pedido.criado_em)
@@ -338,7 +338,7 @@ function abrirDetalhe(id) {
       ? `<div class="detalhe-item-mods">${item.modificadores.map(m => `${esc(m.nome_snapshot)} (+${formatarPreco(m.preco_snapshot)})`).join(', ')}</div>`
       : ''
     const obsHtml = item.observacao
-      ? `<div class="detalhe-item-obs">💬 ${esc(item.observacao)}</div>`
+      ? `<div class="detalhe-item-obs">${esc(item.observacao)}</div>`
       : ''
 
     return `

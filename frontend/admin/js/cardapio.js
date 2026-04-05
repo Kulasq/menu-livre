@@ -154,8 +154,8 @@ function renderCategorias() {
       </td>
       <td>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-secondary btn-sm" onclick="abrirModalCategoria(${cat.id})" title="Editar">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmarExcluirCategoria(${cat.id}, '${esc(cat.nome)}')" title="Excluir">🗑️</button>
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalCategoria(${cat.id})" title="Editar">${icons.editar}</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmarExcluirCategoria(${cat.id}, '${esc(cat.nome)}')" title="Excluir">${icons.excluir}</button>
         </div>
       </td>
     </tr>
@@ -250,7 +250,7 @@ function renderProdutos() {
     const cat = categorias.find(c => c.id === prod.categoria_id)
     const fotoHtml = prod.foto_url
       ? `<img src="${CONFIG.API_URL}${prod.foto_url}" alt="${esc(prod.nome)}" style="width:48px;height:48px;object-fit:cover;border-radius:6px">`
-      : `<div style="width:48px;height:48px;border-radius:6px;background:var(--borda);display:flex;align-items:center;justify-content:center;font-size:1.2rem">🍔</div>`
+      : `<div style="width:48px;height:48px;border-radius:6px;background:var(--borda);display:flex;align-items:center;justify-content:center;color:var(--texto-terc)"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:22px;height:22px"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" /></svg></div>`
 
     const modCount = prod.grupos_modificadores?.length || 0
 
@@ -264,22 +264,22 @@ function renderProdutos() {
         <td>${formatarPreco(prod.preco)}</td>
         <td><span class="badge badge-aviso">${cat ? esc(cat.nome) : '—'}</span></td>
         <td>
-          <button class="btn btn-sm ${prod.disponivel ? 'btn-secondary' : 'btn-danger'}" onclick="toggleDisponivel(${prod.id})">
-            ${prod.disponivel ? '✅' : '❌'}
+          <button class="btn btn-sm ${prod.disponivel ? 'btn-secondary' : 'btn-danger'}" onclick="toggleDisponivel(${prod.id})" title="${prod.disponivel ? 'Disponível' : 'Indisponível'}">
+            ${prod.disponivel ? icons.check : icons.x_circulo}
           </button>
         </td>
         <td>
-          <button class="btn btn-sm ${prod.destaque ? 'btn-primary' : 'btn-secondary'}" onclick="toggleDestaque(${prod.id})">
-            ${prod.destaque ? '⭐' : '☆'}
+          <button class="btn btn-sm ${prod.destaque ? 'btn-primary' : 'btn-secondary'}" onclick="toggleDestaque(${prod.id})" title="${prod.destaque ? 'Destaque ativo' : 'Sem destaque'}">
+            ${prod.destaque ? icons.estrela : icons.estrela_vazia}
           </button>
         </td>
         <td>
           <div style="display:flex;gap:6px">
             <button class="btn btn-secondary btn-sm" onclick="abrirModalModificadores(${prod.id})" title="Modificadores">
-              🔧${modCount > 0 ? `<span class="mod-badge">${modCount}</span>` : ''}
+              ${icons.modificadores}${modCount > 0 ? `<span class="mod-badge">${modCount}</span>` : ''}
             </button>
-            <button class="btn btn-secondary btn-sm" onclick="abrirModalProduto(${prod.id})" title="Editar">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="confirmarExcluirProduto(${prod.id}, '${esc(prod.nome)}')" title="Excluir">🗑️</button>
+            <button class="btn btn-secondary btn-sm" onclick="abrirModalProduto(${prod.id})" title="Editar">${icons.editar}</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmarExcluirProduto(${prod.id}, '${esc(prod.nome)}')" title="Excluir">${icons.excluir}</button>
           </div>
         </td>
       </tr>
@@ -508,8 +508,8 @@ function renderModificadores() {
           ${!mod.disponivel ? '<span class="badge badge-erro" style="font-size:.65rem">Indisponível</span>' : ''}
         </div>
         <div class="mod-opcao-acoes">
-          <button class="btn btn-secondary btn-sm" onclick="abrirModalOpcao(${grupo.id}, ${mod.id})" title="Editar">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmarExcluirOpcao(${mod.id}, '${esc(mod.nome)}')" title="Excluir">🗑️</button>
+          <button class="btn btn-secondary btn-sm" onclick="abrirModalOpcao(${grupo.id}, ${mod.id})" title="Editar">${icons.editar}</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmarExcluirOpcao(${mod.id}, '${esc(mod.nome)}')" title="Excluir">${icons.excluir}</button>
         </div>
       </div>
     `).join('')
@@ -524,8 +524,8 @@ function renderModificadores() {
           </div>
           <div class="mod-grupo-acoes">
             <button class="btn btn-secondary btn-sm" onclick="abrirModalOpcao(${grupo.id})" title="Nova opção">+ Opção</button>
-            <button class="btn btn-secondary btn-sm" onclick="abrirModalGrupo(${grupo.id})" title="Editar grupo">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="confirmarExcluirGrupo(${grupo.id}, '${esc(grupo.nome)}')" title="Excluir grupo">🗑️</button>
+            <button class="btn btn-secondary btn-sm" onclick="abrirModalGrupo(${grupo.id})" title="Editar grupo">${icons.editar}</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmarExcluirGrupo(${grupo.id}, '${esc(grupo.nome)}')" title="Excluir grupo">${icons.excluir}</button>
           </div>
         </div>
         <div class="mod-opcoes">
