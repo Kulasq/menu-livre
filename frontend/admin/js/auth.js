@@ -3,20 +3,32 @@
 /**
  * Cliente HTTP centralizado com interceptor de 401 + refresh automático.
  * Todas as chamadas à API passam por aqui.
+ *
+ * Segurança: o access token (vida curta, 15min) fica apenas em memória —
+ * nunca no localStorage. XSS não consegue roubá-lo.
+ * O refresh token (30 dias) permanece no localStorage pois precisa sobreviver
+ * a recarregamentos de página. Essa é a melhor proteção possível sem httpOnly
+ * cookies, que exigiriam arquitetura servidor-side diferente.
  */
 const api = {
+  _accessToken: null,   // Apenas em memória — não persiste entre reloads
   _refreshPromise: null,
 
   async request(path, options = {}) {
-    const token = localStorage.getItem(CONFIG.STORAGE.ACCESS_TOKEN)
+    /* Se não há token em memória, tenta recuperar via refresh antes da chamada.
+       Isso cobre o caso de page reload onde o access token foi perdido. */
+    if (!this._accessToken) {
+      const refreshed = await this._tryRefresh()
+      if (!refreshed) {
+        auth.logout()
+        return
+      }
+    }
 
     const headers = {
       'Content-Type': 'application/json',
       ...options.headers,
-    }
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
+      'Authorization': `Bearer ${this._accessToken}`,
     }
 
     const res = await fetch(`${CONFIG.API_URL}${path}`, {
@@ -24,8 +36,8 @@ const api = {
       headers,
     })
 
-    /* 401 → tenta refresh uma única vez */
-    if (res.status === 401 && token) {
+    /* 401 → access token expirou mesmo após refresh (refresh também inválido) */
+    if (res.status === 401) {
       const refreshed = await this._tryRefresh()
       if (refreshed) {
         return this.request(path, options)
@@ -95,7 +107,7 @@ const api = {
         if (!res.ok) return false
 
         const data = await res.json()
-        localStorage.setItem(CONFIG.STORAGE.ACCESS_TOKEN, data.access_token)
+        api._accessToken = data.access_token  // Guarda em memória, não no localStorage
         return true
       } catch {
         return false
@@ -132,10 +144,11 @@ const auth = {
   async login(email, senha) {
     const data = await api.post('/api/auth/login', { email, senha })
 
-    localStorage.setItem(CONFIG.STORAGE.ACCESS_TOKEN, data.access_token)
-    localStorage.setItem(CONFIG.STORAGE.REFRESH_TOKEN, data.refresh_token)
+    api._accessToken = data.access_token                                        // Memória — XSS não acessa
+    localStorage.setItem(CONFIG.STORAGE.REFRESH_TOKEN, data.refresh_token)     // Persiste para reloads
     localStorage.setItem(CONFIG.STORAGE.USUARIO_NOME, data.usuario_nome)
     localStorage.setItem(CONFIG.STORAGE.USUARIO_ROLE, data.usuario_role)
+    localStorage.removeItem(CONFIG.STORAGE.ACCESS_TOKEN)                        // Remove legado se existir
 
     return {
       usuario_nome: data.usuario_nome,
@@ -145,16 +158,21 @@ const auth = {
 
   /** Limpa sessão e redireciona para o login. */
   logout() {
-    localStorage.removeItem(CONFIG.STORAGE.ACCESS_TOKEN)
+    api._accessToken = null                                          // Limpa da memória
     localStorage.removeItem(CONFIG.STORAGE.REFRESH_TOKEN)
     localStorage.removeItem(CONFIG.STORAGE.USUARIO_NOME)
     localStorage.removeItem(CONFIG.STORAGE.USUARIO_ROLE)
+    localStorage.removeItem(CONFIG.STORAGE.ACCESS_TOKEN)            // Remove legado se existir
     window.location.href = CONFIG.PAGINAS.LOGIN
   },
 
-  /** Verifica se há token salvo. */
+  /**
+   * Verifica se há sessão ativa.
+   * Checa refresh token no localStorage (persiste entre reloads)
+   * ou access token em memória (sessão corrente).
+   */
   isAutenticado() {
-    return !!localStorage.getItem(CONFIG.STORAGE.ACCESS_TOKEN)
+    return !!(api._accessToken || localStorage.getItem(CONFIG.STORAGE.REFRESH_TOKEN))
   },
 
   /** Retorna dados do usuário logado. */
