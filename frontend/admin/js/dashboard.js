@@ -59,12 +59,12 @@ function renderResumo(data) {
   /* Por status */
   const statusContainer = $('#resumo-status')
   const statusLabels = {
-    pendente:   { label: 'Pendente',   icon: '🕐', classe: 'stat-pendente' },
-    confirmado: { label: 'Confirmado', icon: '✅', classe: 'stat-confirmado' },
-    em_preparo: { label: 'Preparando', icon: '🔥', classe: 'stat-preparo' },
-    pronto:     { label: 'Pronto',     icon: '📦', classe: 'stat-pronto' },
-    entregue:   { label: 'Entregue',   icon: '🎉', classe: 'stat-entregue' },
-    cancelado:  { label: 'Cancelado',  icon: '❌', classe: 'stat-cancelado' },
+    pendente:   { label: 'Pendente',   icon: icons.relogio,     classe: 'stat-pendente' },
+    confirmado: { label: 'Confirmado', icon: icons.check,       classe: 'stat-confirmado' },
+    em_preparo: { label: 'Preparando', icon: icons.fogo,        classe: 'stat-preparo' },
+    pronto:     { label: 'Pronto',     icon: icons.caixa,       classe: 'stat-pronto' },
+    entregue:   { label: 'Entregue',   icon: icons.check_badge, classe: 'stat-entregue' },
+    cancelado:  { label: 'Cancelado',  icon: icons.x_circulo,   classe: 'stat-cancelado' },
   }
 
   statusContainer.innerHTML = Object.entries(statusLabels).map(([key, info]) => {

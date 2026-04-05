@@ -155,7 +155,6 @@ a {
   height: 56px;
   background: var(--accent-light);
   border-radius: var(--radius-lg);
-  font-size: 1.6rem;
   margin-bottom: 16px;
 }
 
@@ -313,8 +312,13 @@ a {
   height: 38px;
   background: var(--accent);
   border-radius: var(--radius-sm);
-  font-size: 1.1rem;
   flex-shrink: 0;
+  color: white;
+}
+
+.sidebar-brand-icon svg {
+  width: 22px;
+  height: 22px;
 }
 
 .sidebar-brand h2 {
@@ -370,8 +374,12 @@ a {
   justify-content: center;
   width: 20px;
   height: 20px;
-  font-size: 1rem;
   flex-shrink: 0;
+}
+
+.sidebar-link-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .sidebar-spacer {
@@ -446,8 +454,12 @@ a {
   height: 40px;
   border-radius: var(--radius-sm);
   color: var(--texto);
-  font-size: 1.3rem;
   transition: background var(--trans-fast);
+}
+
+.btn-menu-mobile svg {
+  width: 22px;
+  height: 22px;
 }
 
 .btn-menu-mobile:hover {
@@ -523,6 +535,12 @@ a {
 .btn-sm {
   padding: 7px 12px;
   font-size: .82rem;
+}
+
+.btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 /* ── Badge ── */
@@ -633,8 +651,16 @@ a {
 }
 
 .estado-vazio-icon {
-  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 12px;
+  color: var(--texto-terc);
+}
+
+.estado-vazio-icon svg {
+  width: 40px;
+  height: 40px;
 }
 
 .estado-vazio p {
@@ -1009,14 +1035,18 @@ a {
   width: 48px;
   height: 48px;
   border-radius: var(--radius-md);
-  font-size: 1.3rem;
   flex-shrink: 0;
 }
 
-.dash-icon-pedidos { background: rgba(59,130,246,.1); }
-.dash-icon-vendas  { background: var(--sucesso-light); }
-.dash-icon-ticket  { background: var(--accent-light); }
-.dash-icon-andamento { background: rgba(249,115,22,.1); }
+.dash-card-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.dash-icon-pedidos { background: rgba(59,130,246,.1); color: #3b82f6; }
+.dash-icon-vendas  { background: var(--sucesso-light); color: var(--sucesso); }
+.dash-icon-ticket  { background: var(--accent-light); color: var(--accent); }
+.dash-icon-andamento { background: rgba(249,115,22,.1); color: #f97316; }
 
 .dash-card-info {
   display: flex;
@@ -1068,7 +1098,16 @@ a {
 }
 
 .stat-status-icon {
-  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.stat-status-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .stat-status-count {
@@ -1108,7 +1147,17 @@ a {
 }
 
 .stat-tipo-icon {
-  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--texto-sec);
+}
+
+.stat-tipo-icon svg {
+  width: 22px;
+  height: 22px;
 }
 
 .stat-tipo-label {
@@ -1201,8 +1250,12 @@ a {
   height: 30px;
   border-radius: var(--radius-sm);
   color: var(--texto-terc);
-  font-size: .85rem;
   transition: background var(--trans-fast), color var(--trans-fast);
+}
+
+.modal-admin-fechar svg {
+  width: 16px;
+  height: 16px;
 }
 
 .modal-admin-fechar:hover {
