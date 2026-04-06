@@ -147,15 +147,29 @@
             <h3 id="sec-funcionamento">Funcionamento</h3>
           </div>
           <div class="card-body">
+            <!-- Status atual + botão de fechar/abrir -->
             <div class="toggle-row mb-3">
               <div class="toggle-row-texto">
-                <span class="toggle-row-label">Aceitar pedidos agora</span>
-                <p class="toggle-row-desc">Quando desativado, clientes navegam normalmente mas não conseguem finalizar pedidos.</p>
+                <span class="toggle-row-label">Status da loja</span>
+                <p class="toggle-row-desc" id="loja-status-desc"></p>
               </div>
-              <label class="toggle" aria-label="Aceitar pedidos">
-                <input type="checkbox" id="inp-aceitar-pedidos" role="switch" />
+              <button type="button" class="btn btn-sm" id="btn-toggle-loja"></button>
+            </div>
+            <hr style="border:none;border-top:1px solid var(--borda);margin:0 0 20px" />
+            <!-- Agendamentos -->
+            <div class="toggle-row mb-3">
+              <div class="toggle-row-texto">
+                <span class="toggle-row-label">Aceitar pedidos agendados</span>
+                <p class="toggle-row-desc">Quando ativado, clientes podem fazer pedidos agendados para a próxima abertura.</p>
+              </div>
+              <label class="toggle" aria-label="Aceitar pedidos agendados">
+                <input type="checkbox" id="inp-aceitar-agendamentos" role="switch" />
                 <span class="toggle-slider"></span>
               </label>
+            </div>
+            <div class="form-group mb-3">
+              <label class="form-label" for="inp-limite-agendamentos">Limite de pedidos agendados simultâneos</label>
+              <input id="inp-limite-agendamentos" type="number" class="form-input" min="0" style="max-width:120px" placeholder="10" />
             </div>
             <div class="form-group">
               <label class="form-label" for="inp-msg-fechado">Mensagem quando fechado</label>

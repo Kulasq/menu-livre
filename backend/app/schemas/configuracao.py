@@ -51,7 +51,9 @@ class ConfiguracaoUpdate(BaseModel):
     pedido_minimo: Optional[float] = None
     tempo_entrega_min: Optional[int] = None
     tempo_entrega_max: Optional[int] = None
-    aceitar_pedidos: Optional[bool] = None
+    fechado_manualmente: Optional[bool] = None
+    aceitar_agendamentos: Optional[bool] = None
+    limite_agendamentos: Optional[int] = None
     mensagem_fechado: Optional[str] = None
     instagram_url: Optional[str] = None
     horarios: Optional[HorariosSchema] = None
@@ -70,7 +72,9 @@ class ConfiguracaoResponse(BaseModel):
     pedido_minimo: float
     tempo_entrega_min: int
     tempo_entrega_max: int
-    aceitar_pedidos: bool
+    fechado_manualmente: bool
+    aceitar_agendamentos: bool
+    limite_agendamentos: int
     mensagem_fechado: str
     instagram_url: Optional[str]
     horarios: Optional[HorariosSchema]
@@ -92,8 +96,9 @@ class ConfiguracaoPublicaResponse(BaseModel):
     pedido_minimo: float
     tempo_entrega_min: int
     tempo_entrega_max: int
-    aceitar_pedidos: bool
+    aceitar_agendamentos: bool
     mensagem_fechado: str
     instagram_url: Optional[str]
     horarios: Optional[HorariosSchema]
-    aberto: bool  # calculado em tempo real pelo service
+    aberto: bool          # calculado em tempo real pelo service
+    fechado_manualmente: bool  # para o frontend distinguir tipo de fechamento

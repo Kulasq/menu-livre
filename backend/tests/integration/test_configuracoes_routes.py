@@ -23,7 +23,8 @@ def test_obter_configuracoes_cria_defaults(client, usuario_admin):
     assert r.status_code == 200
     data = r.json()
     assert data["nome_loja"] == "Pão de Mão"
-    assert data["aceitar_pedidos"] is True
+    assert data["fechado_manualmente"] is False
+    assert data["aceitar_agendamentos"] is True
     assert data["taxa_entrega"] == 0.0
 
 
@@ -48,15 +49,15 @@ def test_atualizar_campos_simples(client, usuario_admin):
     assert data["nome_loja"] == "Pão de Mão Atualizado"
 
 
-def test_atualizar_aceitar_pedidos(client, usuario_admin):
+def test_atualizar_fechado_manualmente(client, usuario_admin):
     token = obter_token(client, usuario_admin)
     r = client.put(
         "/api/admin/configuracoes",
-        json={"aceitar_pedidos": False},
+        json={"fechado_manualmente": True},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert r.status_code == 200
-    assert r.json()["aceitar_pedidos"] is False
+    assert r.json()["fechado_manualmente"] is True
 
 
 def test_atualizar_horarios(client, usuario_admin):
@@ -114,7 +115,7 @@ def test_configuracao_publica_fechada_quando_flag_false(client, usuario_admin):
     token = obter_token(client, usuario_admin)
     client.put(
         "/api/admin/configuracoes",
-        json={"aceitar_pedidos": False},
+        json={"fechado_manualmente": True},
         headers={"Authorization": f"Bearer {token}"},
     )
     r = client.get("/api/configuracao")

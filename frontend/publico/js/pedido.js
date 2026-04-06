@@ -215,6 +215,16 @@ window.pedido = (() => {
       window.carrinho.limpar();
       fecharModal();
 
+      if (resultado.pedido.agendado_para) {
+        const dt = new Date(resultado.pedido.agendado_para);
+        const formatado = dt.toLocaleString('pt-BR', {
+          timeZone: 'America/Recife',
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit',
+        });
+        alert(`Pedido agendado para ${formatado}. Você será atendido nesse horário!`);
+      }
+
       window.open(resultado.whatsapp_url, '_blank');
 
     } catch (err) {

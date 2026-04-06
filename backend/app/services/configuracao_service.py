@@ -56,21 +56,22 @@ def atualizar_configuracoes(dados: ConfiguracaoUpdate, db: Session) -> Configura
 def verificar_loja_aberta(config: Configuracao) -> bool:
     """
     Retorna True se a loja está aberta agora.
-    Critérios (ambos precisam ser verdadeiros):
-      1. aceitar_pedidos = True
-      2. Horário atual (BRT) dentro de algum intervalo configurado para o dia
-    Se não houver horários configurados, usa apenas aceitar_pedidos.
+
+    Prioridade:
+      1. fechado_manualmente=True  → sempre False (override manual)
+      2. Sem horarios_json         → True (sem agenda = sempre aberta)
+      3. Com horarios_json         → verifica horário BRT atual contra a agenda
     """
-    if not config.aceitar_pedidos:
+    if config.fechado_manualmente:
         return False
 
     if not config.horarios_json:
-        return config.aceitar_pedidos
+        return True  # sem agenda configurada = loja aberta por padrão
 
     try:
         horarios_dict = json.loads(config.horarios_json)
     except (json.JSONDecodeError, TypeError):
-        return config.aceitar_pedidos
+        return True  # JSON corrompido: não bloquear a loja
 
     agora_brt = datetime.now(BRT)
     dia_semana = _DIAS[agora_brt.weekday()]  # segunda=0 ... domingo=6
@@ -88,6 +89,49 @@ def verificar_loja_aberta(config: Configuracao) -> bool:
             return True
 
     return False
+
+
+def calcular_proxima_abertura(config: Configuracao) -> datetime | None:
+    """
+    Retorna o datetime (BRT) do próximo horário de abertura configurado.
+    Percorre os próximos 7 dias. Retorna None se não encontrar.
+    """
+    if not config.horarios_json:
+        return None
+
+    try:
+        horarios_dict = json.loads(config.horarios_json)
+    except (json.JSONDecodeError, TypeError):
+        return None
+
+    agora_brt = datetime.now(BRT)
+    hora_atual_min = agora_brt.hour * 60 + agora_brt.minute
+
+    for dias_afrente in range(8):  # hoje + próximos 7 dias
+        data_check = agora_brt + timedelta(days=dias_afrente)
+        dia_semana = _DIAS[data_check.weekday()]
+        dia_config = horarios_dict.get(dia_semana)
+
+        if not dia_config or not dia_config.get("aberto", False):
+            continue
+
+        for intervalo in dia_config.get("horarios", []):
+            inicio_min = _hhmm_para_minutos(intervalo.get("inicio", ""))
+            if inicio_min is None:
+                continue
+
+            # Se for hoje, só considerar horários ainda não chegados
+            if dias_afrente == 0 and inicio_min <= hora_atual_min:
+                continue
+
+            return data_check.replace(
+                hour=inicio_min // 60,
+                minute=inicio_min % 60,
+                second=0,
+                microsecond=0,
+            )
+
+    return None
 
 
 def _hhmm_para_minutos(hhmm: str) -> int | None:
