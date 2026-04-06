@@ -55,8 +55,10 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
+    # Em desenvolvimento (DEBUG=true) permite qualquer origem — cobre file://, Live Server, etc.
+    # Em produção (DEBUG=false) exige que CORS_ORIGINS esteja configurado com o domínio real.
+    allow_origins=["*"] if settings.DEBUG else settings.CORS_ORIGINS,
+    allow_credentials=not settings.DEBUG,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
 )
