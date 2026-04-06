@@ -132,3 +132,83 @@ def test_logout_invalida_refresh_token():
         renovar_access_token(token, db)
 
     assert exc.value.status_code == 401
+
+
+def test_logout_duplo_nao_quebra():
+    """Logout duas vezes com o mesmo token não deve lançar exceção."""
+    token = criar_refresh_token(user_id=1)
+    logout_admin(token)
+    logout_admin(token)  # segundo logout é idempotente
+
+
+# ── Login — campos adicionais ─────────────────────────────────────────────────
+
+def test_login_retorna_usuario_role():
+    db = MagicMock()
+    db.query().filter().first.return_value = _mock_usuario()
+
+    resultado = login_admin("sara@paodeamao.com", "senha123", db)
+
+    assert "usuario_role" in resultado
+    assert resultado["usuario_role"] == "superadmin"
+
+
+def test_login_atualiza_ultimo_acesso():
+    db = MagicMock()
+    usuario = _mock_usuario()
+    db.query().filter().first.return_value = usuario
+
+    login_admin("sara@paodeamao.com", "senha123", db)
+
+    assert isinstance(usuario.ultimo_acesso, datetime)
+
+
+# ── Renovar token — segurança de tipo ────────────────────────────────────────
+
+def test_renovar_access_token_falha_com_access_token():
+    """Access token é assinado com SECRET_KEY; refresh usa REFRESH_SECRET_KEY.
+    Passar um access token no endpoint de refresh deve falhar na decodificação."""
+    access_token = criar_access_token(user_id=1)
+    db = MagicMock()
+
+    with pytest.raises(HTTPException) as exc:
+        renovar_access_token(access_token, db)
+
+    assert exc.value.status_code == 401
+
+
+def test_renovar_access_token_falha_com_token_adulterado():
+    """Token com assinatura corrompida deve ser rejeitado."""
+    token = criar_refresh_token(user_id=1)
+    token_adulterado = token[:-5] + "XXXXX"
+    db = MagicMock()
+
+    with pytest.raises(HTTPException) as exc:
+        renovar_access_token(token_adulterado, db)
+
+    assert exc.value.status_code == 401
+
+
+def test_renovar_access_token_falha_com_usuario_inativo():
+    """Token válido de usuário que foi desativado deve ser rejeitado."""
+    token = criar_refresh_token(user_id=99)
+    db = MagicMock()
+    db.query().filter().first.return_value = _mock_usuario(ativo=False)
+
+    with pytest.raises(HTTPException) as exc:
+        renovar_access_token(token, db)
+
+    assert exc.value.status_code == 401
+
+
+def test_token_cliente_expira_em_24h():
+    """Token de cliente deve ter expiração de aproximadamente 24 horas."""
+    token = criar_token_cliente(cliente_id=5)
+    payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+
+    agora = datetime.now(timezone.utc).timestamp()
+    exp = payload["exp"]
+    diferenca_horas = (exp - agora) / 3600
+
+    # Deve expirar entre 23.9h e 24.1h a partir de agora
+    assert 23.9 < diferenca_horas < 24.1
