@@ -180,3 +180,96 @@ def test_horarios_para_schema_converte_corretamente():
     assert schema.domingo.aberto is True
     assert schema.terca.aberto is False
     assert schema.domingo.horarios[0].inicio == "19:00"
+
+
+def test_horarios_para_schema_json_invalido_retorna_none():
+    config = Configuracao(id=1, whatsapp="", horarios_json="{ isso nao e json valido }")
+    assert horarios_para_schema(config) is None
+
+
+# ── verificar_loja_aberta — edge cases ────────────────────────────────────────
+
+def test_verificar_loja_aberta_json_invalido_usa_aceitar_pedidos():
+    """JSON corrompido deve cair no fallback de aceitar_pedidos."""
+    config = Configuracao(
+        id=1, whatsapp="", aceitar_pedidos=True,
+        horarios_json="{ json invalido }",
+    )
+    assert verificar_loja_aberta(config) is True
+
+
+def test_verificar_loja_aberta_json_invalido_fechado_por_flag():
+    config = Configuracao(
+        id=1, whatsapp="", aceitar_pedidos=False,
+        horarios_json="{ json invalido }",
+    )
+    assert verificar_loja_aberta(config) is False
+
+
+def test_verificar_loja_aberta_exatamente_no_inicio_do_horario():
+    """Loja deve estar aberta no minuto exato de abertura (início inclusivo)."""
+    # segunda-feira às 19:00 BRT = 22:00 UTC; horário: 19:00–23:00
+    segunda_19h = datetime(2026, 3, 30, 22, 0, tzinfo=timezone.utc)
+    config = _config_com_horarios(True, "segunda", True, "19:00", "23:00")
+    with patch("app.services.configuracao_service.datetime") as mock_dt:
+        mock_dt.now.return_value = segunda_19h.astimezone(BRT)
+        assert verificar_loja_aberta(config) is True
+
+
+def test_verificar_loja_aberta_exatamente_no_fim_do_horario():
+    """Loja deve estar aberta no minuto exato de encerramento (fim inclusivo)."""
+    # segunda-feira às 23:00 BRT = 02:00 UTC (+1 dia)
+    segunda_23h = datetime(2026, 3, 31, 2, 0, tzinfo=timezone.utc)
+    config = _config_com_horarios(True, "segunda", True, "19:00", "23:00")
+    with patch("app.services.configuracao_service.datetime") as mock_dt:
+        mock_dt.now.return_value = segunda_23h.astimezone(BRT)
+        assert verificar_loja_aberta(config) is True
+
+
+def test_verificar_loja_aberta_um_minuto_apos_fechamento():
+    """Um minuto após o horário de fechamento deve retornar False."""
+    # segunda-feira às 23:01 BRT
+    segunda_23h01 = datetime(2026, 3, 31, 2, 1, tzinfo=timezone.utc)
+    config = _config_com_horarios(True, "segunda", True, "19:00", "23:00")
+    with patch("app.services.configuracao_service.datetime") as mock_dt:
+        mock_dt.now.return_value = segunda_23h01.astimezone(BRT)
+        assert verificar_loja_aberta(config) is False
+
+
+# ── _hhmm_para_minutos — edge cases ──────────────────────────────────────────
+
+def test_hhmm_para_minutos_23_59_valido():
+    assert _hhmm_para_minutos("23:59") == 23 * 60 + 59
+
+
+def test_hhmm_para_minutos_60_minutos_invalido():
+    assert _hhmm_para_minutos("12:60") is None
+
+
+def test_hhmm_para_minutos_24_horas_invalido():
+    assert _hhmm_para_minutos("24:00") is None
+
+
+def test_hhmm_para_minutos_valor_negativo_invalido():
+    assert _hhmm_para_minutos("-1:00") is None
+
+
+# ── atualizar_configuracoes — horarios=None limpa JSON ───────────────────────
+
+def test_atualizar_horarios_none_limpa_horarios_json():
+    db = setup_db()
+    # Primeiro, define um horário
+    horarios = HorariosSchema(
+        domingo=DiaHorario(aberto=True, horarios=[HorarioIntervalo(inicio="19:00", fim="23:00")]),
+        segunda=DiaHorario(aberto=False, horarios=[]),
+        terca=DiaHorario(aberto=False, horarios=[]),
+        quarta=DiaHorario(aberto=False, horarios=[]),
+        quinta=DiaHorario(aberto=False, horarios=[]),
+        sexta=DiaHorario(aberto=False, horarios=[]),
+        sabado=DiaHorario(aberto=False, horarios=[]),
+    )
+    atualizar_configuracoes(ConfiguracaoUpdate(horarios=horarios), db)
+
+    # Depois, envia horarios=None para limpar
+    config = atualizar_configuracoes(ConfiguracaoUpdate(horarios=None), db)
+    assert config.horarios_json is None
