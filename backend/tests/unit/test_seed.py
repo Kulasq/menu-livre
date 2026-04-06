@@ -57,7 +57,7 @@ class TestSeedConfiguracao:
         assert config.nome_loja == "Pão de Mão"
         assert config.whatsapp == "5581996008571"
         assert config.instagram_url == "https://instagram.com/paodemao"
-        assert config.aceitar_pedidos is True
+        assert config.fechado_manualmente is False
 
     def test_configuracao_valores_padrao(self, db_teste):
         executar_seed(db_teste)

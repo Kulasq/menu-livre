@@ -44,7 +44,6 @@ def seed_configuracao(db) -> None:
         pedido_minimo=0.0,
         tempo_entrega_min=30,
         tempo_entrega_max=50,
-        aceitar_pedidos=True,
         mensagem_fechado="Estamos fechados no momento. Volte em breve! 🍔",
     )
     db.add(config)
