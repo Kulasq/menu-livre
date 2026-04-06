@@ -139,11 +139,23 @@ class ApiError extends Error {
 const auth = {
   /**
    * Faz login e armazena tokens + dados do usuário.
+   * Usa fetch direto — não passa pelo interceptor api.request(), que exige
+   * um token antes de qualquer chamada (causaria loop no próprio login).
    * @returns {{ usuario_nome: string, usuario_role: string }}
    */
   async login(email, senha) {
-    const data = await api.post('/api/auth/login', { email, senha })
+    const res = await fetch(`${CONFIG.API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha }),
+    })
 
+    if (!res.ok) {
+      const erro = await res.json().catch(() => null)
+      throw new ApiError(res.status, erro?.detail ?? `Erro ${res.status}`)
+    }
+
+    const data = await res.json()
     api._accessToken = data.access_token                                        // Memória — XSS não acessa
     localStorage.setItem(CONFIG.STORAGE.REFRESH_TOKEN, data.refresh_token)     // Persiste para reloads
     localStorage.setItem(CONFIG.STORAGE.USUARIO_NOME, data.usuario_nome)
