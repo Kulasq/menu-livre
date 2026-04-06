@@ -22,7 +22,7 @@ def test_criar_configuracao():
 
     assert config.nome_loja == "Pão de Mão"
     assert config.taxa_entrega == 0.0
-    assert config.aceitar_pedidos is True
+    assert config.fechado_manualmente is False
     assert config.tempo_entrega_min == 30
     assert config.tempo_entrega_max == 50
 
