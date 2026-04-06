@@ -10,6 +10,7 @@ from app.models.modificador import Modificador
 from app.models.configuracao import Configuracao
 from app.schemas.pedido import PedidoCreate, PedidoStatusUpdate, PedidoPagamentoUpdate
 from app.services.whatsapp_service import formatar_mensagem, gerar_url
+from app.services.configuracao_service import verificar_loja_aberta, calcular_proxima_abertura
 
 _TRANSICOES = {
     "pendente": {"confirmado", "cancelado"},
@@ -40,6 +41,42 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
 
     config = db.get(Configuracao, 1)
     taxa_entrega = config.taxa_entrega if config and dados.tipo == "delivery" else 0.0
+
+    # ── Verificar status da loja e regras de agendamento ─────────────────────
+    agendado_para = dados.agendado_para  # pode vir do cliente ou ser calculado abaixo
+
+    if config:
+        loja_aberta = verificar_loja_aberta(config)
+
+        if not loja_aberta:
+            if config.fechado_manualmente:
+                raise HTTPException(
+                    status_code=400,
+                    detail=config.mensagem_fechado or "A loja está fechada no momento.",
+                )
+
+            # Fechada por horário — verificar se aceita agendamentos
+            if not config.aceitar_agendamentos:
+                raise HTTPException(
+                    status_code=400,
+                    detail=config.mensagem_fechado or "A loja está fechada no momento.",
+                )
+
+            # Verificar limite de pedidos agendados pendentes
+            if config.limite_agendamentos > 0:
+                agendamentos_abertos = db.query(Pedido).filter(
+                    Pedido.agendado_para.isnot(None),
+                    Pedido.status.in_(["pendente", "confirmado"]),
+                ).count()
+                if agendamentos_abertos >= config.limite_agendamentos:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Limite de pedidos agendados atingido. Tente novamente mais tarde.",
+                    )
+
+            # Calcular próxima abertura se o cliente não forneceu data
+            if not agendado_para:
+                agendado_para = calcular_proxima_abertura(config)
 
     subtotal = 0.0
     itens_db = []
@@ -135,7 +172,7 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
         metodo_pagamento=dados.metodo_pagamento,
         status_pagamento="pendente",
         observacao=dados.observacao,
-        agendado_para=dados.agendado_para,
+        agendado_para=agendado_para,
         itens=itens_db,
     )
 

@@ -88,7 +88,7 @@ def test_atualizar_horarios_serializa_para_json():
 
 # ── verificar_loja_aberta ─────────────────────────────────────────────────────
 
-def _config_com_horarios(aberto_flag: bool, dia: str, aberto_dia: bool, inicio: str, fim: str) -> Configuracao:
+def _config_com_horarios(dia: str, aberto_dia: bool, inicio: str, fim: str) -> Configuracao:
     """Helper: cria Configuracao com horários para um único dia."""
     dias = ["segunda", "terca", "quarta", "quinta", "sexta", "sabado", "domingo"]
     horarios = {
@@ -100,26 +100,25 @@ def _config_com_horarios(aberto_flag: bool, dia: str, aberto_dia: bool, inicio: 
     return Configuracao(
         id=1,
         whatsapp="",
-        aceitar_pedidos=aberto_flag,
         horarios_json=json.dumps(horarios),
     )
 
 
 def test_loja_fechada_por_flag():
-    config = Configuracao(id=1, whatsapp="", aceitar_pedidos=False)
+    config = Configuracao(id=1, whatsapp="", fechado_manualmente=True)
     assert verificar_loja_aberta(config) is False
 
 
 def test_loja_aberta_sem_horarios_configurados():
-    """Sem horarios_json, usa só o flag aceitar_pedidos."""
-    config = Configuracao(id=1, whatsapp="", aceitar_pedidos=True, horarios_json=None)
+    """Sem horarios_json e sem fechado_manualmente, loja sempre aberta."""
+    config = Configuracao(id=1, whatsapp="", horarios_json=None)
     assert verificar_loja_aberta(config) is True
 
 
 def test_loja_aberta_dentro_do_horario():
     # Simula uma segunda-feira às 20:00 BRT
     segunda_20h = datetime(2026, 3, 30, 23, 0, tzinfo=timezone.utc)  # 20:00 BRT = 23:00 UTC
-    config = _config_com_horarios(True, "segunda", True, "19:00", "23:00")
+    config = _config_com_horarios("segunda", True, "19:00", "23:00")
     with patch("app.services.configuracao_service.datetime") as mock_dt:
         mock_dt.now.return_value = segunda_20h.astimezone(BRT)
         assert verificar_loja_aberta(config) is True
@@ -128,7 +127,7 @@ def test_loja_aberta_dentro_do_horario():
 def test_loja_fechada_fora_do_horario():
     # Simula uma segunda-feira às 15:00 BRT (antes de abrir)
     segunda_15h = datetime(2026, 3, 30, 18, 0, tzinfo=timezone.utc)  # 15:00 BRT = 18:00 UTC
-    config = _config_com_horarios(True, "segunda", True, "19:00", "23:00")
+    config = _config_com_horarios("segunda", True, "19:00", "23:00")
     with patch("app.services.configuracao_service.datetime") as mock_dt:
         mock_dt.now.return_value = segunda_15h.astimezone(BRT)
         assert verificar_loja_aberta(config) is False
@@ -137,7 +136,7 @@ def test_loja_fechada_fora_do_horario():
 def test_loja_fechada_dia_desabilitado():
     # Simula uma terça-feira — dia marcado como fechado
     terca_20h = datetime(2026, 3, 31, 23, 0, tzinfo=timezone.utc)  # 20:00 BRT
-    config = _config_com_horarios(True, "segunda", True, "19:00", "23:00")  # só segunda aberta
+    config = _config_com_horarios("segunda", True, "19:00", "23:00")  # só segunda aberta
     with patch("app.services.configuracao_service.datetime") as mock_dt:
         mock_dt.now.return_value = terca_20h.astimezone(BRT)
         assert verificar_loja_aberta(config) is False
@@ -189,18 +188,19 @@ def test_horarios_para_schema_json_invalido_retorna_none():
 
 # ── verificar_loja_aberta — edge cases ────────────────────────────────────────
 
-def test_verificar_loja_aberta_json_invalido_usa_aceitar_pedidos():
-    """JSON corrompido deve cair no fallback de aceitar_pedidos."""
+def test_verificar_loja_aberta_json_invalido_retorna_true():
+    """JSON corrompido não deve bloquear a loja — retorna True por segurança."""
     config = Configuracao(
-        id=1, whatsapp="", aceitar_pedidos=True,
+        id=1, whatsapp="",
         horarios_json="{ json invalido }",
     )
     assert verificar_loja_aberta(config) is True
 
 
-def test_verificar_loja_aberta_json_invalido_fechado_por_flag():
+def test_verificar_loja_aberta_json_invalido_fechado_manualmente():
+    """fechado_manualmente=True fecha mesmo com JSON inválido."""
     config = Configuracao(
-        id=1, whatsapp="", aceitar_pedidos=False,
+        id=1, whatsapp="", fechado_manualmente=True,
         horarios_json="{ json invalido }",
     )
     assert verificar_loja_aberta(config) is False
@@ -210,7 +210,7 @@ def test_verificar_loja_aberta_exatamente_no_inicio_do_horario():
     """Loja deve estar aberta no minuto exato de abertura (início inclusivo)."""
     # segunda-feira às 19:00 BRT = 22:00 UTC; horário: 19:00–23:00
     segunda_19h = datetime(2026, 3, 30, 22, 0, tzinfo=timezone.utc)
-    config = _config_com_horarios(True, "segunda", True, "19:00", "23:00")
+    config = _config_com_horarios("segunda", True, "19:00", "23:00")
     with patch("app.services.configuracao_service.datetime") as mock_dt:
         mock_dt.now.return_value = segunda_19h.astimezone(BRT)
         assert verificar_loja_aberta(config) is True
@@ -220,7 +220,7 @@ def test_verificar_loja_aberta_exatamente_no_fim_do_horario():
     """Loja deve estar aberta no minuto exato de encerramento (fim inclusivo)."""
     # segunda-feira às 23:00 BRT = 02:00 UTC (+1 dia)
     segunda_23h = datetime(2026, 3, 31, 2, 0, tzinfo=timezone.utc)
-    config = _config_com_horarios(True, "segunda", True, "19:00", "23:00")
+    config = _config_com_horarios("segunda", True, "19:00", "23:00")
     with patch("app.services.configuracao_service.datetime") as mock_dt:
         mock_dt.now.return_value = segunda_23h.astimezone(BRT)
         assert verificar_loja_aberta(config) is True
@@ -230,7 +230,7 @@ def test_verificar_loja_aberta_um_minuto_apos_fechamento():
     """Um minuto após o horário de fechamento deve retornar False."""
     # segunda-feira às 23:01 BRT
     segunda_23h01 = datetime(2026, 3, 31, 2, 1, tzinfo=timezone.utc)
-    config = _config_com_horarios(True, "segunda", True, "19:00", "23:00")
+    config = _config_com_horarios("segunda", True, "19:00", "23:00")
     with patch("app.services.configuracao_service.datetime") as mock_dt:
         mock_dt.now.return_value = segunda_23h01.astimezone(BRT)
         assert verificar_loja_aberta(config) is False

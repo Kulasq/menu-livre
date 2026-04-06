@@ -33,9 +33,10 @@ def obter_configuracao_publica(db: Session = Depends(get_db)):
         pedido_minimo=config.pedido_minimo,
         tempo_entrega_min=config.tempo_entrega_min,
         tempo_entrega_max=config.tempo_entrega_max,
-        aceitar_pedidos=config.aceitar_pedidos,
+        aceitar_agendamentos=config.aceitar_agendamentos,
         mensagem_fechado=config.mensagem_fechado,
         instagram_url=config.instagram_url,
         horarios=horarios_para_schema(config),
         aberto=verificar_loja_aberta(config),
+        fechado_manualmente=config.fechado_manualmente,
     )

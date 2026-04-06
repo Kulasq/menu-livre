@@ -125,14 +125,17 @@ window.cardapio = (() => {
       els.headerInstagram().href = config.instagram_url;
     }
 
-    const aberto = config.aceitar_pedidos !== false;
+    const aberto = config.aberto;
     const badge = els.statusBadge();
     badge.textContent = aberto ? '● Aberto' : '● Fechado';
     badge.className = `status-badge ${aberto ? 'status-aberto' : 'status-fechado'}`;
 
     if (!aberto) {
-      els.avisoFechadoMsg().textContent =
-        config.mensagem_fechado || 'Estamos fechados no momento.';
+      let mensagem = config.mensagem_fechado || 'Estamos fechados no momento.';
+      if (config.aceitar_agendamentos) {
+        mensagem += ' Pedidos agendados para a próxima abertura são aceitos.';
+      }
+      els.avisoFechadoMsg().textContent = mensagem;
       els.avisoFechado().classList.remove('hidden');
     }
   }
