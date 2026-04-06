@@ -365,13 +365,12 @@ function removerFoto() {
 }
 
 async function uploadImagem(file) {
-  const token = localStorage.getItem(CONFIG.STORAGE.ACCESS_TOKEN)
   const formData = new FormData()
   formData.append('file', file)
 
   const res = await fetch(`${CONFIG.API_URL}/api/admin/upload`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
+    headers: { 'Authorization': `Bearer ${api._accessToken}` },
     body: formData,
   })
   if (!res.ok) {
