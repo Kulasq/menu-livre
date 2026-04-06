@@ -19,7 +19,9 @@ class Configuracao(Base):
     pedido_minimo: Mapped[float] = mapped_column(Float, default=0.0)
     tempo_entrega_min: Mapped[int] = mapped_column(Integer, default=30)
     tempo_entrega_max: Mapped[int] = mapped_column(Integer, default=50)
-    aceitar_pedidos: Mapped[bool] = mapped_column(Boolean, default=True)
+    fechado_manualmente: Mapped[bool] = mapped_column(Boolean, default=False)
+    aceitar_agendamentos: Mapped[bool] = mapped_column(Boolean, default=True)
+    limite_agendamentos: Mapped[int] = mapped_column(Integer, default=10)
     mensagem_fechado: Mapped[str] = mapped_column(
         Text, default="Estamos fechados no momento."
     )
