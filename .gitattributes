@@ -1,0 +1,25 @@
+# Normaliza todos os arquivos de texto para LF no repositório
+* text=auto eol=lf
+
+# Força LF explicitamente para os tipos mais usados no projeto
+*.py   text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+*.ini  text eol=lf
+*.cfg  text eol=lf
+*.env  text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+# Binários — nunca alterar
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.db   binary
+*.gz   binary
