@@ -10,17 +10,39 @@ const DIAS = [
   { key: 'sabado',  label: 'Sábado'  },
 ]
 
+// Paleta padrão Menu Livre — espelha o admin.css
+const CORES_PADRAO = {
+  cor_primaria:   '#f59e0b',
+  cor_secundaria: '#d97706',
+  cor_fundo:      '#f1f5f9',
+  cor_fonte:      '#0f172a',
+  cor_banner:     '#0f172a',
+}
+
+// Mapeamento campo → CSS variable do preview
+const PREVIEW_MAP = {
+  cor_primaria:   '--preview-primaria',
+  cor_secundaria: '--preview-secundaria',
+  cor_fundo:      '--preview-fundo',
+  cor_fonte:      '--preview-fonte',
+  cor_banner:     '--preview-banner',
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   if (!auth.proteger()) return
 
   _setupUsuario()
   _setupSidebar()
   _buildHorarios()
+  _setupCores()
   _carregarConfiguracoes()
 
   $('#form-config').addEventListener('submit', _salvarConfiguracoes)
   $('#btn-toggle-loja').addEventListener('click', _toggleStatusLoja)
+  $('#btn-restaurar-cores').addEventListener('click', _restaurarCoresPadrao)
 })
+
+// ── Usuário / Sidebar ─────────────────────────────────────────────────────────
 
 function _setupUsuario() {
   const u = auth.getUsuario()
@@ -42,6 +64,8 @@ function _setupSidebar() {
     overlay.classList.add('hidden')
   })
 }
+
+// ── Horários ──────────────────────────────────────────────────────────────────
 
 function _buildHorarios() {
   const lista = $('#horarios-lista')
@@ -74,10 +98,119 @@ function _buildHorarios() {
   })
 }
 
+// ── Cores ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Normaliza qualquer formato CSS de cor para hex (#rrggbb).
+ * Usa o truque do canvas: o browser faz a conversão nativamente,
+ * sem nenhuma biblioteca externa.
+ */
+function _normalizarParaHex(cor) {
+  if (!cor || !cor.trim()) return null
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 1
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = '#000000' // reset para detectar cor inválida
+    ctx.fillStyle = cor.trim()
+    const hex = ctx.fillStyle  // retorna '#rrggbb' ou 'rgba(r,g,b,a)'
+    // ctx.fillStyle retorna '#000000' se a cor for inválida — checamos se mudou
+    if (hex === '#000000' && cor.trim().toLowerCase() !== '#000000'
+        && cor.trim().toLowerCase() !== 'black'
+        && cor.trim().toLowerCase() !== 'rgb(0,0,0)'
+        && cor.trim().toLowerCase() !== 'rgb(0, 0, 0)') {
+      return null // cor inválida
+    }
+    // Se vier rgba, converte para hex (ignora alpha)
+    if (hex.startsWith('rgba') || hex.startsWith('rgb')) {
+      const m = hex.match(/\d+/g)
+      if (!m || m.length < 3) return null
+      return '#' + [m[0], m[1], m[2]]
+        .map(n => parseInt(n).toString(16).padStart(2, '0'))
+        .join('')
+    }
+    return hex // já é hex
+  } catch {
+    return null
+  }
+}
+
+/** Configura os 5 pares de inputs (swatch + texto) */
+function _setupCores() {
+  const campos = Object.keys(CORES_PADRAO)
+
+  campos.forEach(campo => {
+    const swatch = $(`#swatch-${campo.replace(/_/g, '-')}`)
+    const texto  = $(`#inp-${campo.replace(/_/g, '-')}`)
+
+    // Swatch → texto (o picker sempre retorna hex)
+    swatch.addEventListener('input', () => {
+      texto.value = swatch.value
+      _atualizarPreview(campo, swatch.value)
+    })
+
+    // Texto → swatch + preview (aceita qualquer formato CSS)
+    texto.addEventListener('input', () => {
+      const hex = _normalizarParaHex(texto.value)
+      if (hex) {
+        swatch.value = hex
+        _atualizarPreview(campo, hex)
+      }
+    })
+
+    // Ao sair do campo texto, normaliza o valor para hex
+    texto.addEventListener('blur', () => {
+      const hex = _normalizarParaHex(texto.value)
+      if (hex) {
+        texto.value = hex
+        swatch.value = hex
+      }
+    })
+  })
+}
+
+/** Atualiza a CSS variable do preview ao vivo */
+function _atualizarPreview(campo, hex) {
+  const cssVar = PREVIEW_MAP[campo]
+  if (cssVar) {
+    document.getElementById('preview-cores').style.setProperty(cssVar, hex)
+  }
+}
+
+/** Preenche os inputs de cor a partir dos dados da API */
+function _preencherCores(c) {
+  const campos = Object.keys(CORES_PADRAO)
+  campos.forEach(campo => {
+    const valor = c[campo] || CORES_PADRAO[campo]
+    const hex   = _normalizarParaHex(valor) || CORES_PADRAO[campo]
+    const swatch = $(`#swatch-${campo.replace(/_/g, '-')}`)
+    const texto  = $(`#inp-${campo.replace(/_/g, '-')}`)
+    swatch.value = hex
+    texto.value  = hex
+    _atualizarPreview(campo, hex)
+  })
+}
+
+/** Restaura todos os campos de cor para os padrões Menu Livre */
+function _restaurarCoresPadrao() {
+  Object.entries(CORES_PADRAO).forEach(([campo, hex]) => {
+    const swatch = $(`#swatch-${campo.replace(/_/g, '-')}`)
+    const texto  = $(`#inp-${campo.replace(/_/g, '-')}`)
+    swatch.value = hex
+    texto.value  = hex
+    _atualizarPreview(campo, hex)
+  })
+  toast.sucesso('Cores restauradas para o padrão. Salve para aplicar.')
+}
+
+// ── Configurações ─────────────────────────────────────────────────────────────
+
 async function _carregarConfiguracoes() {
   try {
     const config = await api.get('/api/admin/configuracoes')
     _preencherForm(config)
+    _preencherCores(config)
+    atualizarNomeLojaSidebar(config.nome_loja)
     $('#config-loading').classList.add('hidden')
     $('#form-config').classList.remove('hidden')
   } catch (err) {
@@ -167,6 +300,13 @@ async function _salvarConfiguracoes(e) {
     }
   })
 
+  // Normaliza as cores para hex antes de enviar ao backend
+  const cores = {}
+  Object.keys(CORES_PADRAO).forEach(campo => {
+    const raw = $(`#inp-${campo.replace(/_/g, '-')}`).value.trim()
+    cores[campo] = _normalizarParaHex(raw) || CORES_PADRAO[campo]
+  })
+
   const body = {
     nome_loja:            $('#inp-nome-loja').value.trim()              || null,
     whatsapp,
@@ -181,6 +321,7 @@ async function _salvarConfiguracoes(e) {
     limite_agendamentos:  parseInt($('#inp-limite-agendamentos').value) || 0,
     mensagem_fechado:     $('#inp-msg-fechado').value.trim()            || null,
     horarios,
+    ...cores,
   }
 
   const btn = $('#btn-salvar')
@@ -190,6 +331,7 @@ async function _salvarConfiguracoes(e) {
   try {
     await api.put('/api/admin/configuracoes', body)
     toast.sucesso('Configurações salvas com sucesso.')
+    atualizarNomeLojaSidebar(body.nome_loja)
   } catch (err) {
     toast.erro('Erro ao salvar: ' + err.message)
   } finally {

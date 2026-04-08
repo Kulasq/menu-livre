@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Configurações — Pão de Mão</title>
+  <title>Configurações — Menu Livre</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -19,7 +19,7 @@
       <div class="sidebar-brand">
         <div class="sidebar-brand-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 1 0 20A10 10 0 0 1 12 2Zm0 2a8 8 0 1 0 0 16A8 8 0 0 0 12 4Zm-1 3h2v1.27a3 3 0 0 1 0 5.46V16h-2v-2.27a3 3 0 0 1 0-5.46V7Zm1 2.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg></div>
         <div>
-          <h2>Pão de Mão</h2>
+          <h2 id="sidebar-nome-loja">Menu Livre</h2>
           <small>Painel Admin</small>
         </div>
       </div>
@@ -186,6 +186,104 @@
           <div class="card-body">
             <div class="horarios-lista" id="horarios-lista">
               <!-- Gerado via JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Aparência do cardápio ── -->
+        <section class="card mb-4" aria-labelledby="sec-aparencia">
+          <div class="card-header">
+            <h3 id="sec-aparencia">Aparência do cardápio</h3>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.875rem;color:var(--texto-sec);margin-bottom:20px">
+              Personalize as cores do cardápio público. Aceita qualquer formato CSS:
+              <code style="background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.8rem">#f59e0b</code>,
+              <code style="background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.8rem">rgb(245,158,11)</code>,
+              <code style="background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.8rem">hsl(38,90%,50%)</code> ou nome (ex: <code style="background:var(--bg);padding:1px 5px;border-radius:4px;font-size:.8rem">amber</code>).
+            </p>
+
+            <!-- Preview ao vivo -->
+            <div id="preview-cores" style="
+              background:var(--preview-fundo,#f1f5f9);
+              border-radius:10px;
+              padding:16px;
+              margin-bottom:24px;
+              border:1px solid var(--borda);
+            ">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <div style="
+                  width:36px;height:36px;border-radius:50%;
+                  background:var(--preview-banner,#0f172a);
+                  flex-shrink:0;
+                "></div>
+                <span style="
+                  font-weight:700;font-size:1rem;
+                  color:var(--preview-fonte,#0f172a);
+                ">Nome da loja</span>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" style="
+                  background:var(--preview-primaria,#f59e0b);
+                  color:#fff;border-radius:20px;
+                  padding:8px 18px;font-weight:600;font-size:.85rem;
+                  border:none;cursor:default;
+                ">Adicionar</button>
+                <button type="button" style="
+                  background:var(--preview-secundaria,#d97706);
+                  color:#fff;border-radius:20px;
+                  padding:8px 18px;font-weight:600;font-size:.85rem;
+                  border:none;cursor:default;
+                ">Ver sacola</button>
+                <span style="
+                  font-size:.85rem;
+                  color:var(--preview-fonte,#0f172a);
+                  align-self:center;opacity:.7;
+                ">Texto do cardápio</span>
+              </div>
+            </div>
+
+            <!-- Inputs de cor -->
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label" for="inp-cor-primaria">Cor primária <span style="font-weight:400;color:var(--texto-sec)">(botões principais)</span></label>
+                <div class="cor-input-wrap">
+                  <input type="color" class="cor-swatch" id="swatch-cor-primaria" aria-hidden="true" tabindex="-1" />
+                  <input type="text" class="form-input cor-texto" id="inp-cor-primaria" placeholder="#f59e0b" autocomplete="off" spellcheck="false" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-cor-secundaria">Cor secundária <span style="font-weight:400;color:var(--texto-sec)">(botões secundários)</span></label>
+                <div class="cor-input-wrap">
+                  <input type="color" class="cor-swatch" id="swatch-cor-secundaria" aria-hidden="true" tabindex="-1" />
+                  <input type="text" class="form-input cor-texto" id="inp-cor-secundaria" placeholder="#d97706" autocomplete="off" spellcheck="false" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-cor-fundo">Cor de fundo <span style="font-weight:400;color:var(--texto-sec)">(página do cardápio)</span></label>
+                <div class="cor-input-wrap">
+                  <input type="color" class="cor-swatch" id="swatch-cor-fundo" aria-hidden="true" tabindex="-1" />
+                  <input type="text" class="form-input cor-texto" id="inp-cor-fundo" placeholder="#f1f5f9" autocomplete="off" spellcheck="false" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-cor-fonte">Cor do texto <span style="font-weight:400;color:var(--texto-sec)">(texto principal)</span></label>
+                <div class="cor-input-wrap">
+                  <input type="color" class="cor-swatch" id="swatch-cor-fonte" aria-hidden="true" tabindex="-1" />
+                  <input type="text" class="form-input cor-texto" id="inp-cor-fonte" placeholder="#0f172a" autocomplete="off" spellcheck="false" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inp-cor-banner">Cor do banner <span style="font-weight:400;color:var(--texto-sec)">(fundo quando sem imagem)</span></label>
+                <div class="cor-input-wrap">
+                  <input type="color" class="cor-swatch" id="swatch-cor-banner" aria-hidden="true" tabindex="-1" />
+                  <input type="text" class="form-input cor-texto" id="inp-cor-banner" placeholder="#0f172a" autocomplete="off" spellcheck="false" />
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top:16px">
+              <button type="button" class="btn btn-sm" id="btn-restaurar-cores">Restaurar cores padrão</button>
             </div>
           </div>
         </section>
