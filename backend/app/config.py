@@ -5,7 +5,7 @@ import json
 
 class Settings(BaseSettings):
     # Aplicação
-    APP_NAME: str = "Pão de Mão"
+    APP_NAME: str = "Menu Livre"
     DEBUG: bool = False
 
     # Segurança
