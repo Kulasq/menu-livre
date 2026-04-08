@@ -31,7 +31,6 @@ A maioria dos sistemas de cardápio digital cobra assinatura mensal cara por fun
 - Modificadores por produto (ex: ponto da carne, adicionais) — obrigatórios ou opcionais
 - Carrinho persistente com resumo de valores
 - Identificação por telefone — sem senha, sem fricção
-- Endereço salvo e pré-preenchido nos próximos pedidos
 - Checkout gera mensagem WhatsApp formatada automaticamente
 - Se loja estiver fechada: pedido é agendado para a próxima abertura
 
@@ -59,11 +58,13 @@ A maioria dos sistemas de cardápio digital cobra assinatura mensal cara por fun
 
 ## Em desenvolvimento
 
+- **Destaques no topo** — seção fixa no início do cardápio para produtos em evidência
+- **Pagamento por link de cartão** — opção extra no checkout com taxa de 5% calculada automaticamente
+- **Aparência configurável** — personalização de logo, banner, paleta de cores e dados da loja pelo próprio admin; zero dado de cliente hardcoded no código
+- **Clientes e endereços** — histórico de pedidos, múltiplos endereços salvos com atalho no checkout
 - **Controle de estoque** — produto fica indisponível automaticamente ao zerar
 - **Pedidos pelo painel** — admin registra pedidos de balcão/mesa diretamente
-- **Clientes** — página dedicada com histórico de pedidos e segmentação automática
 - **Relatórios avançados** — faturamento por período, produtos mais vendidos, horário de pico
-- **Aparência** — personalização de logo, banner e cores do cardápio
 - **Fidelidade** — estrutura de pontos e níveis (bronze/prata/ouro)
 - **Deploy** — Docker Compose + Nginx + VPS com SSL automático
 
