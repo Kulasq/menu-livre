@@ -36,7 +36,7 @@ def test_obter_configuracoes_cria_se_nao_existir():
     db = setup_db()
     config = obter_configuracoes(db)
     assert config.id == 1
-    assert config.nome_loja == "Pão de Mão"
+    assert config.nome_loja == "Minha Loja"
 
 
 def test_obter_configuracoes_retorna_existente():

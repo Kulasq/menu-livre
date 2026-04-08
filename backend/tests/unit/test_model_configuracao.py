@@ -20,11 +20,45 @@ def test_criar_configuracao():
     db.commit()
     db.refresh(config)
 
-    assert config.nome_loja == "Pão de Mão"
+    assert config.nome_loja == "Minha Loja"
     assert config.taxa_entrega == 0.0
     assert config.fechado_manualmente is False
     assert config.tempo_entrega_min == 30
     assert config.tempo_entrega_max == 50
+
+
+def test_campos_de_cores_tem_defaults():
+    """Novos campos de cores devem ter os defaults da paleta Menu Livre."""
+    db = setup_db()
+
+    config = Configuracao(whatsapp="5581996008571")
+    db.add(config)
+    db.commit()
+    db.refresh(config)
+
+    assert config.cor_primaria   == "#f59e0b"
+    assert config.cor_secundaria == "#d97706"
+    assert config.cor_fundo      == "#f1f5f9"
+    assert config.cor_fonte      == "#0f172a"
+    assert config.cor_banner     == "#0f172a"
+
+
+def test_campos_de_cores_aceitam_nulo_via_update():
+    """Campos de cores aceitam NULL quando zerados via setattr (fluxo do service)."""
+    db = setup_db()
+
+    config = Configuracao(whatsapp="5581996008571")
+    db.add(config)
+    db.commit()
+
+    # Simula o service zerando as cores após criação (não no construtor)
+    config.cor_primaria = None
+    config.cor_banner = None
+    db.commit()
+    db.refresh(config)
+
+    assert config.cor_primaria is None
+    assert config.cor_banner is None
 
 
 def test_sempre_uma_linha():
