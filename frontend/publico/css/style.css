@@ -47,19 +47,21 @@ a {
    TOKENS DE DESIGN
    ============================================= */
 :root {
-  /* Paleta Pão de Mão */
-  --bg:            #f5e6d3;
+  /* Paleta padrão Menu Livre — espelha admin.css.
+     O JS sobrescreve estas variáveis com os valores salvos na API. */
+  --bg:            #f1f5f9;   /* cor_fundo     */
   --bg-card:       #ffffff;
   --bg-nav:        #ffffff;
-  --marrom:        #7d3f1e;
-  --marrom-escuro: #5a2d0c;
-  --marrom-btn:    #9b5c3a;
-  --marrom-hover:  #7d3f1e;
-  --texto:         #1c1009;
-  --texto-sec:     #6b5040;
-  --texto-terc:    #a08070;
-  --borda:         #e8d0b8;
-  --borda-input:   #d4b89a;
+  --marrom:        #d97706;   /* cor_secundaria */
+  --marrom-escuro: #0f172a;   /* cor_banner     */
+  --marrom-btn:    #f59e0b;   /* cor_primaria   */
+  --marrom-hover:  #d97706;   /* cor_primaria escurecida */
+  --texto:         #0f172a;   /* cor_fonte      */
+  --texto-sec:     #64748b;
+  --texto-terc:    #94a3b8;
+  --borda:         #e2e8f0;
+  --borda-input:   #cbd5e1;
+  --banner-bg:     #0f172a;   /* cor_banner (fallback sem imagem) */
 
   /* Feedback */
   --verde:         #2d7a3a;
@@ -259,7 +261,7 @@ a {
   width: 100%;
   max-height: 180px;
   overflow: hidden;
-  background: var(--marrom-escuro);
+  background: var(--banner-bg);
 }
 
 .banner img {
