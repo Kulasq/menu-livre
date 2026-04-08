@@ -161,7 +161,7 @@ window.cardapio = (() => {
       { campo: 'cor_secundaria', vars: ['--marrom'] },
       { campo: 'cor_fundo',      vars: ['--bg'] },
       { campo: 'cor_fonte',      vars: ['--texto'] },
-      { campo: 'cor_banner',     vars: ['--marrom-escuro', '--banner-bg'] },
+      { campo: 'cor_banner',     vars: ['--banner-bg'] },
     ];
 
     mapa.forEach(({ campo, vars }) => {
