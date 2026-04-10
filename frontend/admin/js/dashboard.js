@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupUsuario()
   setupSidebar()
+  carregarNomeLojaSidebar()
   carregarResumo()
 
   /* Atualiza a cada 30 segundos */

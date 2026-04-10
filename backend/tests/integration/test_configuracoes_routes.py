@@ -22,10 +22,23 @@ def test_obter_configuracoes_cria_defaults(client, usuario_admin):
     r = client.get("/api/admin/configuracoes", headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 200
     data = r.json()
-    assert data["nome_loja"] == "Pão de Mão"
+    assert data["nome_loja"] == "Minha Loja"
     assert data["fechado_manualmente"] is False
     assert data["aceitar_agendamentos"] is True
     assert data["taxa_entrega"] == 0.0
+
+
+def test_obter_configuracoes_retorna_campos_de_cores(client, usuario_admin):
+    """GET admin deve retornar os 5 campos de cor com defaults da paleta Menu Livre."""
+    token = obter_token(client, usuario_admin)
+    r = client.get("/api/admin/configuracoes", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["cor_primaria"]   == "#f59e0b"
+    assert data["cor_secundaria"] == "#d97706"
+    assert data["cor_fundo"]      == "#f1f5f9"
+    assert data["cor_fonte"]      == "#0f172a"
+    assert data["cor_banner"]     == "#0f172a"
 
 
 # ── PUT /api/admin/configuracoes ──────────────────────────────────────────────
@@ -128,3 +141,32 @@ def test_configuracao_publica_nao_expoe_dados_sensiveis(client):
     data = r.json()
     assert "id" not in data
     assert "atualizado_em" not in data
+
+
+def test_atualizar_cor_primaria(client, usuario_admin):
+    """PUT deve salvar cor_primaria e retorná-la no GET seguinte."""
+    token = obter_token(client, usuario_admin)
+    r = client.put(
+        "/api/admin/configuracoes",
+        json={"cor_primaria": "#ff6600"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 200
+    assert r.json()["cor_primaria"] == "#ff6600"
+
+    r2 = client.get("/api/admin/configuracoes", headers={"Authorization": f"Bearer {token}"})
+    assert r2.json()["cor_primaria"] == "#ff6600"
+
+
+def test_configuracao_publica_retorna_cores(client, usuario_admin):
+    """Endpoint público deve expor campos de cor para o cardápio aplicar."""
+    token = obter_token(client, usuario_admin)
+    client.put(
+        "/api/admin/configuracoes",
+        json={"cor_fundo": "#ffffff"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    r = client.get("/api/configuracao")
+    data = r.json()
+    assert "cor_fundo" in data
+    assert data["cor_fundo"] == "#ffffff"
