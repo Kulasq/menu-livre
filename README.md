@@ -101,7 +101,15 @@ alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
-Abra `frontend/admin/index.html` no navegador. A API estará em `http://localhost:8000`.
+Sirva o frontend com Python:
+
+```bash
+cd frontend && python -m http.server 3000
+# Admin:   http://localhost:3000/admin/
+# Público: http://localhost:3000/publico/
+```
+
+A API estará em `http://localhost:8000`.
 
 ### Variáveis de ambiente
 
