@@ -1177,7 +1177,12 @@ a {
   z-index: 150;
   width: calc(100% - 32px);
   max-width: 480px;
-  animation: slideUp .2s ease-out;
+  animation: slideUpCentered .2s ease-out;
+}
+
+@keyframes slideUpCentered {
+  from { transform: translateX(-50%) translateY(100%); }
+  to   { transform: translateX(-50%) translateY(0); }
 }
 
 .btn-flutuante-inner {
