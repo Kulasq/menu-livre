@@ -83,6 +83,7 @@ window.cardapio = (() => {
       if (resConfig.ok) {
         _config = await resConfig.json();
         _aplicarConfig(_config);
+        _aplicarCores(_config);
       }
 
       _renderNav();
@@ -101,15 +102,25 @@ window.cardapio = (() => {
 
   // ─── aplicar configuração da loja no header ───────────────
   function _aplicarConfig(config) {
-    if (config.nome_loja) els.headerNome().textContent = config.nome_loja;
+    const nome = config.nome_loja || 'Cardápio';
+
+    // Atualiza nome visível no header
+    els.headerNome().textContent = nome;
+
+    // Atualiza <title> e <meta description> dinamicamente
+    document.title = nome + ' — Cardápio';
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.content = `Cardápio digital de ${nome}. Faça seu pedido pelo WhatsApp.`;
 
     if (config.logo_url) {
       els.headerLogo().src = fotoUrl(config.logo_url);
+      els.headerLogo().alt = `Logo ${nome}`;
       els.headerLogo().classList.remove('hidden');
     }
 
     if (config.banner_url) {
       els.bannerImg().src = fotoUrl(config.banner_url);
+      els.bannerImg().alt = `Banner ${nome}`;
       els.banner().classList.remove('hidden');
     }
 
@@ -138,6 +149,27 @@ window.cardapio = (() => {
       els.avisoFechadoMsg().textContent = mensagem;
       els.avisoFechado().classList.remove('hidden');
     }
+  }
+
+  // ─── aplicar paleta de cores via CSS variables ───────────
+  function _aplicarCores(config) {
+    const root = document.documentElement;
+
+    // Mapeamento: campo da API → CSS variable(s) que controla
+    const mapa = [
+      { campo: 'cor_primaria',   vars: ['--marrom-btn', '--marrom-hover'] },
+      { campo: 'cor_secundaria', vars: ['--marrom'] },
+      { campo: 'cor_fundo',      vars: ['--bg'] },
+      { campo: 'cor_fonte',      vars: ['--texto'] },
+      { campo: 'cor_banner',     vars: ['--banner-bg'] },
+    ];
+
+    mapa.forEach(({ campo, vars }) => {
+      const valor = config[campo];
+      if (valor) {
+        vars.forEach(v => root.style.setProperty(v, valor));
+      }
+    });
   }
 
   // ─── renderizar nav de categorias ────────────────────────

@@ -39,4 +39,9 @@ def obter_configuracao_publica(db: Session = Depends(get_db)):
         horarios=horarios_para_schema(config),
         aberto=verificar_loja_aberta(config),
         fechado_manualmente=config.fechado_manualmente,
+        cor_primaria=config.cor_primaria,
+        cor_secundaria=config.cor_secundaria,
+        cor_fundo=config.cor_fundo,
+        cor_fonte=config.cor_fonte,
+        cor_banner=config.cor_banner,
     )
