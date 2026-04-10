@@ -49,13 +49,22 @@ const PAGAMENTO_LABELS = {
 
 /* ── Inicialização ──────────────────────────────────────── */
 
+/* Nome da loja para o template de impressão (preenchido após auth) */
+let _nomeLoja = ''
+
 document.addEventListener('DOMContentLoaded', () => {
   if (!auth.proteger()) return
 
   setupUsuario()
   setupSidebar()
+  carregarNomeLojaSidebar()
   setupEventos()
   carregarPedidos()
+
+  /* Carrega nome_loja para o cupom térmico (usa cache de sessão se disponível) */
+  api.get('/api/admin/configuracoes')
+    .then(c => { if (c?.nome_loja) _nomeLoja = c.nome_loja })
+    .catch(() => {})
 
   /* Polling a cada 5 segundos */
   autoRefreshTimer = setInterval(carregarPedidos, 5000)
@@ -493,7 +502,7 @@ function imprimirPedido() {
 </head>
 <body>
 
-  <h1>PAO DE MAO</h1>
+  <h1>${_nomeLoja || 'Cardápio Digital'}</h1>
   <div class="subtitulo">Cardapio Digital</div>
 
   <div class="sep"></div>
@@ -524,7 +533,7 @@ function imprimirPedido() {
   <div class="sep"></div>
 
   <div class="rodape">Documento sem valor fiscal.</div>
-  <div class="rodape">Pao de Mao - Bonito, PE</div>
+  <div class="rodape">${_nomeLoja || 'Menu Livre'}</div>
 
 </body>
 </html>`

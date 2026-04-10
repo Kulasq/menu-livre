@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupUsuario()
   setupSidebar()
+  carregarNomeLojaSidebar()
   setupEventos()
   carregarDados()
 })

@@ -4,12 +4,19 @@ from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime, timezone
 from app.database import Base
 
+# Paleta padrão Menu Livre (espelha o admin.css)
+_COR_PRIMARIA_DEFAULT  = "#f59e0b"   # --accent
+_COR_SECUNDARIA_DEFAULT = "#d97706"  # --accent-hover
+_COR_FUNDO_DEFAULT     = "#f1f5f9"   # --bg
+_COR_FONTE_DEFAULT     = "#0f172a"   # --texto
+_COR_BANNER_DEFAULT    = "#0f172a"   # --bg-sidebar
+
 
 class Configuracao(Base):
     __tablename__ = "configuracoes"
 
     id: Mapped[int] = mapped_column(primary_key=True, default=1)
-    nome_loja: Mapped[str] = mapped_column(String(100), default="Pão de Mão")
+    nome_loja: Mapped[str] = mapped_column(String(100), default="Minha Loja")
     logo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     banner_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     whatsapp: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -27,6 +34,26 @@ class Configuracao(Base):
     )
     instagram_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     horarios_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # ── Aparência do cardápio público ────────────────────────────────────────
+    # Valores armazenados como hex (#rrggbb). O admin pode salvar qualquer
+    # formato CSS válido — o service normaliza para hex antes de persistir.
+    cor_primaria: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, default=_COR_PRIMARIA_DEFAULT
+    )
+    cor_secundaria: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, default=_COR_SECUNDARIA_DEFAULT
+    )
+    cor_fundo: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, default=_COR_FUNDO_DEFAULT
+    )
+    cor_fonte: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, default=_COR_FONTE_DEFAULT
+    )
+    cor_banner: Mapped[str | None] = mapped_column(
+        String(20), nullable=True, default=_COR_BANNER_DEFAULT
+    )
+
     atualizado_em: Mapped[datetime] = mapped_column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
