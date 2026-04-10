@@ -177,9 +177,21 @@ window.cardapio = (() => {
     const lista = els.navLista();
     lista.innerHTML = '';
 
-    _dados.forEach((cat, idx) => {
+    const temDestaques = _dados.some(cat => cat.produtos.some(p => p.destaque));
+    const catsComItens = _dados.filter(cat => cat.produtos.length > 0);
+
+    if (temDestaques) {
       const btn = document.createElement('button');
-      btn.className = `nav-item${idx === 0 ? ' ativo' : ''}`;
+      btn.className = 'nav-item ativo';
+      btn.textContent = 'Destaques';
+      btn.dataset.id = 'destaques';
+      btn.addEventListener('click', () => _scrollParaCategoria('destaques'));
+      lista.appendChild(btn);
+    }
+
+    catsComItens.forEach((cat, idx) => {
+      const btn = document.createElement('button');
+      btn.className = `nav-item${!temDestaques && idx === 0 ? ' ativo' : ''}`;
       btn.textContent = cat.nome;
       btn.dataset.id = cat.id;
       btn.addEventListener('click', () => _scrollParaCategoria(cat.id));
@@ -200,7 +212,27 @@ window.cardapio = (() => {
     const container = els.container();
     container.innerHTML = '';
 
-    _dados.forEach((cat) => {
+    // Seção "Destaques" fixa no topo — produtos destaque=true de todas as categorias
+    const todosDestaques = _dados.flatMap(cat => cat.produtos.filter(p => p.destaque));
+    if (todosDestaques.length > 0) {
+      const secao = document.createElement('section');
+      secao.className = 'categoria-secao';
+      secao.id = 'cat-destaques';
+
+      const titulo = document.createElement('h2');
+      titulo.className = 'categoria-titulo';
+      titulo.textContent = 'Destaques';
+      secao.appendChild(titulo);
+
+      const grade = document.createElement('div');
+      grade.className = 'destaques-grid';
+      todosDestaques.forEach(p => grade.appendChild(_criarCardDestaque(p)));
+      secao.appendChild(grade);
+
+      container.appendChild(secao);
+    }
+
+    _dados.filter(cat => cat.produtos.length > 0).forEach((cat) => {
       const secao = document.createElement('section');
       secao.className = 'categoria-secao';
       secao.id = `cat-${cat.id}`;
@@ -210,22 +242,10 @@ window.cardapio = (() => {
       titulo.textContent = cat.nome;
       secao.appendChild(titulo);
 
-      const destaques = cat.produtos.filter(p => p.destaque);
-      const normais   = cat.produtos.filter(p => !p.destaque);
-
-      if (destaques.length > 0) {
-        const grade = document.createElement('div');
-        grade.className = 'destaques-grid';
-        destaques.forEach(p => grade.appendChild(_criarCardDestaque(p)));
-        secao.appendChild(grade);
-      }
-
-      if (normais.length > 0) {
-        const lista = document.createElement('div');
-        lista.className = 'produtos-lista';
-        normais.forEach(p => lista.appendChild(_criarCardProduto(p)));
-        secao.appendChild(lista);
-      }
+      const lista = document.createElement('div');
+      lista.className = 'produtos-lista';
+      cat.produtos.forEach(p => lista.appendChild(_criarCardProduto(p)));
+      secao.appendChild(lista);
 
       container.appendChild(secao);
     });
