@@ -607,14 +607,16 @@ async function togglePagamento(id) {
 
 function formatarHora(iso) {
   if (!iso) return '—'
-  const d = new Date(iso)
-  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString('pt-BR', {
+    timeZone: 'America/Recife',
+    hour: '2-digit', minute: '2-digit',
+  })
 }
 
 function formatarDataHora(iso) {
   if (!iso) return '—'
-  const d = new Date(iso)
-  return d.toLocaleDateString('pt-BR', {
+  return new Date(iso).toLocaleDateString('pt-BR', {
+    timeZone: 'America/Recife',
     day: '2-digit', month: '2-digit',
     hour: '2-digit', minute: '2-digit',
   })
