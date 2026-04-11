@@ -1,6 +1,7 @@
 window.pedido = (() => {
   // ─── estado ───────────────────────────────────────────────
-  let _tipo = 'retirada'; // 'retirada' | 'delivery'
+  let _tipo   = 'retirada'; // 'retirada' | 'delivery'
+  let _config = null;       // config pública carregada no init
 
   // ─── elementos ────────────────────────────────────────────
   const els = {
@@ -13,9 +14,9 @@ window.pedido = (() => {
     inputTelefone:      () => document.getElementById('input-telefone'),
     passoEndereco:      () => document.getElementById('passo-endereco'),
     inputEndereco:      () => document.getElementById('input-endereco'),
+    rowTipoPedido:      () => document.getElementById('row-tipo-pedido'),
     inputTipoPedido:    () => document.getElementById('input-tipo-pedido'),
     campoAgendamento:   () => document.getElementById('campo-agendamento'),
-    inputData:          () => document.getElementById('input-data'),
     inputHora:          () => document.getElementById('input-hora'),
     inputPagamento:     () => document.getElementById('input-pagamento'),
     infoPix:            () => document.getElementById('info-pix'),
@@ -31,6 +32,52 @@ window.pedido = (() => {
 
   function _limparTelefone(tel) {
     return tel.replace(/\D/g, '');
+  }
+
+  // ─── slots de horário ────────────────────────────────────
+  function _gerarSlots(horarios, diaSemana) {
+    const nomes = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+    const dia   = horarios?.[nomes[diaSemana]];
+    if (!dia?.aberto || !dia.horarios?.length) return [];
+
+    const slots = [];
+    dia.horarios.forEach(({ inicio, fim }) => {
+      let min = _hhmmParaMin(inicio);
+      const fimMin = _hhmmParaMin(fim);
+      if (min === null || fimMin === null) return;
+      while (min <= fimMin) {
+        slots.push(`${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`);
+        min += 30;
+      }
+    });
+    return slots;
+  }
+
+  function _hhmmParaMin(str) {
+    if (!str) return null;
+    const [h, m] = str.split(':').map(Number);
+    return (isNaN(h) || isNaN(m)) ? null : h * 60 + m;
+  }
+
+  function _popularSelectHora(slots, padrao) {
+    const sel = els.inputHora();
+    sel.innerHTML = '';
+    if (!slots.length) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'Sem horários disponíveis';
+      sel.appendChild(opt);
+      return;
+    }
+    slots.forEach(slot => {
+      const opt = document.createElement('option');
+      opt.value = slot;
+      opt.textContent = slot;
+      if (slot === padrao) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    // se nenhum foi marcado como padrão, seleciona o primeiro
+    if (!sel.value && slots.length) sel.value = slots[0];
   }
 
   function _validar() {
@@ -56,11 +103,6 @@ window.pedido = (() => {
     }
 
     if (els.inputTipoPedido().value === 'agendado') {
-      if (!els.inputData().value) {
-        alert('Por favor, selecione a data do agendamento.');
-        els.inputData().focus();
-        return false;
-      }
       if (!els.inputHora().value) {
         alert('Por favor, selecione o horário do agendamento.');
         els.inputHora().focus();
@@ -77,41 +119,52 @@ window.pedido = (() => {
     return true;
   }
 
+  function _hojeBRT() {
+    // Retorna "YYYY-MM-DD" no fuso de Recife (UTC-3), independente do browser
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Recife' });
+  }
+
   function _montarAgendadoPara() {
     if (els.inputTipoPedido().value !== 'agendado') return null;
-    const data = els.inputData().value;
     const hora = els.inputHora().value;
-    if (!data || !hora) return null;
-    // converte de BRT para UTC antes de enviar
-    const localDate = new Date(`${data}T${hora}:00`);
-    return new Date(localDate.getTime() + 3 * 60 * 60 * 1000).toISOString();
+    if (!hora) return null;
+    // sufixo -03:00 força interpretação BRT antes da conversão para UTC
+    return new Date(`${_hojeBRT()}T${hora}:00-03:00`).toISOString();
   }
 
   // ─── abrir modal ──────────────────────────────────────────
   function abrirModal(tipo) {
     _tipo = tipo || 'retirada';
 
-    // preencher total no header
     els.totalHeader().textContent = brl(window.carrinho.total());
 
-    // mostrar/ocultar endereço
-    if (_tipo === 'delivery') {
-      els.passoEndereco().classList.remove('hidden');
-    } else {
-      els.passoEndereco().classList.add('hidden');
-    }
+    els.passoEndereco().classList.toggle('hidden', _tipo !== 'delivery');
 
-    // pré-preencher dados salvos do cliente
     const clienteSalvo = _carregarCliente();
     if (clienteSalvo) {
-      els.inputNome().value      = clienteSalvo.nome || '';
-      els.inputTelefone().value  = clienteSalvo.telefone || '';
+      els.inputNome().value     = clienteSalvo.nome || '';
+      els.inputTelefone().value = clienteSalvo.telefone || '';
     }
 
-    // data mínima = hoje
-    const hoje = new Date().toISOString().split('T')[0];
-    els.inputData().min = hoje;
-    els.inputData().value = hoje;
+    const lojaFechada = _config && !_config.aberto;
+
+    if (lojaFechada) {
+      // loja fechada → agendamento obrigatório, sem escolha de tipo
+      els.inputTipoPedido().value = 'agendado';
+      els.rowTipoPedido().classList.add('hidden');
+      els.campoAgendamento().classList.remove('hidden');
+
+      // dia da semana em Recife (0=dom … 6=sab)
+      const [y, m, d] = _hojeBRT().split('-').map(Number);
+      const diaRecife = new Date(y, m - 1, d).getDay();
+      const slots = _gerarSlots(_config.horarios, diaRecife);
+      _popularSelectHora(slots, _config.proxima_abertura);
+    } else {
+      // loja aberta → fluxo normal
+      els.inputTipoPedido().value = 'imediato';
+      els.rowTipoPedido().classList.remove('hidden');
+      els.campoAgendamento().classList.add('hidden');
+    }
 
     els.modal().classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -246,6 +299,11 @@ window.pedido = (() => {
     els.inputTipoPedido().addEventListener('change', () => {
       const agendado = els.inputTipoPedido().value === 'agendado';
       els.campoAgendamento().classList.toggle('hidden', !agendado);
+      if (agendado && _config?.horarios) {
+        const [y, m, d] = _hojeBRT().split('-').map(Number);
+        const slots = _gerarSlots(_config.horarios, new Date(y, m - 1, d).getDay());
+        _popularSelectHora(slots, _config.proxima_abertura);
+      }
     });
 
     els.inputPagamento().addEventListener('change', () => {
@@ -257,24 +315,24 @@ window.pedido = (() => {
   }
 
   // ─── init ─────────────────────────────────────────────────
-  async function _carregarChavePix() {
+  async function _carregarConfig() {
     try {
       const res = await fetch(`${CONFIG.API_URL}/api/configuracao`);
       if (!res.ok) return;
-      const config = await res.json();
-      if (config.chave_pix) {
-        els.infoPixChave().textContent = config.chave_pix;
-      } else if (config.whatsapp) {
-        els.infoPixChave().textContent = config.whatsapp;
+      _config = await res.json();
+      if (_config.chave_pix) {
+        els.infoPixChave().textContent = _config.chave_pix;
+      } else if (_config.whatsapp) {
+        els.infoPixChave().textContent = _config.whatsapp;
       }
     } catch {
-      // silencioso — chave pix não é crítica
+      // silencioso — config não é crítica para abrir o modal
     }
   }
 
   function init() {
     _initEventos();
-    _carregarChavePix();
+    _carregarConfig();
   }
 
   return { init, abrirModal, fecharModal };
