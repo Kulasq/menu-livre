@@ -20,8 +20,6 @@ window.cardapio = (() => {
     statusBadge:      () => document.getElementById('status-badge'),
     headerWhatsapp:   () => document.getElementById('header-whatsapp'),
     headerInstagram:  () => document.getElementById('header-instagram'),
-    avisoFechado:     () => document.getElementById('aviso-fechado'),
-    avisoFechadoMsg:  () => document.getElementById('aviso-fechado-msg'),
     modal:            () => document.getElementById('modal-produto'),
     modalNome:        () => document.getElementById('modal-produto-nome'),
     modalDesc:        () => document.getElementById('modal-produto-desc'),
@@ -141,14 +139,24 @@ window.cardapio = (() => {
     badge.textContent = aberto ? '● Aberto' : '● Fechado';
     badge.className = `status-badge ${aberto ? 'status-aberto' : 'status-fechado'}`;
 
-    if (!aberto) {
-      let mensagem = config.mensagem_fechado || 'Estamos fechados no momento.';
-      if (config.aceitar_agendamentos) {
-        mensagem += ' Pedidos agendados para a próxima abertura são aceitos.';
-      }
-      els.avisoFechadoMsg().textContent = mensagem;
-      els.avisoFechado().classList.remove('hidden');
+    if (!aberto && config.aceitar_agendamentos) {
+      _mostrarAvisoAgendamento(config.mensagem_fechado);
     }
+  }
+
+  function _mostrarAvisoAgendamento(mensagem) {
+    const modal  = document.getElementById('modal-aviso-fechado');
+    const msgEl  = document.getElementById('modal-aviso-msg');
+    const btn    = document.getElementById('modal-aviso-ok');
+
+    msgEl.textContent = mensagem || 'Estamos fechados no momento.';
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    btn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }, { once: true });
   }
 
   // ─── aplicar paleta de cores via CSS variables ───────────

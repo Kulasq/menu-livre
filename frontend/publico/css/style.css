@@ -219,39 +219,6 @@ a {
   color: var(--marrom);
 }
 
-.btn-carrinho {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 34px;
-  padding: 0 10px;
-  background: var(--marrom-btn);
-  color: #fff;
-  border-radius: var(--radius-xl);
-  font-size: .82rem;
-  font-weight: 600;
-  transition: background .15s;
-  white-space: nowrap;
-}
-
-.btn-carrinho:hover,
-.btn-carrinho:active {
-  background: var(--marrom-hover);
-}
-
-.carrinho-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  background: #fff;
-  color: var(--marrom-btn);
-  border-radius: 99px;
-  font-size: .68rem;
-  font-weight: 700;
-}
 
 /* =============================================
    BANNER
@@ -578,34 +545,6 @@ a {
   font-weight: 600;
 }
 
-/* =============================================
-   AVISO LOJA FECHADA
-   ============================================= */
-.aviso-fechado {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 80;
-  background: var(--banner-bg);
-  color: #fff;
-  padding: 12px 16px;
-}
-
-.aviso-fechado-conteudo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-.aviso-fechado-icon { font-size: 1.2rem; }
-
-.aviso-fechado-conteudo p {
-  font-size: .85rem;
-  line-height: 1.4;
-}
 
 /* =============================================
    MODAL (base) — flutuante como o drawer
@@ -644,6 +583,8 @@ a {
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 @keyframes slideUp {
@@ -1055,6 +996,10 @@ a {
 }
 
 .btn-tipo-servico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 12px 8px;
   border: 2px solid var(--borda-input);
   border-radius: var(--radius-md);
@@ -1065,11 +1010,45 @@ a {
   transition: border-color .15s, color .15s, background .15s;
 }
 
+.btn-tipo-servico svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
 .btn-tipo-servico.ativo,
 .btn-tipo-servico:hover {
   border-color: var(--marrom-btn);
   color: var(--marrom-btn);
   background: rgba(155,92,58,.07);
+}
+
+/* =============================================
+   MODAL AVISO LOJA FECHADA
+   ============================================= */
+.modal-box-aviso {
+  align-items: center;
+  text-align: center;
+  padding: 32px 24px;
+  gap: 16px;
+  border-radius: var(--radius-lg);
+}
+
+.modal-aviso-icone svg {
+  width: 52px;
+  height: 52px;
+  color: var(--marrom-btn);
+}
+
+.modal-aviso-msg {
+  font-size: .95rem;
+  color: var(--texto);
+  line-height: 1.5;
+}
+
+.modal-box-aviso .btn-primario {
+  width: 100%;
+  margin-top: 4px;
 }
 
 /* =============================================
@@ -1130,10 +1109,19 @@ a {
   color: var(--texto-sec);
 }
 
+#row-tipo-pedido,
+#campo-agendamento {
+  width: 100%;
+  min-width: 0;
+}
+
 .passo input,
 .passo textarea,
 .passo select {
   width: 100%;
+  /* cap absoluto: viewport - padding do modal (16px) - padding do passo (32px) */
+  max-width: calc(100vw - 48px);
+  min-width: 0;
   padding: 11px 13px;
   border: 1px solid var(--borda-input);
   border-radius: var(--radius-sm);
@@ -1303,9 +1291,4 @@ a {
     height: 30px;
   }
 
-  .btn-carrinho {
-    padding: 0 8px;
-    height: 30px;
-    font-size: .75rem;
-  }
 }
