@@ -9,6 +9,7 @@ from app.services import cardapio_service
 from app.services.configuracao_service import (
     obter_configuracoes,
     verificar_loja_aberta,
+    calcular_proxima_abertura,
     horarios_para_schema,
 )
 
@@ -39,6 +40,7 @@ def obter_configuracao_publica(db: Session = Depends(get_db)):
         horarios=horarios_para_schema(config),
         aberto=verificar_loja_aberta(config),
         fechado_manualmente=config.fechado_manualmente,
+        proxima_abertura=(lambda dt: f"{dt.hour:02d}:{dt.minute:02d}" if dt else None)(calcular_proxima_abertura(config)),
         cor_primaria=config.cor_primaria,
         cor_secundaria=config.cor_secundaria,
         cor_fundo=config.cor_fundo,
