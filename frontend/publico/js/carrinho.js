@@ -82,7 +82,6 @@ window.carrinho = (() => {
 
   // ─── atualizar UI ─────────────────────────────────────────
   function _atualizar() {
-    _atualizarBotaoHeader();
     _atualizarBotaoFlutuante();
     _renderDrawer();
   }
@@ -102,18 +101,6 @@ window.carrinho = (() => {
     }
   }
 
-  function _atualizarBotaoHeader() {
-    const btn   = document.getElementById('btn-carrinho');
-    const count = document.getElementById('carrinho-count');
-    const qty   = quantidade();
-
-    if (qty > 0) {
-      count.textContent = qty;
-      count.classList.remove('hidden');
-    } else {
-      count.classList.add('hidden');
-    }
-  }
 
   // ─── drawer ───────────────────────────────────────────────
   function abrirDrawer() {
@@ -235,7 +222,6 @@ window.carrinho = (() => {
 
   // ─── eventos ──────────────────────────────────────────────
   function _initEventos() {
-    document.getElementById('btn-carrinho').addEventListener('click', abrirDrawer);
     document.getElementById('drawer-fechar').addEventListener('click', fecharDrawer);
     document.getElementById('drawer-overlay').addEventListener('click', fecharDrawer);
     document.getElementById('btn-flutuante-inner').addEventListener('click', abrirDrawer);

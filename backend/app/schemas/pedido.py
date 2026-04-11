@@ -1,6 +1,6 @@
 from __future__ import annotations
-from pydantic import BaseModel, Field
-from datetime import datetime
+from pydantic import BaseModel, Field, field_validator
+from datetime import datetime, timezone
 
 
 class PedidoItemModificadorCreate(BaseModel):
@@ -83,6 +83,13 @@ class PedidoResponse(BaseModel):
     itens: list[PedidoItemResponse] = []
 
     model_config = {"from_attributes": True}
+
+    @field_validator('agendado_para', 'criado_em', mode='before')
+    @classmethod
+    def assume_utc(cls, v):
+        if isinstance(v, datetime) and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
 
 
 class NovoPedidoResponse(BaseModel):

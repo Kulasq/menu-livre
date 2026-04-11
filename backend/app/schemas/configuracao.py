@@ -114,6 +114,7 @@ class ConfiguracaoPublicaResponse(BaseModel):
     horarios: Optional[HorariosSchema]
     aberto: bool          # calculado em tempo real pelo service
     fechado_manualmente: bool  # para o frontend distinguir tipo de fechamento
+    proxima_abertura: Optional[str]  # "HH:MM" do próximo horário de abertura, ou None
     # Aparência
     cor_primaria: Optional[str]
     cor_secundaria: Optional[str]
