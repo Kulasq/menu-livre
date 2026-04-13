@@ -1,7 +1,15 @@
 import os
 from logging.config import fileConfig
+from pathlib import Path
 from sqlalchemy import engine_from_config, pool
 from alembic import context
+
+# Carrega .env para que DATABASE_URL esteja disponível ao rodar alembic diretamente
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+except ImportError:
+    pass
 
 # Importar Base e todos os models para o Alembic detectar
 from app.database import Base
@@ -15,7 +23,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
+    url = os.environ.get("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
