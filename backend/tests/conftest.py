@@ -66,8 +66,8 @@ def client(db_teste):
 def usuario_admin(db_teste):
     """Cria um usuário admin no banco de teste."""
     usuario = Usuario(
-        nome="Sara",
-        email="sara@paodeamao.com",
+        nome="Admin",
+        email="admin@exemplo.com",
         senha_hash=hash_senha("senha123"),
         role="superadmin",
     )

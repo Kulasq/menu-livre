@@ -54,7 +54,7 @@ def test_rota_admin_com_jwt_adulterado_rejeitado(client, usuario_admin):
 def test_rota_admin_com_usuario_inativo_rejeitado(client, usuario_admin, db_teste):
     """Access token válido de usuário desativado deve ser rejeitado."""
     login = client.post("/api/auth/login", json={
-        "email": "sara@paodeamao.com",
+        "email": "admin@exemplo.com",
         "senha": "senha123",
     })
     token = login.json()["access_token"]

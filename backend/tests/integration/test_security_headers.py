@@ -48,7 +48,7 @@ class TestSecurityHeaders:
     def test_headers_presentes_em_rota_autenticada(self, client, usuario_admin):
         """Headers de segurança devem aparecer em rotas protegidas também."""
         r = client.post("/api/auth/login", json={
-            "email": "sara@paodeamao.com",
+            "email": "admin@exemplo.com",
             "senha": "senha123",
         })
         assert r.status_code == 200

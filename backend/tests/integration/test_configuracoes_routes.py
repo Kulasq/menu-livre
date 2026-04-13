@@ -4,7 +4,7 @@ import pytest
 
 def obter_token(client, usuario_admin) -> str:
     r = client.post("/api/auth/login", json={
-        "email": "sara@paodeamao.com",
+        "email": "admin@exemplo.com",
         "senha": "senha123",
     })
     return r.json()["access_token"]
@@ -52,14 +52,14 @@ def test_atualizar_campos_simples(client, usuario_admin):
     token = obter_token(client, usuario_admin)
     r = client.put(
         "/api/admin/configuracoes",
-        json={"whatsapp": "81999990000", "taxa_entrega": 5.0, "nome_loja": "Pão de Mão Atualizado"},
+        json={"whatsapp": "81999990000", "taxa_entrega": 5.0, "nome_loja": "Loja Atualizada"},
         headers={"Authorization": f"Bearer {token}"},
     )
     assert r.status_code == 200
     data = r.json()
     assert data["whatsapp"] == "81999990000"
     assert data["taxa_entrega"] == 5.0
-    assert data["nome_loja"] == "Pão de Mão Atualizado"
+    assert data["nome_loja"] == "Loja Atualizada"
 
 
 def test_atualizar_fechado_manualmente(client, usuario_admin):
