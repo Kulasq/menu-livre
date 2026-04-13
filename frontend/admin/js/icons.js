@@ -1,5 +1,5 @@
 /**
- * Biblioteca de ícones SVG do painel admin — Pão de Mão.
+ * Biblioteca de ícones SVG do painel admin — Menu Livre.
  *
  * Todos os ícones são inline SVG (Heroicons outline, 24×24).
  * Usam currentColor para herdar a cor do elemento pai automaticamente.

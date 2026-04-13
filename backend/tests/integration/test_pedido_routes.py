@@ -6,7 +6,7 @@ from app.models.produto import Produto
 
 def obter_token_admin(client, usuario_admin) -> str:
     r = client.post("/api/auth/login", json={
-        "email": "sara@paodeamao.com",
+        "email": "admin@exemplo.com",
         "senha": "senha123",
     })
     return r.json()["access_token"]
@@ -89,7 +89,7 @@ def test_criar_pedido_retirada(client, db_teste, usuario_admin):
 
     assert r.status_code == 200
     data = r.json()
-    assert data["pedido"]["numero"].startswith("PDM-")
+    assert data["pedido"]["numero"].startswith("ML-")
     assert data["pedido"]["status"] == "pendente"
     assert "whatsapp_url" in data
     assert data["whatsapp_url"].startswith("https://api.whatsapp.com/send/")

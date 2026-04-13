@@ -17,29 +17,29 @@ class TestSeedUsuario:
     def test_cria_superadmin(self, db_teste):
         executar_seed(db_teste)
 
-        usuario = db_teste.query(Usuario).filter_by(email="sara@paodemao.com.br").first()
+        usuario = db_teste.query(Usuario).filter_by(email="admin@exemplo.com").first()
         assert usuario is not None
 
     def test_superadmin_tem_campos_corretos(self, db_teste):
         executar_seed(db_teste)
 
-        usuario = db_teste.query(Usuario).filter_by(email="sara@paodemao.com.br").first()
-        assert usuario.nome == "Sara"
+        usuario = db_teste.query(Usuario).filter_by(email="admin@exemplo.com").first()
+        assert usuario.nome == "Admin"
         assert usuario.role == "superadmin"
         assert usuario.ativo is True
 
     def test_superadmin_senha_valida(self, db_teste):
         executar_seed(db_teste)
 
-        usuario = db_teste.query(Usuario).filter_by(email="sara@paodemao.com.br").first()
-        assert verificar_senha("paodemao2026", usuario.senha_hash) is True
+        usuario = db_teste.query(Usuario).filter_by(email="admin@exemplo.com").first()
+        assert verificar_senha("senha123", usuario.senha_hash) is True
 
     def test_seed_idempotente_usuario(self, db_teste):
         """Rodar o seed duas vezes não duplica o usuário."""
         executar_seed(db_teste)
         executar_seed(db_teste)
 
-        total = db_teste.query(Usuario).filter_by(email="sara@paodemao.com.br").count()
+        total = db_teste.query(Usuario).filter_by(email="admin@exemplo.com").count()
         assert total == 1
 
 
@@ -54,9 +54,8 @@ class TestSeedConfiguracao:
         executar_seed(db_teste)
 
         config = db_teste.query(Configuracao).filter_by(id=1).first()
-        assert config.nome_loja == "Pão de Mão"
-        assert config.whatsapp == "5581996008571"
-        assert config.instagram_url == "https://instagram.com/paodemao"
+        assert config.nome_loja == "Minha Loja"
+        assert config.whatsapp == ""
         assert config.fechado_manualmente is False
 
     def test_configuracao_valores_padrao(self, db_teste):

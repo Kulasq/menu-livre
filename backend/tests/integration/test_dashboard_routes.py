@@ -5,7 +5,7 @@ import uuid
 
 def obter_token(client, usuario_admin) -> str:
     response = client.post("/api/auth/login", json={
-        "email": "sara@paodeamao.com",
+        "email": "admin@exemplo.com",
         "senha": "senha123",
     })
     return response.json()["access_token"]
