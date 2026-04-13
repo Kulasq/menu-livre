@@ -1,0 +1,28 @@
+# systemd unit — Cardápio Digital (Menu Livre)
+# Copiar para: /etc/systemd/system/cardapio.service
+# Ativar:  sudo systemctl daemon-reload
+#          sudo systemctl enable cardapio
+#          sudo systemctl start cardapio
+# Status:  sudo systemctl status cardapio
+# Logs:    sudo journalctl -u cardapio -f
+
+[Unit]
+Description=Cardápio Digital — Menu Livre
+After=network.target
+
+[Service]
+User=deploy
+Group=deploy
+WorkingDirectory=/var/www/menu-livre/backend
+Environment="PATH=/var/www/menu-livre/backend/.venv/bin"
+EnvironmentFile=/var/www/menu-livre/backend/.env
+ExecStart=/var/www/menu-livre/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=always
+RestartSec=5
+
+# Segurança
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -12,21 +12,22 @@ from app.services.auth_service import hash_senha
 
 
 def seed_usuario(db) -> None:
-    existe = db.query(Usuario).filter_by(email="sara@paodemao.com.br").first()
+    existe = db.query(Usuario).filter_by(email="admin@exemplo.com").first()
     if existe:
-        print("  [ok] Superadmin já existe — pulando.")
+        print("  [ok] Admin já existe — pulando.")
         return
 
     usuario = Usuario(
-        nome="Sara",
-        email="sara@paodemao.com.br",
-        senha_hash=hash_senha("paodemao2026"),
+        nome="Admin",
+        email="admin@exemplo.com",
+        senha_hash=hash_senha("senha123"),
         role="superadmin",
         ativo=True,
     )
     db.add(usuario)
     db.commit()
-    print("  [criado] Superadmin: sara@paodemao.com.br / senha: paodemao2026")
+    print("  [criado] Admin: admin@exemplo.com / senha: senha123")
+    print("  ⚠️  Troque a senha após o primeiro login!")
 
 
 def seed_configuracao(db) -> None:
@@ -37,14 +38,13 @@ def seed_configuracao(db) -> None:
 
     config = Configuracao(
         id=1,
-        nome_loja="Pão de Mão",
-        whatsapp="5581996008571",
-        instagram_url="https://instagram.com/paodemao",
+        nome_loja="Minha Loja",
+        whatsapp="",
         taxa_entrega=0.0,
         pedido_minimo=0.0,
         tempo_entrega_min=30,
         tempo_entrega_max=50,
-        mensagem_fechado="Estamos fechados no momento. Volte em breve! 🍔",
+        mensagem_fechado="Estamos fechados no momento. Volte em breve!",
     )
     db.add(config)
     db.commit()
@@ -52,7 +52,7 @@ def seed_configuracao(db) -> None:
 
 
 def main() -> None:
-    print("\n🍞 Pão de Mão — Seed inicial\n")
+    print("\n🍽️  Menu Livre — Seed inicial\n")
 
     db = SessionLocal()
     try:

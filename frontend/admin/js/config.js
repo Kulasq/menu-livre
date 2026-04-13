@@ -1,11 +1,13 @@
 const CONFIG = {
-  API_URL: 'http://localhost:8000',
+  // Em produção (Nginx proxy), API fica no mesmo domínio — sem prefixo
+  // Em desenvolvimento local, aponta para o uvicorn direto
+  API_URL: window.location.hostname === 'localhost' ? 'http://localhost:8000' : '',
 
   STORAGE: {
-    ACCESS_TOKEN: 'pdm_admin_access_token',
-    REFRESH_TOKEN: 'pdm_admin_refresh_token',
-    USUARIO_NOME: 'pdm_admin_usuario_nome',
-    USUARIO_ROLE: 'pdm_admin_usuario_role',
+    ACCESS_TOKEN: 'ml_admin_access_token',
+    REFRESH_TOKEN: 'ml_admin_refresh_token',
+    USUARIO_NOME: 'ml_admin_usuario_nome',
+    USUARIO_ROLE: 'ml_admin_usuario_role',
   },
 
   PAGINAS: {

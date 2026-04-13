@@ -25,7 +25,7 @@ _TRANSICOES = {
 def _numero_pedido(db: Session) -> str:
     ultimo = db.query(Pedido).order_by(Pedido.id.desc()).first()
     proximo = 1 if not ultimo else ultimo.id + 1
-    return f"PDM-{proximo:04d}"
+    return f"ML-{proximo:04d}"
 
 
 def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
@@ -188,7 +188,8 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
     cliente.ultimo_pedido = datetime.now(timezone.utc)
     db.commit()
 
-    mensagem = formatar_mensagem(pedido_completo)
+    nome_loja = config.nome_loja if config else "Menu Livre"
+    mensagem = formatar_mensagem(pedido_completo, nome_loja)
     url = gerar_url(mensagem)
 
     return {

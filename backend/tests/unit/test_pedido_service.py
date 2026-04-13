@@ -59,7 +59,7 @@ def test_criar_pedido_retirada():
     )
 
     pedido = resultado["pedido"]
-    assert pedido.numero.startswith("PDM-")
+    assert pedido.numero.startswith("ML-")
     assert pedido.status == "pendente"
     assert pedido.total == 44.90
     assert pedido.taxa_entrega == 0.0
@@ -158,8 +158,8 @@ def test_mensagem_whatsapp_gerada():
         db,
     )
 
-    assert "Pão de Mão" in resultado["mensagem_whatsapp"]
-    assert "PDM-" in resultado["mensagem_whatsapp"]
+    assert "Menu Livre" in resultado["mensagem_whatsapp"]
+    assert "ML-" in resultado["mensagem_whatsapp"]
     assert "Bacontentão" in resultado["mensagem_whatsapp"]
     assert resultado["whatsapp_url"].startswith("https://api.whatsapp.com/send/")
 

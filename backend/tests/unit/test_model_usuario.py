@@ -17,7 +17,7 @@ def test_criar_usuario():
 
     usuario = Usuario(
         nome="Kulas Dantas",
-        email="kulas@paodeamao.com",
+        email="kulas@exemplo.com",
         senha_hash="hash_qualquer",
         role="superadmin",
     )
@@ -27,7 +27,7 @@ def test_criar_usuario():
 
     assert usuario.id is not None
     assert usuario.nome == "Kulas Dantas"
-    assert usuario.email == "kulas@paodeamao.com"
+    assert usuario.email == "kulas@exemplo.com"
     assert usuario.role == "superadmin"
     assert usuario.ativo is True  # default
     assert usuario.ultimo_acesso is None  # default
