@@ -3,7 +3,7 @@ from urllib.parse import quote
 from app.config import settings
 
 
-def formatar_mensagem(pedido) -> str:
+def formatar_mensagem(pedido, nome_loja: str = "Menu Livre") -> str:
     from datetime import timezone, timedelta
     BRT = timezone(timedelta(hours=-3))
     horario = pedido.criado_em.replace(tzinfo=timezone.utc).astimezone(BRT)
@@ -13,7 +13,7 @@ def formatar_mensagem(pedido) -> str:
         return f"R$ {valor:.2f}".replace(".", ",")
 
     lines = [
-        "🍔 *Pão de Mão* — Novo Pedido!",
+        f"🍔 *{nome_loja}* — Novo Pedido!",
         "",
         f"📋 Pedido: {pedido.numero}",
         f"👤 Cliente: {pedido.cliente.nome}",
