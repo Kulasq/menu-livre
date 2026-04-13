@@ -1,0 +1,11 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: menu-livre-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /var/www/menu-livre/frontend:/usr/share/nginx/html:ro
+      - /var/www/menu-livre/backend/uploads:/usr/share/nginx/uploads:ro
+    restart: unless-stopped
