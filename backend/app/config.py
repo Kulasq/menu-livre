@@ -16,13 +16,13 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     # Banco
-    DATABASE_URL: str = "sqlite:///./data/paodeamao.db"
+    DATABASE_URL: str = "sqlite:///./data/cardapio.db"
 
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:8080", "http://localhost:3000"]
 
     # WhatsApp
-    WHATSAPP_NUMBER: str = "5581996008571"
+    WHATSAPP_NUMBER: str = ""
 
     # Uploads
     UPLOAD_DIR: str = "./uploads"
