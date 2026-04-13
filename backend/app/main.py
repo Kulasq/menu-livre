@@ -4,7 +4,7 @@ from app.routers.admin import upload as admin_upload
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response, RedirectResponse
+from fastapi.responses import Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
@@ -79,19 +79,5 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/")
-def raiz():
-    return RedirectResponse(url="/publico/")
-
-
-@app.get("/admin")
-def admin_redirect():
-    return RedirectResponse(url="/admin/")
-
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
-
-# Frontend estático — deve ser o último mount (catch-all)
-_frontend_dir = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
-if os.path.isdir(_frontend_dir):
-    app.mount("/", StaticFiles(directory=_frontend_dir, html=True), name="frontend")
