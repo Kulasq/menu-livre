@@ -15,7 +15,7 @@ def test_criar_configuracao():
     """Verifica que a configuração é salva com defaults corretos."""
     db = setup_db()
 
-    config = Configuracao(whatsapp="5581996008571")
+    config = Configuracao(whatsapp="5500000000000")
     db.add(config)
     db.commit()
     db.refresh(config)
@@ -31,7 +31,7 @@ def test_campos_de_cores_tem_defaults():
     """Novos campos de cores devem ter os defaults da paleta Menu Livre."""
     db = setup_db()
 
-    config = Configuracao(whatsapp="5581996008571")
+    config = Configuracao(whatsapp="5500000000000")
     db.add(config)
     db.commit()
     db.refresh(config)
@@ -47,7 +47,7 @@ def test_campos_de_cores_aceitam_nulo_via_update():
     """Campos de cores aceitam NULL quando zerados via setattr (fluxo do service)."""
     db = setup_db()
 
-    config = Configuracao(whatsapp="5581996008571")
+    config = Configuracao(whatsapp="5500000000000")
     db.add(config)
     db.commit()
 
@@ -65,7 +65,7 @@ def test_sempre_uma_linha():
     """Configuração deve ter sempre id=1 (linha única)."""
     db = setup_db()
 
-    config = Configuracao(id=1, whatsapp="5581996008571")
+    config = Configuracao(id=1, whatsapp="5500000000000")
     db.add(config)
     db.commit()
 
