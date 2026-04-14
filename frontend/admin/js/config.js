@@ -10,11 +10,12 @@ const CONFIG = {
     USUARIO_ROLE: 'ml_admin_usuario_role',
   },
 
-  // Paths relativos — funciona em dev (/admin/) e em prod (raiz do domínio)
+  // Paths relativos sem .html — funciona em dev (/admin/) e em prod (raiz do domínio)
+  // Nginx usa try_files $uri $uri.html para resolver sem extensão
   PAGINAS: {
-    LOGIN: 'index.html',
-    DASHBOARD: 'dashboard.html',
-    CARDAPIO: 'cardapio.html',
-    PEDIDOS: 'pedidos.html',
+    LOGIN: '.',
+    DASHBOARD: 'dashboard',
+    CARDAPIO: 'cardapio',
+    PEDIDOS: 'pedidos',
   },
 }
