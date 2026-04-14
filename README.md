@@ -45,6 +45,13 @@ A maioria dos sistemas de cardápio digital cobra assinatura mensal cara por fun
 - Fechar loja manualmente com um clique
 - Configurações: taxa de entrega, pedido mínimo, chave PIX, mensagem de fechado
 - Dashboard com resumo do dia: pedidos, faturamento, ticket médio, status por tipo
+- Aparência configurável: logo, banner, paleta de cores — tudo pelo admin, zero hardcode
+- Seção "Destaques" no topo do cardápio para produtos em evidência
+
+### Deploy
+- VPS Ubuntu 24.04, Nginx em Docker (portas 8080/8081 para cardápio e admin)
+- Uvicorn como systemd service (porta 8000, sem expor diretamente)
+- SSL via NPM (Nginx Proxy Manager) nas portas 80/443
 
 ### Segurança
 - XSS: `esc()` com `textContent` no frontend público
@@ -58,15 +65,16 @@ A maioria dos sistemas de cardápio digital cobra assinatura mensal cara por fun
 
 ## Em desenvolvimento
 
-- **Destaques no topo** — seção fixa no início do cardápio para produtos em evidência
+- **Histórico de pedidos** — aba com calendário e filtro por período; tela principal mostra só pedidos do dia
+- **PIX avançado** — botão copiar chave, QR code com valor exato (Pix Copia e Cola)
+- **Múltiplos horários por dia** — suporte a intervalos como 11h–14h e 18h–22h
 - **Pagamento por link de cartão** — opção extra no checkout com taxa de 5% calculada automaticamente
-- **Aparência configurável** — personalização de logo, banner, paleta de cores e dados da loja pelo próprio admin; zero dado de cliente hardcoded no código
+- **Busca no cardápio** — filtro de itens em tempo real, sem request extra
 - **Clientes e endereços** — histórico de pedidos, múltiplos endereços salvos com atalho no checkout
 - **Controle de estoque** — produto fica indisponível automaticamente ao zerar
 - **Pedidos pelo painel** — admin registra pedidos de balcão/mesa diretamente
 - **Relatórios avançados** — faturamento por período, produtos mais vendidos, horário de pico
 - **Fidelidade** — estrutura de pontos e níveis (bronze/prata/ouro)
-- **Deploy** — Docker Compose + Nginx + VPS com SSL automático
 
 ---
 
