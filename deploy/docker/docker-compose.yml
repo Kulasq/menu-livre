@@ -3,7 +3,8 @@ services:
     image: nginx:alpine
     container_name: menu-livre-nginx
     ports:
-      - "8080:80"
+      - "8080:8080"   # cardápio público
+      - "8081:8081"   # painel admin
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - /var/www/menu-livre/frontend:/usr/share/nginx/html:ro
