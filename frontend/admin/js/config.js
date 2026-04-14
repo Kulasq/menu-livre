@@ -10,10 +10,11 @@ const CONFIG = {
     USUARIO_ROLE: 'ml_admin_usuario_role',
   },
 
+  // Paths relativos — funciona em dev (/admin/) e em prod (raiz do domínio)
   PAGINAS: {
-    LOGIN: '/admin/index.html',
-    DASHBOARD: '/admin/dashboard.html',
-    CARDAPIO: '/admin/cardapio.html',
-    PEDIDOS: '/admin/pedidos.html',
+    LOGIN: 'index.html',
+    DASHBOARD: 'dashboard.html',
+    CARDAPIO: 'cardapio.html',
+    PEDIDOS: 'pedidos.html',
   },
 }
