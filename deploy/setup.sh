@@ -23,15 +23,25 @@ echo "============================================"
 echo ""
 
 # 1. Atualizar sistema
-echo "[1/8] Atualizando sistema..."
+echo "[1/9] Atualizando sistema..."
 apt update -qq && apt upgrade -y -qq
 
 # 2. Instalar dependências
-echo "[2/8] Instalando dependências..."
+echo "[2/9] Instalando dependências..."
 apt install -y -qq python3.12 python3.12-venv python3-pip git
 
-# 3. Clonar repositório
-echo "[3/8] Clonando repositório..."
+# 3. Configurar firewall (UFW)
+echo "[3/9] Configurando firewall..."
+ufw allow OpenSSH
+ufw allow 80
+ufw allow 443
+# Permite containers Docker acessarem o uvicorn (Nginx container → API)
+ufw allow from 172.16.0.0/12 to any port 8000 comment "Docker -> uvicorn"
+ufw --force enable
+echo "  → UFW: $(ufw status | head -1)"
+
+# 4. Clonar repositório
+echo "[4/9] Clonando repositório..."
 mkdir -p /var/www
 if [ -d "$REPO_DIR" ]; then
     echo "  → Diretório já existe, pulando clone."
@@ -40,19 +50,19 @@ else
 fi
 chown -R "$DEPLOY_USER":"$DEPLOY_USER" "$REPO_DIR"
 
-# 4. Criar virtualenv e instalar dependências Python
-echo "[4/8] Criando virtualenv e instalando pacotes..."
+# 5. Criar virtualenv e instalar dependências Python
+echo "[5/9] Criando virtualenv e instalando pacotes..."
 cd "$BACKEND_DIR"
 sudo -u "$DEPLOY_USER" python3.12 -m venv .venv
 sudo -u "$DEPLOY_USER" .venv/bin/pip install --upgrade pip -q
 sudo -u "$DEPLOY_USER" .venv/bin/pip install -r requirements.txt -q
 
-# 5. Criar diretórios de dados
-echo "[5/8] Criando diretórios de dados..."
+# 6. Criar diretórios de dados
+echo "[6/9] Criando diretórios de dados..."
 sudo -u "$DEPLOY_USER" mkdir -p data uploads backups
 
-# 6. Configurar .env
-echo "[6/8] Configurando variáveis de ambiente..."
+# 7. Configurar .env
+echo "[7/9] Configurando variáveis de ambiente..."
 if [ ! -f "$BACKEND_DIR/.env" ]; then
     cp "$BACKEND_DIR/.env.example" "$BACKEND_DIR/.env"
     echo ""
@@ -68,16 +78,20 @@ if [ ! -f "$BACKEND_DIR/.env" ]; then
     read -p "  Pressione ENTER após editar o .env para continuar..."
 fi
 
-# 7. Rodar migrations e seed
-echo "[7/8] Rodando migrations do banco..."
+# 8. Rodar migrations e seed
+echo "[8/9] Rodando migrations do banco..."
 cd "$BACKEND_DIR"
 sudo -u "$DEPLOY_USER" .venv/bin/alembic upgrade head
 
 echo "  → Criando dados iniciais (admin + configuração)..."
 sudo -u "$DEPLOY_USER" .venv/bin/python scripts/seed.py
 
-# 8. Instalar serviço systemd + subir container Nginx
-echo "[8/8] Configurando serviços..."
+# Garante que todos os arquivos do banco (incluindo WAL) pertencem ao deploy
+chown -R "$DEPLOY_USER":"$DEPLOY_USER" "$BACKEND_DIR/data/"
+chmod 640 "$BACKEND_DIR/data/"*.db 2>/dev/null || true
+
+# 9. Instalar serviço systemd + subir container Nginx
+echo "[9/9] Configurando serviços..."
 
 # Backend (systemd)
 cp "$REPO_DIR/deploy/cardapio.service" /etc/systemd/system/cardapio.service
