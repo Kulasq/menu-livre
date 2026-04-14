@@ -16,7 +16,7 @@ Group=deploy
 WorkingDirectory=/var/www/menu-livre/backend
 Environment="PATH=/var/www/menu-livre/backend/.venv/bin"
 EnvironmentFile=/var/www/menu-livre/backend/.env
-ExecStart=/var/www/menu-livre/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+ExecStart=/var/www/menu-livre/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
 Restart=always
 RestartSec=5
 
