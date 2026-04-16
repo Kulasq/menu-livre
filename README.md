@@ -36,6 +36,7 @@ A maioria dos sistemas de cardápio digital cobra assinatura mensal cara por fun
 
 ### Painel administrativo
 - Login com JWT — access token em memória, refresh em cookie/localStorage
+- **Minha conta**: alterar nome, e-mail e senha diretamente pelo avatar no header
 - Gestão completa de categorias, produtos, modificadores (drag & drop de ordem)
 - Upload de fotos com redimensionamento automático (Pillow)
 - Fila de pedidos com atualização automática a cada 5s + notificação sonora
@@ -141,7 +142,7 @@ cd backend
 pytest tests/ -v
 ```
 
-213 testes (unit + integration). Os testes de integração rodam com SQLite em memória — sem banco real, sem estado compartilhado entre testes.
+244 testes (unit + integration). Os testes de integração rodam com SQLite em memória — sem banco real, sem estado compartilhado entre testes.
 
 ---
 
