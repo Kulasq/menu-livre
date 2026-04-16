@@ -17,6 +17,10 @@ python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.2.1
 
+# Rate limiting
+slowapi==0.1.9
+limits==3.14.0
+
 # Uploads
 python-multipart==0.0.20
 Pillow==11.1.0
