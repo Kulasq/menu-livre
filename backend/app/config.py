@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     REFRESH_SECRET_KEY: str = "dev-refresh-key-troque-em-producao"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Banco
     DATABASE_URL: str = "sqlite:///./data/cardapio.db"
