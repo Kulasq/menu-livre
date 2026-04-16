@@ -1,6 +1,7 @@
 import os
 from fastapi.staticfiles import StaticFiles
 from app.routers.admin import upload as admin_upload
+from app.routers.admin import usuario as admin_usuario
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -64,6 +65,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(admin_usuario.router)
 app.include_router(admin_cardapio.router)
 app.include_router(admin_pedidos.router)
 app.include_router(admin_upload.router)
