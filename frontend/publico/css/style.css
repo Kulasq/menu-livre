@@ -1292,3 +1292,22 @@ a {
   }
 
 }
+
+/* =============================================
+   RODAPÉ DE CRÉDITO
+   ============================================= */
+#rodape-credito {
+  text-align: center;
+  padding: 8px 16px;
+  color: var(--texto-terc);
+  font-size: 0.75rem;
+}
+
+#rodape-credito a {
+  color: var(--texto-sec);
+  text-decoration: none;
+}
+
+#rodape-credito a:hover {
+  text-decoration: underline;
+}
