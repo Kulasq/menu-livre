@@ -14,8 +14,8 @@ const CONFIG = {
   // Nginx usa try_files $uri $uri.html para resolver sem extensão
   PAGINAS: {
     LOGIN: '.',
-    DASHBOARD: 'dashboard',
-    CARDAPIO: 'cardapio',
-    PEDIDOS: 'pedidos',
+    DASHBOARD: 'dashboard.html',
+    CARDAPIO: 'cardapio.html',
+    PEDIDOS: 'pedidos.html',
   },
 }
