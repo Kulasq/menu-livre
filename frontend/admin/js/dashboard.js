@@ -28,7 +28,6 @@ function setupUsuario() {
 }
 
 function setupSidebar() {
-  $('#btn-logout').addEventListener('click', () => auth.logout())
   const sidebar = $('#sidebar')
   const overlay = $('#sidebar-overlay')
   $('#btn-menu').addEventListener('click', () => {
@@ -44,9 +43,15 @@ function setupSidebar() {
 async function carregarResumo() {
   try {
     const data = await api.get('/api/admin/dashboard/resumo')
+    /* api.request() retorna undefined quando o refresh falha e chama auth.logout()
+       — nesse caso a página já está navegando para o login, não precisamos fazer nada */
+    if (!data) return
     renderResumo(data)
   } catch (err) {
     console.error('Erro ao carregar resumo:', err.message)
+    /* Remove o spinner para não deixar a tela travada em caso de falha da API */
+    $('#dashboard-loading').classList.add('hidden')
+    toast.erro('Não foi possível carregar o resumo. Verifique sua conexão.')
   }
 }
 
