@@ -35,7 +35,6 @@ function setupUsuario() {
 }
 
 function setupSidebar() {
-  $('#btn-logout').addEventListener('click', () => auth.logout())
   const sidebar = $('#sidebar')
   const overlay = $('#sidebar-overlay')
   $('#btn-menu').addEventListener('click', () => {
