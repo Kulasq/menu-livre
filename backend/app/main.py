@@ -6,9 +6,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
+from app.limiter import limiter
 from app.routers import auth
 from app.routers.admin import cardapio as admin_cardapio
 from app.routers.admin import pedidos as admin_pedidos
@@ -50,6 +53,9 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None,
     lifespan=lifespan,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Ordem importa: SecurityHeaders antes do CORS para garantir aplicação em todas as respostas
 app.add_middleware(SecurityHeadersMiddleware)

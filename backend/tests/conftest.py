@@ -13,6 +13,7 @@ from app.models.configuracao import Configuracao
 
 from app.main import app as fastapi_app
 from app.database import Base, get_db
+from app.limiter import limiter
 from app.services.auth_service import hash_senha
 
 import tempfile
@@ -56,6 +57,7 @@ def client(db_teste):
     def override_get_db():
         yield db_teste
 
+    limiter._storage.reset()
     fastapi_app.dependency_overrides[get_db] = override_get_db
     with TestClient(fastapi_app) as c:
         yield c
