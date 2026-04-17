@@ -109,9 +109,64 @@ window.carrinho = (() => {
     document.body.style.overflow = 'hidden';
   }
 
-  function fecharDrawer() {
-    document.getElementById('drawer-carrinho').classList.add('hidden');
-    document.body.style.overflow = '';
+  // ─── drag-to-close ───────────────────────────────────────
+  function _initDragFechar(handleEl, boxEl, fecharFn) {
+    let startY = 0, deltaY = 0;
+
+    handleEl.addEventListener('touchstart', e => {
+      if (boxEl.classList.contains('fechando')) return;
+      startY = e.touches[0].clientY;
+      deltaY = 0;
+      boxEl.style.transition = 'none';
+    }, { passive: true });
+
+    handleEl.addEventListener('touchmove', e => {
+      const d = e.touches[0].clientY - startY;
+      if (d > 0) {
+        deltaY = d;
+        boxEl.style.transform = `translateY(${d}px)`;
+      }
+    }, { passive: true });
+
+    handleEl.addEventListener('touchend', () => {
+      if (deltaY > 100) {
+        boxEl.style.transition = 'transform .2s ease-in';
+        boxEl.style.transform  = 'translateY(110%)';
+        boxEl.addEventListener('transitionend', () => {
+          boxEl.style.transition = '';
+          boxEl.style.transform  = '';
+          fecharFn(true);
+        }, { once: true });
+      } else {
+        boxEl.addEventListener('transitionend', () => {
+          boxEl.style.transition = '';
+        }, { once: true });
+        boxEl.style.transition = 'transform .25s cubic-bezier(.2,.8,.3,1)';
+        boxEl.style.transform  = '';
+      }
+    });
+  }
+
+  function fecharDrawer(skipAnim = false, callback = null) {
+    const isMobile = window.matchMedia('(max-width: 599px)').matches;
+    const drawer = document.getElementById('drawer-carrinho');
+    if (!isMobile || skipAnim) {
+      drawer.classList.add('hidden');
+      document.body.style.overflow = '';
+      if (callback) callback();
+      return;
+    }
+    const box = drawer.querySelector('.drawer-box');
+    if (box.classList.contains('fechando')) return;
+    drawer.classList.add('fechando');
+    box.classList.add('fechando');
+    box.addEventListener('animationend', () => {
+      box.classList.remove('fechando');
+      drawer.classList.remove('fechando');
+      drawer.classList.add('hidden');
+      document.body.style.overflow = '';
+      if (callback) callback();
+    }, { once: true });
   }
 
   function _renderDrawer() {
@@ -222,8 +277,7 @@ window.carrinho = (() => {
 
   // ─── eventos ──────────────────────────────────────────────
   function _initEventos() {
-    document.getElementById('drawer-fechar').addEventListener('click', fecharDrawer);
-    document.getElementById('drawer-overlay').addEventListener('click', fecharDrawer);
+    document.getElementById('drawer-overlay').addEventListener('click', () => fecharDrawer());
     document.getElementById('btn-flutuante-inner').addEventListener('click', abrirDrawer);
 
     document.querySelectorAll('.btn-tipo-servico').forEach(btn => {
@@ -231,10 +285,17 @@ window.carrinho = (() => {
         document.querySelectorAll('.btn-tipo-servico').forEach(b => b.classList.remove('ativo'));
         btn.classList.add('ativo');
         const tipo = btn.dataset.tipo;
-        window.pedido.abrirModal(tipo);
-        fecharDrawer();
+        // fecha o drawer com animação e abre o checkout só após terminar
+        fecharDrawer(false, () => window.pedido.abrirModal(tipo));
       });
     });
+
+    const drawerBox = document.querySelector('#drawer-carrinho .drawer-box');
+    _initDragFechar(
+      document.getElementById('drawer-handle'),
+      drawerBox,
+      (skip) => fecharDrawer(skip)
+    );
   }
 
   function init() {
