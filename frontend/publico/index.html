@@ -78,7 +78,7 @@
   <div id="modal-produto" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-produto-nome">
     <div class="modal-overlay" id="modal-produto-overlay"></div>
     <div class="modal-box">
-      <button class="modal-fechar" id="modal-produto-fechar" aria-label="Fechar">✕</button>
+      <div class="modal-drag-handle" id="modal-produto-handle" aria-hidden="true"></div>
 
       <div class="modal-scroll">
         <div id="modal-produto-foto-wrap" class="modal-foto-wrap hidden">
@@ -116,9 +116,9 @@
   <div id="drawer-carrinho" class="drawer hidden" role="dialog" aria-modal="true" aria-label="Carrinho">
     <div class="drawer-overlay" id="drawer-overlay"></div>
     <div class="drawer-box">
+      <div class="modal-drag-handle" id="drawer-handle" aria-hidden="true"></div>
       <div class="drawer-header">
         <h2>Sua sacola</h2>
-        <button class="modal-fechar" id="drawer-fechar" aria-label="Fechar carrinho">✕</button>
       </div>
       <div id="drawer-itens" class="drawer-itens">
         <!-- itens injetados via JS -->
@@ -170,6 +170,7 @@
   <div id="modal-pedido" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-pedido-titulo">
     <div class="modal-overlay" id="modal-pedido-overlay"></div>
     <div class="modal-box modal-box-pedido">
+      <div class="modal-drag-handle" id="modal-pedido-handle" aria-hidden="true"></div>
 
       <div class="modal-pedido-header">
         <button class="modal-voltar" id="modal-pedido-voltar" aria-label="Voltar">←</button>
