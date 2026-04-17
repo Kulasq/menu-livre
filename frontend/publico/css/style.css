@@ -310,7 +310,15 @@ a {
    SEÇÃO DE CATEGORIA
    ============================================= */
 .categoria-secao {
-  padding: 0px 16px 8px;
+  padding: 0 16px 8px;
+}
+
+/* A primeira seção compensa o gap criado pelo nav sticky:
+   o nav ocupa y=0-48 no fluxo mas aparece fixo em y=72-120 no viewport,
+   deixando 48px de espaço vazio só antes do primeiro item. */
+.cardapio-container > .categoria-secao:first-child {
+  margin-top: calc(-1 * var(--nav-h));
+  padding-top: 8px;
 }
 
 .categoria-titulo {
@@ -642,6 +650,11 @@ a {
 /* No modal de produto: cobre a maior parte da foto */
 #modal-produto .modal-drag-handle {
   height: 180px;
+}
+
+/* No checkout: handle puramente visual — toque vai para o cabeçalho (botão ← não fica bloqueado) */
+#modal-pedido .modal-drag-handle {
+  pointer-events: none;
 }
 
 .modal-fechar {
@@ -1126,8 +1139,6 @@ a {
   color: var(--texto-sec);
   padding: 4px 8px 4px 0;
   transition: color .12s;
-  position: relative;
-  z-index: 6; /* acima do drag handle para não bloquear o toque */
 }
 
 .modal-voltar:hover { color: var(--marrom); }

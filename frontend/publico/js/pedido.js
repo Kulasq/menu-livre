@@ -350,8 +350,10 @@ window.pedido = (() => {
 
     els.overlay().addEventListener('click', () => fecharModal());
 
+    // O drag handle do checkout é visual — eventos de toque ficam no cabeçalho
+    // para não bloquear o botão ← (stacking context do header confina qualquer z-index filho)
     _initDragFechar(
-      els.modalHandle(),
+      document.querySelector('#modal-pedido .modal-pedido-header'),
       document.querySelector('#modal-pedido .modal-box'),
       (skip) => fecharModal(skip)
     );
