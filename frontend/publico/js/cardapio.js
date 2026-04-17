@@ -489,6 +489,19 @@ window.cardapio = (() => {
         input.value = mod.id;
         input.addEventListener('change', () => _onModificadorChange(grupo, mod, input.checked));
 
+        // Permite desmarcar radio em grupos não-obrigatórios
+        if (tipo === 'radio' && !grupo.obrigatorio) {
+          let _estavaMarcado = false;
+          input.addEventListener('mousedown', () => { _estavaMarcado = input.checked; });
+          input.addEventListener('touchstart', () => { _estavaMarcado = input.checked; }, { passive: true });
+          input.addEventListener('click', () => {
+            if (_estavaMarcado) {
+              input.checked = false;
+              _onModificadorChange(grupo, mod, false);
+            }
+          });
+        }
+
         const labelTxt = document.createElement('span');
         labelTxt.className = 'modificador-label';
         labelTxt.textContent = mod.nome;
