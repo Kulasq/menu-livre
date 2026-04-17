@@ -644,6 +644,11 @@ a {
   height: 180px;
 }
 
+/* No checkout: handle puramente visual — toque vai para o cabeçalho (botão ← não fica bloqueado) */
+#modal-pedido .modal-drag-handle {
+  pointer-events: none;
+}
+
 .modal-fechar {
   position: absolute;
   top: 14px;
@@ -1126,8 +1131,6 @@ a {
   color: var(--texto-sec);
   padding: 4px 8px 4px 0;
   transition: color .12s;
-  position: relative;
-  z-index: 6; /* acima do drag handle para não bloquear o toque */
 }
 
 .modal-voltar:hover { color: var(--marrom); }
