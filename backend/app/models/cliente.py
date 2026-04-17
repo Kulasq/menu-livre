@@ -1,6 +1,6 @@
 from __future__ import annotations
-from sqlalchemy import String, Boolean, DateTime, Integer, Float, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Boolean, DateTime, Integer, Float, Text, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone
 from app.database import Base
 
@@ -22,3 +22,22 @@ class Cliente(Base):
         DateTime, default=lambda: datetime.now(timezone.utc)
     )
     ultimo_pedido: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    enderecos: Mapped[list[Endereco]] = relationship(
+        "Endereco", back_populates="cliente", cascade="all, delete-orphan"
+    )
+
+
+class Endereco(Base):
+    __tablename__ = "enderecos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    cliente_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("clientes.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    endereco: Mapped[str] = mapped_column(Text, nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+    cliente: Mapped[Cliente] = relationship("Cliente", back_populates="enderecos")
