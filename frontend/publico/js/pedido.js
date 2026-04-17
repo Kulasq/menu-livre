@@ -26,6 +26,11 @@ window.pedido = (() => {
     modalHandle:        () => document.getElementById('modal-pedido-handle'),
   };
 
+  // ─── estado de sessão do cliente (em memória — sem localStorage) ──────────
+  let _clienteId = null;
+  let _clienteToken = null;
+  let _enderecoSalvoSelecionado = null; // endereço escolhido via radio salvo
+
   // ─── utilitários ──────────────────────────────────────────
   function brl(valor) {
     return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -33,6 +38,37 @@ window.pedido = (() => {
 
   function _limparTelefone(tel) {
     return tel.replace(/\D/g, '');
+  }
+
+  function _obterEnderecoEntrega() {
+    return _enderecoSalvoSelecionado || els.inputEndereco().value.trim();
+  }
+
+  // ─── máscara de telefone BR ───────────────────────────────
+  function _aplicarMascaraTelefone(input) {
+    input.addEventListener('input', () => {
+      let digits = _limparTelefone(input.value).slice(0, 11);
+      if (digits.length === 0) { input.value = ''; return; }
+      if (digits.length <= 2) {
+        input.value = `(${digits}`;
+      } else if (digits.length <= 6) {
+        input.value = `(${digits.slice(0,2)}) ${digits.slice(2)}`;
+      } else if (digits.length <= 10) {
+        input.value = `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;
+      } else {
+        // 11 dígitos — celular
+        input.value = `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;
+      }
+      _validarTelefoneInput(input);
+    });
+  }
+
+  function _validarTelefoneInput(input) {
+    const digits = _limparTelefone(input.value);
+    const valido = digits.length === 10 || digits.length === 11;
+    input.classList.toggle('input-invalido', input.value.length > 0 && !valido);
+    const erroEl = document.getElementById('erro-telefone');
+    if (erroEl) erroEl.classList.toggle('hidden', !input.value.length || valido);
   }
 
   // ─── slots de horário ────────────────────────────────────
@@ -91,14 +127,14 @@ window.pedido = (() => {
       return false;
     }
 
-    if (tel.length < 10 || tel.length > 11) {
-      alert('Telefone inválido. Informe DDD + número.');
+    if (tel.length !== 10 && tel.length !== 11) {
+      alert('Telefone inválido. Informe DDD + número (10 ou 11 dígitos).');
       els.inputTelefone().focus();
       return false;
     }
 
-    if (_tipo === 'delivery' && !els.inputEndereco().value.trim()) {
-      alert('Por favor, informe o endereço de entrega.');
+    if (_tipo === 'delivery' && !_obterEnderecoEntrega()) {
+      alert('Por favor, selecione ou informe o endereço de entrega.');
       els.inputEndereco().focus();
       return false;
     }
@@ -141,10 +177,26 @@ window.pedido = (() => {
 
     els.passoEndereco().classList.toggle('hidden', _tipo !== 'delivery');
 
+    // Reseta estado de endereços ao abrir
+    _enderecoSalvoSelecionado = null;
+    const endSalvos = document.getElementById('enderecos-salvos');
+    if (endSalvos) { endSalvos.innerHTML = ''; endSalvos.classList.add('hidden'); }
+    _mostrarCampoEndereco(true);
+    els.inputEndereco().value = '';
+
     const clienteSalvo = _carregarCliente();
     if (clienteSalvo) {
       els.inputNome().value     = clienteSalvo.nome || '';
       els.inputTelefone().value = clienteSalvo.telefone || '';
+    }
+
+    // Se delivery e telefone já preenchido, carrega endereços automaticamente
+    if (_tipo === 'delivery' && els.inputTelefone().value) {
+      if (_clienteId && _clienteToken) {
+        _carregarEnderecosSalvos();
+      } else {
+        _lookupClienteBlur();
+      }
     }
 
     const lojaFechada = _config && !_config.aberto;
@@ -246,6 +298,165 @@ window.pedido = (() => {
     localStorage.setItem(CONFIG.STORAGE_KEYS.TOKEN, token);
   }
 
+  // ─── endereços salvos ────────────────────────────────────
+  async function _carregarEnderecosSalvos() {
+    if (!_clienteId || !_clienteToken || _tipo !== 'delivery') return;
+
+    try {
+      const res = await fetch(`${CONFIG.API_URL}/api/clientes/${_clienteId}/enderecos`, {
+        headers: { 'Authorization': `Bearer ${_clienteToken}` },
+      });
+      if (!res.ok) return;
+      const enderecos = await res.json();
+      _renderEnderecosSalvos(enderecos);
+    } catch {
+      // silencioso
+    }
+  }
+
+  function _mostrarCampoEndereco(visivel) {
+    const wrap = document.getElementById('wrap-endereco-novo');
+    if (wrap) wrap.classList.toggle('hidden', !visivel);
+  }
+
+  function _renderEnderecosSalvos(enderecos) {
+    const container = document.getElementById('enderecos-salvos');
+    if (!container) return;
+    container.innerHTML = '';
+    _enderecoSalvoSelecionado = null;
+
+    if (!enderecos.length) {
+      container.classList.add('hidden');
+      _mostrarCampoEndereco(true);
+      return;
+    }
+
+    // Com endereços salvos: esconde o campo de texto até "Outro endereço" ser selecionado
+    _mostrarCampoEndereco(false);
+    els.inputEndereco().value = '';
+
+    const titulo = document.createElement('p');
+    titulo.className = 'enderecos-salvos-titulo';
+    titulo.textContent = 'Endereços salvos:';
+    container.appendChild(titulo);
+
+    const SVG_LIXEIRA = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>`;
+
+    enderecos.forEach((e, idx) => {
+      const radioId = `end-salvo-${idx}`;
+      const item = document.createElement('div');
+      item.className = 'endereco-salvo-item';
+
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = 'endereco-salvo';
+      radio.id = radioId;
+      radio.className = 'endereco-salvo-radio';
+      radio.value = e.endereco;
+      radio.addEventListener('change', () => {
+        _enderecoSalvoSelecionado = e.endereco;
+        _mostrarCampoEndereco(false);
+        els.inputEndereco().value = '';
+      });
+
+      const label = document.createElement('label');
+      label.htmlFor = radioId;
+      label.className = 'endereco-salvo-texto';
+      label.textContent = e.endereco;
+
+      const btnDel = document.createElement('button');
+      btnDel.type = 'button';
+      btnDel.className = 'endereco-salvo-del';
+      btnDel.setAttribute('aria-label', 'Remover endereço');
+      btnDel.innerHTML = SVG_LIXEIRA;
+      btnDel.addEventListener('click', async () => {
+        try {
+          const res = await fetch(`${CONFIG.API_URL}/api/clientes/enderecos/${e.id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${_clienteToken}` },
+          });
+          if (res.ok || res.status === 204) {
+            if (radio.checked) {
+              _enderecoSalvoSelecionado = null;
+            }
+            item.remove();
+            // Se não há mais salvos (exceto o "Outro"), mostra campo diretamente
+            if (!container.querySelectorAll('.endereco-salvo-item').length) {
+              container.classList.add('hidden');
+              _mostrarCampoEndereco(true);
+            }
+          }
+        } catch { /* silencioso */ }
+      });
+
+      item.appendChild(radio);
+      item.appendChild(label);
+      item.appendChild(btnDel);
+      container.appendChild(item);
+    });
+
+    // Opção "Outro endereço"
+    const outroId = 'end-salvo-outro';
+    const outroItem = document.createElement('div');
+    outroItem.className = 'endereco-salvo-item';
+
+    const outroRadio = document.createElement('input');
+    outroRadio.type = 'radio';
+    outroRadio.name = 'endereco-salvo';
+    outroRadio.id = outroId;
+    outroRadio.className = 'endereco-salvo-radio';
+    outroRadio.addEventListener('change', () => {
+      _enderecoSalvoSelecionado = null;
+      _mostrarCampoEndereco(true);
+      setTimeout(() => els.inputEndereco().focus(), 50);
+    });
+
+    const outroLabel = document.createElement('label');
+    outroLabel.htmlFor = outroId;
+    outroLabel.className = 'endereco-salvo-texto endereco-salvo-outro';
+    outroLabel.textContent = '+ Outro endereço';
+
+    outroItem.appendChild(outroRadio);
+    outroItem.appendChild(outroLabel);
+    container.appendChild(outroItem);
+
+    container.classList.remove('hidden');
+  }
+
+  // ─── lookup silencioso no blur do telefone ────────────────
+  async function _lookupClienteBlur() {
+    const tel = _limparTelefone(els.inputTelefone().value);
+    if (tel.length !== 10 && tel.length !== 11) return;
+
+    try {
+      const nome = els.inputNome().value.trim() || undefined;
+      const body = { telefone: tel };
+      if (nome) body.nome = nome;
+
+      const res = await fetch(`${CONFIG.API_URL}/api/clientes/identificar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      // 400 = novo cliente sem nome — silencioso (sem chips para mostrar)
+      if (!res.ok) return;
+      const { cliente, access_token } = await res.json();
+
+      // Preenche nome apenas se o campo estiver vazio (cliente retornou da API)
+      if (!els.inputNome().value.trim()) {
+        els.inputNome().value = cliente.nome;
+      }
+
+      // Guarda em memória para uso nos chips e no envio
+      _clienteId = cliente.id;
+      _clienteToken = access_token;
+
+      _carregarEnderecosSalvos();
+    } catch {
+      // silencioso — não interrompe o fluxo
+    }
+  }
+
   // ─── identificar cliente na API ───────────────────────────
   async function _identificarCliente(nome, telefone) {
     const res = await fetch(`${CONFIG.API_URL}/api/clientes/identificar`, {
@@ -274,7 +485,7 @@ window.pedido = (() => {
 
     const body = {
       tipo:              _tipo,
-      endereco_entrega:  _tipo === 'delivery' ? els.inputEndereco().value.trim() : null,
+      endereco_entrega:  _tipo === 'delivery' ? _obterEnderecoEntrega() : null,
       metodo_pagamento:  els.inputPagamento().value,
       observacao:        els.inputObs().value.trim() || null,
       agendado_para:     _montarAgendadoPara(),
@@ -357,6 +568,11 @@ window.pedido = (() => {
       document.querySelector('#modal-pedido .modal-box'),
       (skip) => fecharModal(skip)
     );
+
+    // Máscara de telefone + lookup silencioso no blur
+    const telInput = els.inputTelefone();
+    _aplicarMascaraTelefone(telInput);
+    telInput.addEventListener('blur', _lookupClienteBlur);
 
     els.inputTipoPedido().addEventListener('change', () => {
       const agendado = els.inputTipoPedido().value === 'agendado';

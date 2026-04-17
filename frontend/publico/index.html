@@ -185,13 +185,17 @@
           <input type="text" id="input-nome" placeholder="Ex: Maria" autocomplete="given-name" />
 
           <label for="input-telefone">Telefone (WhatsApp)</label>
-          <input type="tel" id="input-telefone" placeholder="(81) 99999-9999" autocomplete="tel" />
+          <input type="tel" id="input-telefone" placeholder="(81) 99999-9999" autocomplete="tel" inputmode="numeric" />
+          <p id="erro-telefone" class="campo-erro hidden">Número inválido. Informe DDD + número (10 ou 11 dígitos).</p>
         </div>
 
         <!-- PASSO 2: endereço (só delivery) -->
         <div id="passo-endereco" class="passo hidden">
-          <label for="input-endereco">Endereço de entrega</label>
-          <input type="text" id="input-endereco" placeholder="Rua, número, bairro…" autocomplete="street-address" />
+          <div id="enderecos-salvos" class="enderecos-salvos hidden"></div>
+          <div id="wrap-endereco-novo">
+            <label for="input-endereco">Endereço de entrega</label>
+            <input type="text" id="input-endereco" placeholder="Rua, número, bairro…" autocomplete="street-address" />
+          </div>
         </div>
 
         <!-- PASSO 3: agendamento -->
