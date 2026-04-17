@@ -576,7 +576,7 @@ a {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: slideUp .22s ease-out;
+  animation: slideUp .35s ease-out;
 }
 
 /* Área scrollável (foto + corpo / passos) */
@@ -591,6 +591,57 @@ a {
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(110%); opacity: 0; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; }
+}
+
+/* Animação de fechamento (só mobile — classe adicionada via JS) */
+.modal-box.fechando,
+.drawer-box.fechando {
+  animation: slideDown .3s ease-in forwards;
+  pointer-events: none;
+}
+
+.modal.fechando .modal-overlay,
+.drawer.fechando .drawer-overlay {
+  animation: fadeOut .3s ease-in forwards;
+}
+
+/* Barra/pill indicadora de arrasto — padrão de todos os modais */
+.modal-drag-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;          /* cobre a área do cabeçalho */
+  padding-top: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  z-index: 5;
+  cursor: grab;
+}
+
+.modal-drag-handle::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,.75);
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
+}
+
+/* No modal de produto: cobre a maior parte da foto */
+#modal-produto .modal-drag-handle {
+  height: 180px;
 }
 
 .modal-fechar {
@@ -848,7 +899,7 @@ a {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: slideUp .22s ease-out;
+  animation: slideUp .35s ease-out;
 }
 
 .drawer-header {
@@ -1075,6 +1126,8 @@ a {
   color: var(--texto-sec);
   padding: 4px 8px 4px 0;
   transition: color .12s;
+  position: relative;
+  z-index: 6; /* acima do drag handle para não bloquear o toque */
 }
 
 .modal-voltar:hover { color: var(--marrom); }
@@ -1261,6 +1314,11 @@ a {
     border-radius: var(--radius-lg);
     animation: fadeScale .2s ease-out;
   }
+
+  /* Sem barra de arrasto e sem animação de saída no desktop */
+  .modal-drag-handle { display: none; }
+  .modal-box.fechando,
+  .drawer-box.fechando { animation: none; }
 
   .btn-flutuante-carrinho {
     max-width: 560px;
