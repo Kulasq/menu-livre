@@ -310,7 +310,15 @@ a {
    SEÇÃO DE CATEGORIA
    ============================================= */
 .categoria-secao {
-  padding: 0px 16px 8px;
+  padding: 0 16px 8px;
+}
+
+/* A primeira seção compensa o gap criado pelo nav sticky:
+   o nav ocupa y=0-48 no fluxo mas aparece fixo em y=72-120 no viewport,
+   deixando 48px de espaço vazio só antes do primeiro item. */
+.cardapio-container > .categoria-secao:first-child {
+  margin-top: calc(-1 * var(--nav-h));
+  padding-top: 8px;
 }
 
 .categoria-titulo {
