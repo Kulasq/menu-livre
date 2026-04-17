@@ -3,10 +3,12 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
-from app.models.cliente import Cliente
+from app.models.cliente import Cliente, Endereco
 from app.schemas.cliente import ClienteIdentificar, ClienteUpdate
 from app.services.auth_service import criar_token_cliente
 import re
+
+_LIMITE_ENDERECOS = 5
 
 
 def normalizar_telefone(telefone: str) -> str:
@@ -74,3 +76,52 @@ def atualizar_cliente(cliente_id: int, dados: ClienteUpdate, db: Session) -> Cli
         setattr(cliente, campo, valor)
     db.commit()
     return db.query(Cliente).filter(Cliente.id == cliente_id).first()
+
+
+def listar_enderecos(db: Session, cliente_id: int) -> list[Endereco]:
+    return (
+        db.query(Endereco)
+        .filter(Endereco.cliente_id == cliente_id)
+        .order_by(Endereco.criado_em.desc())
+        .all()
+    )
+
+
+def deletar_endereco(db: Session, endereco_id: int, cliente_id: int) -> None:
+    endereco = db.get(Endereco, endereco_id)
+    if not endereco:
+        raise HTTPException(status_code=404, detail="Endereço não encontrado")
+    if endereco.cliente_id != cliente_id:
+        raise HTTPException(status_code=403, detail="Sem permissão para deletar este endereço")
+    db.delete(endereco)
+    db.commit()
+
+
+def salvar_endereco_se_novo(db: Session, cliente_id: int, endereco: str) -> None:
+    """Salva endereço se ainda não existir. Remove os mais antigos quando passa do limite."""
+    texto = endereco.strip().lower()
+    if not texto:
+        return
+
+    ja_existe = (
+        db.query(Endereco)
+        .filter(Endereco.cliente_id == cliente_id)
+        .all()
+    )
+
+    for e in ja_existe:
+        if e.endereco.strip().lower() == texto:
+            return  # endereço idêntico já salvo
+
+    novo = Endereco(cliente_id=cliente_id, endereco=endereco.strip())
+    db.add(novo)
+
+    # Remover os mais antigos se ultrapassar o limite
+    total = len(ja_existe) + 1
+    if total > _LIMITE_ENDERECOS:
+        mais_antigos = sorted(ja_existe, key=lambda e: e.criado_em)
+        para_remover = total - _LIMITE_ENDERECOS
+        for antigo in mais_antigos[:para_remover]:
+            db.delete(antigo)
+
+    db.commit()
