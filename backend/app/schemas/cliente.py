@@ -29,3 +29,12 @@ class ClienteSessionResponse(BaseModel):
     cliente: ClienteResponse
     access_token: str
     token_type: str = "bearer"
+
+
+class EnderecoResponse(BaseModel):
+    id: int
+    cliente_id: int
+    endereco: str
+    criado_em: datetime
+
+    model_config = {"from_attributes": True}
