@@ -11,6 +11,7 @@ from app.models.configuracao import Configuracao
 from app.schemas.pedido import PedidoCreate, PedidoStatusUpdate, PedidoPagamentoUpdate
 from app.services.whatsapp_service import formatar_mensagem, gerar_url
 from app.services.configuracao_service import verificar_loja_aberta, calcular_proxima_abertura
+from app.services import cliente_service
 
 _TRANSICOES = {
     "pendente": {"confirmado", "cancelado"},
@@ -181,6 +182,13 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
 
     # Recarregar com todos os relacionamentos para a mensagem WhatsApp
     pedido_completo = _obter_pedido_completo(pedido.id, db)
+
+    # Auto-salvar endereço de delivery — falha silenciosa para não derrubar o pedido
+    if dados.tipo == "delivery" and dados.endereco_entrega:
+        try:
+            cliente_service.salvar_endereco_se_novo(db, cliente_id, dados.endereco_entrega)
+        except Exception:
+            pass
 
     # Atualizar stats do cliente
     cliente.total_pedidos += 1
