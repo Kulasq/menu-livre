@@ -23,6 +23,7 @@ window.pedido = (() => {
     infoPixChave:       () => document.getElementById('info-pix-chave'),
     inputObs:           () => document.getElementById('input-obs-pedido'),
     btnConfirmar:       () => document.getElementById('btn-confirmar-pedido'),
+    modalHandle:        () => document.getElementById('modal-pedido-handle'),
   };
 
   // ─── utilitários ──────────────────────────────────────────
@@ -170,9 +171,62 @@ window.pedido = (() => {
     document.body.style.overflow = 'hidden';
   }
 
-  function fecharModal() {
-    els.modal().classList.add('hidden');
-    document.body.style.overflow = '';
+  // ─── drag-to-close ───────────────────────────────────────
+  function _initDragFechar(handleEl, boxEl, fecharFn) {
+    let startY = 0, deltaY = 0;
+
+    handleEl.addEventListener('touchstart', e => {
+      if (boxEl.classList.contains('fechando')) return;
+      startY = e.touches[0].clientY;
+      deltaY = 0;
+      boxEl.style.transition = 'none';
+    }, { passive: true });
+
+    handleEl.addEventListener('touchmove', e => {
+      const d = e.touches[0].clientY - startY;
+      if (d > 0) {
+        deltaY = d;
+        boxEl.style.transform = `translateY(${d}px)`;
+      }
+    }, { passive: true });
+
+    handleEl.addEventListener('touchend', () => {
+      if (deltaY > 100) {
+        boxEl.style.transition = 'transform .2s ease-in';
+        boxEl.style.transform  = 'translateY(110%)';
+        boxEl.addEventListener('transitionend', () => {
+          boxEl.style.transition = '';
+          boxEl.style.transform  = '';
+          fecharFn(true);
+        }, { once: true });
+      } else {
+        boxEl.addEventListener('transitionend', () => {
+          boxEl.style.transition = '';
+        }, { once: true });
+        boxEl.style.transition = 'transform .25s cubic-bezier(.2,.8,.3,1)';
+        boxEl.style.transform  = '';
+      }
+    });
+  }
+
+  function fecharModal(skipAnim = false) {
+    const isMobile = window.matchMedia('(max-width: 599px)').matches;
+    const modal = els.modal();
+    if (!isMobile || skipAnim) {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+      return;
+    }
+    const box = modal.querySelector('.modal-box');
+    if (box.classList.contains('fechando')) return;
+    modal.classList.add('fechando');
+    box.classList.add('fechando');
+    box.addEventListener('animationend', () => {
+      box.classList.remove('fechando');
+      modal.classList.remove('fechando');
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }, { once: true });
   }
 
   // ─── cliente no localStorage ──────────────────────────────
@@ -294,7 +348,13 @@ window.pedido = (() => {
       window.carrinho.abrirDrawer();
     });
 
-    els.overlay().addEventListener('click', fecharModal);
+    els.overlay().addEventListener('click', () => fecharModal());
+
+    _initDragFechar(
+      els.modalHandle(),
+      document.querySelector('#modal-pedido .modal-box'),
+      (skip) => fecharModal(skip)
+    );
 
     els.inputTipoPedido().addEventListener('change', () => {
       const agendado = els.inputTipoPedido().value === 'agendado';
