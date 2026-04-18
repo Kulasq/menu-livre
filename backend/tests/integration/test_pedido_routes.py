@@ -132,6 +132,89 @@ def test_admin_listar_pedidos(client, db_teste, usuario_admin):
     assert len(r.json()) >= 1
 
 
+def test_criar_pedido_dinheiro_com_troco(client, db_teste, usuario_admin):
+    produto = criar_produto_teste(client, db_teste, usuario_admin)
+    sessao = identificar_cliente(client)
+    token_cliente = sessao["access_token"]
+
+    r = client.post(
+        "/api/pedidos",
+        json={
+            "tipo": "retirada",
+            "metodo_pagamento": "dinheiro",
+            "troco_para": 60.0,
+            "itens": [{"produto_id": produto["id"], "quantidade": 1}],
+        },
+        headers={"Authorization": f"Bearer {token_cliente}"},
+    )
+
+    assert r.status_code == 200
+    data = r.json()
+    assert data["pedido"]["troco_para"] == 60.0
+    assert "Troco para" in data["mensagem_whatsapp"]
+
+
+def test_criar_pedido_dinheiro_sem_troco(client, db_teste, usuario_admin):
+    produto = criar_produto_teste(client, db_teste, usuario_admin)
+    sessao = identificar_cliente(client)
+    token_cliente = sessao["access_token"]
+
+    r = client.post(
+        "/api/pedidos",
+        json={
+            "tipo": "retirada",
+            "metodo_pagamento": "dinheiro",
+            "itens": [{"produto_id": produto["id"], "quantidade": 1}],
+        },
+        headers={"Authorization": f"Bearer {token_cliente}"},
+    )
+
+    assert r.status_code == 200
+    data = r.json()
+    assert data["pedido"]["troco_para"] is None
+    assert "Não precisa de troco" in data["mensagem_whatsapp"]
+
+
+def test_criar_pedido_dinheiro_troco_menor_que_total_falha(client, db_teste, usuario_admin):
+    produto = criar_produto_teste(client, db_teste, usuario_admin)
+    sessao = identificar_cliente(client)
+    token_cliente = sessao["access_token"]
+
+    r = client.post(
+        "/api/pedidos",
+        json={
+            "tipo": "retirada",
+            "metodo_pagamento": "dinheiro",
+            "troco_para": 1.0,
+            "itens": [{"produto_id": produto["id"], "quantidade": 1}],
+        },
+        headers={"Authorization": f"Bearer {token_cliente}"},
+    )
+
+    assert r.status_code == 400
+    assert "troco" in r.json()["detail"].lower()
+
+
+def test_criar_pedido_pix_ignora_troco_para(client, db_teste, usuario_admin):
+    produto = criar_produto_teste(client, db_teste, usuario_admin)
+    sessao = identificar_cliente(client)
+    token_cliente = sessao["access_token"]
+
+    r = client.post(
+        "/api/pedidos",
+        json={
+            "tipo": "retirada",
+            "metodo_pagamento": "pix",
+            "troco_para": 100.0,
+            "itens": [{"produto_id": produto["id"], "quantidade": 1}],
+        },
+        headers={"Authorization": f"Bearer {token_cliente}"},
+    )
+
+    assert r.status_code == 200
+    assert r.json()["pedido"]["troco_para"] is None
+
+
 def test_admin_atualizar_status_pedido(client, db_teste, usuario_admin):
     produto = criar_produto_teste(client, db_teste, usuario_admin)
     sessao = identificar_cliente(client)
