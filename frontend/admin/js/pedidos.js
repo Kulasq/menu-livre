@@ -316,6 +316,16 @@ function abrirDetalhe(id) {
   $('#detalhe-horario').textContent = formatarDataHora(pedido.criado_em)
   $('#detalhe-pagamento').textContent = `${pagLabel} — ${pagStatus}`
 
+  const trocoRow = $('#detalhe-troco-row')
+  if (pedido.metodo_pagamento === 'dinheiro') {
+    $('#detalhe-troco').textContent = pedido.troco_para
+      ? `Troco para ${formatarPreco(pedido.troco_para)}`
+      : 'Não precisa de troco'
+    trocoRow.classList.remove('hidden')
+  } else {
+    trocoRow.classList.add('hidden')
+  }
+
   const enderecoEl = $('#detalhe-endereco')
   if (pedido.endereco_entrega) {
     enderecoEl.textContent = pedido.endereco_entrega
