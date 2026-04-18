@@ -161,6 +161,13 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
     total = subtotal + taxa_entrega
     numero = _numero_pedido(db)
 
+    if dados.metodo_pagamento == "dinheiro" and dados.troco_para is not None:
+        if dados.troco_para < total:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Troco inválido: valor deve ser maior ou igual ao total (R$ {total:.2f})",
+            )
+
     pedido = Pedido(
         numero=numero,
         cliente_id=cliente_id,
@@ -171,6 +178,7 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
         taxa_entrega=taxa_entrega,
         total=total,
         metodo_pagamento=dados.metodo_pagamento,
+        troco_para=dados.troco_para,
         status_pagamento="pendente",
         observacao=dados.observacao,
         agendado_para=agendado_para,
