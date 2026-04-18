@@ -23,6 +23,7 @@ class Pedido(Base):
     taxa_entrega: Mapped[float] = mapped_column(Float, default=0.0)
     total: Mapped[float] = mapped_column(Float, nullable=False)
     metodo_pagamento: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    troco_para: Mapped[float | None] = mapped_column(Float, nullable=True)
     status_pagamento: Mapped[str] = mapped_column(String(20), default="pendente")
     observacao: Mapped[str | None] = mapped_column(Text, nullable=True)
     agendado_para: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
