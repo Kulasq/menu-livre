@@ -1,5 +1,5 @@
 from __future__ import annotations
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from datetime import datetime, timezone
 
 
@@ -19,9 +19,16 @@ class PedidoCreate(BaseModel):
     tipo: str = Field(pattern="^(delivery|retirada)$")
     endereco_entrega: str | None = None
     metodo_pagamento: str = Field(pattern="^(pix|dinheiro|cartao)$")
+    troco_para: float | None = Field(default=None, gt=0)
     observacao: str | None = None
     agendado_para: datetime | None = None
     itens: list[PedidoItemCreate] = Field(min_length=1)
+
+    @model_validator(mode='after')
+    def validar_troco(self) -> 'PedidoCreate':
+        if self.metodo_pagamento != 'dinheiro':
+            self.troco_para = None
+        return self
 
 
 class PedidoStatusUpdate(BaseModel):
@@ -76,6 +83,7 @@ class PedidoResponse(BaseModel):
     taxa_entrega: float
     total: float
     metodo_pagamento: str | None
+    troco_para: float | None
     status_pagamento: str
     observacao: str | None
     agendado_para: datetime | None

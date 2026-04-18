@@ -226,6 +226,19 @@
           <p id="info-pix" class="info-pagamento hidden">
             🔑 Chave PIX: <strong id="info-pix-chave"></strong>
           </p>
+          <div id="bloco-troco" class="info-pagamento hidden">
+            <p class="troco-pergunta">Precisa de troco?</p>
+            <div class="troco-radios">
+              <label class="troco-radio-label">
+                <input type="radio" name="precisa-troco" value="nao" checked> Não
+              </label>
+              <label class="troco-radio-label">
+                <input type="radio" name="precisa-troco" value="sim"> Sim, troco para:
+              </label>
+            </div>
+            <input id="input-troco-para" type="text" inputmode="decimal" placeholder="R$ 0,00" class="hidden troco-input">
+            <p id="erro-troco" class="erro-campo hidden">Valor deve ser maior ou igual ao total do pedido</p>
+          </div>
         </div>
 
         <!-- PASSO 5: observação geral -->

@@ -36,11 +36,24 @@ document.addEventListener('DOMContentLoaded', () => {
   _buildHorarios()
   _setupCores()
   _carregarConfiguracoes()
+  _setupImpressao()
 
   $('#form-config').addEventListener('submit', _salvarConfiguracoes)
   $('#btn-toggle-loja').addEventListener('click', _toggleStatusLoja)
   $('#btn-restaurar-cores').addEventListener('click', _restaurarCoresPadrao)
 })
+
+function _setupImpressao() {
+  const salvo = localStorage.getItem('impressao_largura') || '80mm'
+  const radio = document.querySelector(`input[name="impressao-largura"][value="${salvo}"]`)
+  if (radio) radio.checked = true
+
+  document.querySelectorAll('input[name="impressao-largura"]').forEach(r => {
+    r.addEventListener('change', () => {
+      localStorage.setItem('impressao_largura', r.value)
+    })
+  })
+}
 
 // ── Usuário / Sidebar ─────────────────────────────────────────────────────────
 
