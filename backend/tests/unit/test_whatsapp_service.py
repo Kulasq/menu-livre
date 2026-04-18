@@ -84,7 +84,7 @@ class TestFormatarFone:
 # formatar_mensagem — testa a estrutura geral da mensagem
 # ---------------------------------------------------------------------------
 
-def _mock_pedido(tipo="delivery", metodo="pix", com_modificador=False, com_obs=True):
+def _mock_pedido(tipo="delivery", metodo="pix", com_modificador=False, com_obs=True, troco_para=None):
     """Cria um pedido fake com MagicMock para testar formatar_mensagem."""
     pedido = MagicMock()
     pedido.numero = "001"
@@ -96,6 +96,7 @@ def _mock_pedido(tipo="delivery", metodo="pix", com_modificador=False, com_obs=T
     pedido.taxa_entrega = 5.00 if tipo == "delivery" else 0.00
     pedido.total = 35.00
     pedido.metodo_pagamento = metodo
+    pedido.troco_para = troco_para
     pedido.observacao = "Sem cebola" if com_obs else None
 
     pedido.cliente.nome = "João"
@@ -159,3 +160,17 @@ class TestFormatarMensagem:
     def test_metodo_cartao_nao_mostra_chave(self):
         msg = formatar_mensagem(_mock_pedido(metodo="cartao"))
         assert "Chave" not in msg
+
+    def test_dinheiro_sem_troco_mostra_nao_precisa(self):
+        msg = formatar_mensagem(_mock_pedido(metodo="dinheiro", troco_para=None))
+        assert "Não precisa de troco" in msg
+
+    def test_dinheiro_com_troco_mostra_valor(self):
+        msg = formatar_mensagem(_mock_pedido(metodo="dinheiro", troco_para=50.00))
+        assert "Troco para" in msg
+        assert "R$ 50,00" in msg
+
+    def test_pix_nao_mostra_troco(self):
+        msg = formatar_mensagem(_mock_pedido(metodo="pix"))
+        assert "Troco" not in msg
+        assert "precisa de troco" not in msg
