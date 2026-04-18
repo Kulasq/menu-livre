@@ -316,6 +316,19 @@ function abrirDetalhe(id) {
   $('#detalhe-horario').textContent = formatarDataHora(pedido.criado_em)
   $('#detalhe-pagamento').textContent = `${pagLabel} — ${pagStatus}`
 
+  const trocoRow = $('#detalhe-troco-row')
+  if (pedido.metodo_pagamento === 'dinheiro') {
+    if (pedido.troco_para) {
+      const troco = pedido.troco_para - pedido.total
+      $('#detalhe-troco').textContent = `${formatarPreco(pedido.troco_para)} → troco de ${formatarPreco(troco)}`
+    } else {
+      $('#detalhe-troco').textContent = 'Não precisa de troco'
+    }
+    trocoRow.classList.remove('hidden')
+  } else {
+    trocoRow.classList.add('hidden')
+  }
+
   const enderecoEl = $('#detalhe-endereco')
   if (pedido.endereco_entrega) {
     enderecoEl.textContent = pedido.endereco_entrega
@@ -388,10 +401,9 @@ function imprimirPedido() {
   /* ── Helpers de formatação ──────────────────────────── */
   const TIPO_TEXTO    = { delivery: 'Delivery', retirada: 'Retirada' }
   const PGTO_TEXTO    = { pix: 'PIX', dinheiro: 'Dinheiro', cartao: 'Cartao' }
-  const STATUS_TEXTO  = {
-    pendente: 'Pendente', confirmado: 'Confirmado', em_preparo: 'Preparando',
-    pronto: 'Pronto', entregue: 'Entregue', cancelado: 'Cancelado',
-  }
+
+  /* ── Largura de impressão (preferência local do dispositivo) ── */
+  const largura = localStorage.getItem('impressao_largura') || '80mm'
 
   /* ── Monta os itens ─────────────────────────────────── */
   const itensHtml = p.itens.map(item => {
@@ -433,6 +445,12 @@ function imprimirPedido() {
     ? `<div class="campo"><span class="rotulo">OBS</span><span>${p.observacao}</span></div>`
     : ''
 
+  /* ── Troco ──────────────────────────────────────────── */
+  const trocoHtml = p.metodo_pagamento === 'dinheiro' && p.troco_para
+    ? `<div class="subtotal-row"><span>Troco para</span><span>${formatarPreco(p.troco_para)}</span></div>
+       <div class="subtotal-row" style="font-weight:bold"><span>Troco</span><span>${formatarPreco(p.troco_para - p.total)}</span></div>`
+    : ''
+
   /* ── Monta o HTML do cupom ──────────────────────────── */
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -445,7 +463,7 @@ function imprimirPedido() {
     body {
       font-family: 'Courier New', Courier, monospace;
       font-size: 11pt;
-      width: 80mm;
+      width: ${largura};
       margin: 0 auto;
       padding: 4mm 2mm;
       color: #000;
@@ -493,8 +511,8 @@ function imprimirPedido() {
     .rodape { text-align: center; font-size: 8pt; margin-top: 8px; }
 
     @media print {
-      body { width: 80mm; }
-      @page { margin: 2mm; size: 80mm auto; }
+      body { width: ${largura}; }
+      @page { margin: 2mm; size: ${largura} auto; }
     }
   </style>
 </head>
@@ -514,7 +532,6 @@ function imprimirPedido() {
   <div class="campo"><span class="rotulo">FONE</span><span>${p.cliente.telefone}</span></div>
   <div class="campo"><span class="rotulo">TIPO</span><span>${TIPO_TEXTO[p.tipo] || p.tipo}</span></div>
   <div class="campo"><span class="rotulo">PGTO</span><span>${PGTO_TEXTO[p.metodo_pagamento] || p.metodo_pagamento}</span></div>
-  <div class="campo"><span class="rotulo">STATUS</span><span>${STATUS_TEXTO[p.status] || p.status}</span></div>
   ${enderecoHtml}${agendadoHtml}${obsHtml}
 
   <div class="sep"></div>
@@ -527,6 +544,7 @@ function imprimirPedido() {
   <div class="subtotal-row"><span>Subtotal</span><span>${formatarPreco(p.subtotal)}</span></div>
   ${taxaHtml}
   <div class="total-row"><span>TOTAL</span><span>${formatarPreco(p.total)}</span></div>
+  ${trocoHtml}
 
   <div class="sep"></div>
 

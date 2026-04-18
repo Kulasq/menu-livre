@@ -21,6 +21,9 @@ window.pedido = (() => {
     inputPagamento:     () => document.getElementById('input-pagamento'),
     infoPix:            () => document.getElementById('info-pix'),
     infoPixChave:       () => document.getElementById('info-pix-chave'),
+    blocoTroco:         () => document.getElementById('bloco-troco'),
+    inputTrocoPara:     () => document.getElementById('input-troco-para'),
+    erroTroco:          () => document.getElementById('erro-troco'),
     inputObs:           () => document.getElementById('input-obs-pedido'),
     btnConfirmar:       () => document.getElementById('btn-confirmar-pedido'),
     modalHandle:        () => document.getElementById('modal-pedido-handle'),
@@ -40,8 +43,30 @@ window.pedido = (() => {
     return tel.replace(/\D/g, '');
   }
 
+  function _aplicarMascaraMoeda(input) {
+    input.addEventListener('input', () => {
+      const digits = input.value.replace(/\D/g, '');
+      if (!digits) { input.value = ''; return; }
+      const centavos = parseInt(digits, 10);
+      const reais = centavos / 100;
+      input.value = reais.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    });
+  }
+
+  function _parseMoeda(valor) {
+    if (!valor) return null;
+    const num = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+    return isNaN(num) ? null : num;
+  }
+
   function _obterEnderecoEntrega() {
     return _enderecoSalvoSelecionado || els.inputEndereco().value.trim();
+  }
+
+  function _totalFinal() {
+    const subtotal = window.carrinho.total();
+    const taxa = (_tipo === 'delivery' && _config?.taxa_entrega) ? _config.taxa_entrega : 0;
+    return subtotal + taxa;
   }
 
   // ─── máscara de telefone BR ───────────────────────────────
@@ -153,6 +178,19 @@ window.pedido = (() => {
       return false;
     }
 
+    if (els.inputPagamento().value === 'dinheiro') {
+      const precisaTroco = document.querySelector('input[name="precisa-troco"]:checked')?.value === 'sim';
+      if (precisaTroco) {
+        const total = _totalFinal();
+        const troco = _parseMoeda(els.inputTrocoPara().value);
+        if (!troco || troco < total) {
+          els.erroTroco().classList.remove('hidden');
+          els.inputTrocoPara().focus();
+          return false;
+        }
+      }
+    }
+
     return true;
   }
 
@@ -173,7 +211,7 @@ window.pedido = (() => {
   function abrirModal(tipo) {
     _tipo = tipo || 'retirada';
 
-    els.totalHeader().textContent = brl(window.carrinho.total());
+    els.totalHeader().textContent = brl(_totalFinal());
 
     els.passoEndereco().classList.toggle('hidden', _tipo !== 'delivery');
 
@@ -218,6 +256,16 @@ window.pedido = (() => {
       els.rowTipoPedido().classList.remove('hidden');
       els.campoAgendamento().classList.add('hidden');
     }
+
+    // Reseta pagamento e troco
+    els.inputPagamento().value = '';
+    els.infoPix().classList.add('hidden');
+    els.blocoTroco().classList.add('hidden');
+    els.inputTrocoPara().classList.add('hidden');
+    els.inputTrocoPara().value = '';
+    els.erroTroco().classList.add('hidden');
+    const naoTroco = document.querySelector('input[name="precisa-troco"][value="nao"]');
+    if (naoTroco) naoTroco.checked = true;
 
     els.modal().classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -483,10 +531,14 @@ window.pedido = (() => {
       modificadores: item.modificadores || [],
     }));
 
+    const precisaTroco = els.inputPagamento().value === 'dinheiro' &&
+      document.querySelector('input[name="precisa-troco"]:checked')?.value === 'sim';
+
     const body = {
       tipo:              _tipo,
       endereco_entrega:  _tipo === 'delivery' ? _obterEnderecoEntrega() : null,
       metodo_pagamento:  els.inputPagamento().value,
+      troco_para:        precisaTroco ? _parseMoeda(els.inputTrocoPara().value) : null,
       observacao:        els.inputObs().value.trim() || null,
       agendado_para:     _montarAgendadoPara(),
       itens,
@@ -584,9 +636,36 @@ window.pedido = (() => {
       }
     });
 
+    _aplicarMascaraMoeda(els.inputTrocoPara());
+
     els.inputPagamento().addEventListener('change', () => {
-      const pix = els.inputPagamento().value === 'pix';
-      els.infoPix().classList.toggle('hidden', !pix);
+      const val = els.inputPagamento().value;
+      els.infoPix().classList.toggle('hidden', val !== 'pix');
+      els.blocoTroco().classList.toggle('hidden', val !== 'dinheiro');
+      if (val !== 'dinheiro') {
+        // reset troco ao sair do dinheiro
+        document.querySelector('input[name="precisa-troco"][value="nao"]').checked = true;
+        els.inputTrocoPara().classList.add('hidden');
+        els.inputTrocoPara().value = '';
+        els.erroTroco().classList.add('hidden');
+      }
+    });
+
+    els.blocoTroco().addEventListener('change', (e) => {
+      if (e.target.name !== 'precisa-troco') return;
+      const sim = e.target.value === 'sim';
+      els.inputTrocoPara().classList.toggle('hidden', !sim);
+      els.erroTroco().classList.add('hidden');
+      if (sim) {
+        els.inputTrocoPara().value = '';
+        setTimeout(() => els.inputTrocoPara().focus(), 50);
+      } else {
+        els.inputTrocoPara().value = '';
+      }
+    });
+
+    els.inputTrocoPara().addEventListener('input', () => {
+      els.erroTroco().classList.add('hidden');
     });
 
     els.btnConfirmar().addEventListener('click', _confirmar);

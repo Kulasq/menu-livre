@@ -61,6 +61,12 @@ def formatar_mensagem(pedido, nome_loja: str = "Menu Livre") -> str:
     if pedido.metodo_pagamento == "pix":
         lines.append(f"🔑 Chave: {settings.WHATSAPP_NUMBER}")
 
+    if pedido.metodo_pagamento == "dinheiro":
+        if pedido.troco_para:
+            lines.append(f"💵 Troco para: {brl(pedido.troco_para)}")
+        else:
+            lines.append("💵 Não precisa de troco")
+
     if pedido.observacao:
         lines += ["", f"📝 *Observação:* {pedido.observacao}"]
 
