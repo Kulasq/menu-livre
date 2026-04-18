@@ -63,6 +63,12 @@ window.pedido = (() => {
     return _enderecoSalvoSelecionado || els.inputEndereco().value.trim();
   }
 
+  function _totalFinal() {
+    const subtotal = window.carrinho.total();
+    const taxa = (_tipo === 'delivery' && _config?.taxa_entrega) ? _config.taxa_entrega : 0;
+    return subtotal + taxa;
+  }
+
   // ─── máscara de telefone BR ───────────────────────────────
   function _aplicarMascaraTelefone(input) {
     input.addEventListener('input', () => {
@@ -175,7 +181,7 @@ window.pedido = (() => {
     if (els.inputPagamento().value === 'dinheiro') {
       const precisaTroco = document.querySelector('input[name="precisa-troco"]:checked')?.value === 'sim';
       if (precisaTroco) {
-        const total = window.carrinho.total();
+        const total = _totalFinal();
         const troco = _parseMoeda(els.inputTrocoPara().value);
         if (!troco || troco < total) {
           els.erroTroco().classList.remove('hidden');
@@ -205,7 +211,7 @@ window.pedido = (() => {
   function abrirModal(tipo) {
     _tipo = tipo || 'retirada';
 
-    els.totalHeader().textContent = brl(window.carrinho.total());
+    els.totalHeader().textContent = brl(_totalFinal());
 
     els.passoEndereco().classList.toggle('hidden', _tipo !== 'delivery');
 
