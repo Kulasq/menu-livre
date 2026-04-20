@@ -227,8 +227,12 @@
 
     // Fechar
     overlay.querySelector('#btn-fechar-conta').addEventListener('click', _fecharModal)
+    let _mousedownNoBackdrop = false
+    overlay.addEventListener('mousedown', (e) => {
+      _mousedownNoBackdrop = e.target === overlay
+    })
     overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) _fecharModal()
+      if (e.target === overlay && _mousedownNoBackdrop) _fecharModal()
     })
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && !overlay.classList.contains('hidden')) _fecharModal()
