@@ -574,7 +574,8 @@ a {
   backdrop-filter: blur(2px);
 }
 
-.modal-drag-handle {
+.modal-drag-handle,
+.modal-pedido-header {
   touch-action: none;
 }
 
