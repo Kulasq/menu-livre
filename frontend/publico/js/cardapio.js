@@ -5,6 +5,8 @@ window.cardapio = (() => {
   let _produtoAtual = null;
   let _quantidade = 1;
   let _modificadoresSelecionados = {}; // { grupo_id: [modificador_id, ...] }
+  let _scrollProgramatico = false;
+  let _scrollProgTimer = null;
 
   // ─── elementos ────────────────────────────────────────────
   const els = {
@@ -207,13 +209,34 @@ window.cardapio = (() => {
     });
   }
 
+  function _destacarNav(id) {
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.classList.toggle('ativo', btn.dataset.id === String(id));
+    });
+    const ativo = document.querySelector(`.nav-item[data-id="${id}"]`);
+    if (ativo) ativo.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+
   function _scrollParaCategoria(categoriaId) {
     const secao = document.getElementById(`cat-${categoriaId}`);
     if (!secao) return;
+
+    _destacarNav(categoriaId);
+
+    _scrollProgramatico = true;
+    if (_scrollProgTimer) clearTimeout(_scrollProgTimer);
+
     const offsetTop = secao.getBoundingClientRect().top + window.scrollY;
     const headerH = document.getElementById('header').offsetHeight;
     const navH = document.getElementById('nav-categorias').offsetHeight;
     window.scrollTo({ top: offsetTop - headerH - navH - 8, behavior: 'smooth' });
+
+    const liberar = () => { _scrollProgramatico = false; };
+    if ('onscrollend' in window) {
+      window.addEventListener('scrollend', liberar, { once: true });
+    } else {
+      _scrollProgTimer = setTimeout(liberar, 700);
+    }
   }
 
   function _renderCardapio() {
@@ -346,21 +369,35 @@ window.cardapio = (() => {
     const navH    = document.getElementById('nav-categorias').offsetHeight;
 
     const observer = new IntersectionObserver((entries) => {
+      if (_scrollProgramatico) return;
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
         const id = entry.target.id.replace('cat-', '');
-        document.querySelectorAll('.nav-item').forEach(btn => {
-          btn.classList.toggle('ativo', btn.dataset.id === id);
-        });
-        // centraliza o item ativo no nav
-        const ativo = document.querySelector(`.nav-item[data-id="${id}"]`);
-        if (ativo) ativo.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        _destacarNav(id);
       });
     }, {
       rootMargin: `-${headerH + navH + 8}px 0px -60% 0px`,
     });
 
     document.querySelectorAll('.categoria-secao').forEach(s => observer.observe(s));
+
+    // quando a página bate no fundo, destaca a última seção (categorias curtas no final)
+    let _rafFimPagina = null;
+    window.addEventListener('scroll', () => {
+      if (_scrollProgramatico) return;
+      if (_rafFimPagina) return;
+      _rafFimPagina = requestAnimationFrame(() => {
+        _rafFimPagina = null;
+        const distanciaDoFundo = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+        if (distanciaDoFundo <= 4) {
+          const secoes = document.querySelectorAll('.categoria-secao');
+          if (secoes.length) {
+            const ultima = secoes[secoes.length - 1];
+            _destacarNav(ultima.id.replace('cat-', ''));
+          }
+        }
+      });
+    }, { passive: true });
   }
 
   // ─── modal produto ────────────────────────────────────────
