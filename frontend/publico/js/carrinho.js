@@ -107,7 +107,7 @@ window.carrinho = (() => {
     _renderDrawer();
     const drawer = document.getElementById('drawer-carrinho');
     const box = drawer.querySelector('.drawer-box');
-    box.style.maxHeight = `${window.innerHeight}px`;
+    box.style.maxHeight = `${Math.round(window.innerHeight * 0.90)}px`;
     drawer.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }

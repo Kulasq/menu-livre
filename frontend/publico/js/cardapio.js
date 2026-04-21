@@ -388,7 +388,7 @@ window.cardapio = (() => {
     _atualizarBtnAdicionar();
 
     const box = els.modal().querySelector('.modal-box');
-    box.style.maxHeight = `${window.innerHeight}px`;
+    box.style.maxHeight = `${Math.round(window.innerHeight * 0.92)}px`;
     els.modal().classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
