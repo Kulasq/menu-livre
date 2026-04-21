@@ -363,41 +363,58 @@ window.cardapio = (() => {
     return card;
   }
 
-  // ─── observer para destacar categoria ativa no nav ────────
+  // ─── detectar categoria ativa com histerese por direção ────
   function _observarSecoes() {
-    const headerH = document.getElementById('header').offsetHeight;
-    const navH    = document.getElementById('nav-categorias').offsetHeight;
+    let _ultimoScrollY = window.scrollY;
 
-    const observer = new IntersectionObserver((entries) => {
+    function _atualizarCategoriaAtiva() {
       if (_scrollProgramatico) return;
-      entries.forEach(entry => {
-        if (!entry.isIntersecting) return;
-        const id = entry.target.id.replace('cat-', '');
-        _destacarNav(id);
-      });
-    }, {
-      rootMargin: `-${headerH + navH + 8}px 0px -60% 0px`,
-    });
 
-    document.querySelectorAll('.categoria-secao').forEach(s => observer.observe(s));
+      const secoes = document.querySelectorAll('.categoria-secao');
+      const scrollY = window.scrollY;
+      const subindo = scrollY < _ultimoScrollY;
+      _ultimoScrollY = scrollY;
 
-    // quando a página bate no fundo, destaca a última seção (categorias curtas no final)
-    let _rafFimPagina = null;
+      // quando a página bate no fundo, destaca a última seção (categorias curtas no final)
+      const distanciaDoFundo = document.documentElement.scrollHeight - window.innerHeight - scrollY;
+      if (distanciaDoFundo <= 4) {
+        if (secoes.length) _destacarNav(secoes[secoes.length - 1].id.replace('cat-', ''));
+        return;
+      }
+
+      // se o topo da primeira seção ainda está visível, ela é dominante — não depende da linha de histerese
+      if (secoes.length && secoes[0].getBoundingClientRect().top > 0) {
+        _destacarNav(secoes[0].id.replace('cat-', ''));
+        return;
+      }
+
+      // histerese: linha de detecção diferente por direção de scroll
+      // descendo → 20%: ativa cedo, assim que a seção aparece no topo
+      // subindo  → 60%: só ativa quando a seção anterior já ocupa boa parte da tela
+      const linha = window.innerHeight * (subindo ? 0.60 : 0.20);
+
+      // categoria ativa: última cujo TOPO está acima da linha de referência
+      let ativa = null;
+      for (const secao of secoes) {
+        const rect = secao.getBoundingClientRect();
+        if (rect.top > linha) break;
+        ativa = secao;
+      }
+
+      if (ativa) _destacarNav(ativa.id.replace('cat-', ''));
+    }
+
+    let _raf = null;
     window.addEventListener('scroll', () => {
-      if (_scrollProgramatico) return;
-      if (_rafFimPagina) return;
-      _rafFimPagina = requestAnimationFrame(() => {
-        _rafFimPagina = null;
-        const distanciaDoFundo = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
-        if (distanciaDoFundo <= 4) {
-          const secoes = document.querySelectorAll('.categoria-secao');
-          if (secoes.length) {
-            const ultima = secoes[secoes.length - 1];
-            _destacarNav(ultima.id.replace('cat-', ''));
-          }
-        }
+      if (_raf) return;
+      _raf = requestAnimationFrame(() => {
+        _raf = null;
+        _atualizarCategoriaAtiva();
       });
     }, { passive: true });
+
+    // estado inicial correto ao carregar a página
+    _atualizarCategoriaAtiva();
   }
 
   // ─── modal produto ────────────────────────────────────────
