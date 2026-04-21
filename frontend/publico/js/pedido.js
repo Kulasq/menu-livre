@@ -267,6 +267,8 @@ window.pedido = (() => {
     const naoTroco = document.querySelector('input[name="precisa-troco"][value="nao"]');
     if (naoTroco) naoTroco.checked = true;
 
+    const box = els.modal().querySelector('.modal-box');
+    box.style.maxHeight = `${window.innerHeight}px`;
     els.modal().classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
@@ -312,16 +314,18 @@ window.pedido = (() => {
   function fecharModal(skipAnim = false) {
     const isMobile = window.matchMedia('(max-width: 599px)').matches;
     const modal = els.modal();
+    const box = modal.querySelector('.modal-box');
     if (!isMobile || skipAnim) {
+      box.style.maxHeight = '';
       modal.classList.add('hidden');
       document.body.style.overflow = '';
       return;
     }
-    const box = modal.querySelector('.modal-box');
     if (box.classList.contains('fechando')) return;
     modal.classList.add('fechando');
     box.classList.add('fechando');
     box.addEventListener('animationend', () => {
+      box.style.maxHeight = '';
       box.classList.remove('fechando');
       modal.classList.remove('fechando');
       modal.classList.add('hidden');
