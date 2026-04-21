@@ -105,7 +105,10 @@ window.carrinho = (() => {
   // ─── drawer ───────────────────────────────────────────────
   function abrirDrawer() {
     _renderDrawer();
-    document.getElementById('drawer-carrinho').classList.remove('hidden');
+    const drawer = document.getElementById('drawer-carrinho');
+    const box = drawer.querySelector('.drawer-box');
+    box.style.maxHeight = `${window.innerHeight}px`;
+    drawer.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
 
@@ -150,17 +153,19 @@ window.carrinho = (() => {
   function fecharDrawer(skipAnim = false, callback = null) {
     const isMobile = window.matchMedia('(max-width: 599px)').matches;
     const drawer = document.getElementById('drawer-carrinho');
+    const box = drawer.querySelector('.drawer-box');
     if (!isMobile || skipAnim) {
+      box.style.maxHeight = '';
       drawer.classList.add('hidden');
       document.body.style.overflow = '';
       if (callback) callback();
       return;
     }
-    const box = drawer.querySelector('.drawer-box');
     if (box.classList.contains('fechando')) return;
     drawer.classList.add('fechando');
     box.classList.add('fechando');
     box.addEventListener('animationend', () => {
+      box.style.maxHeight = '';
       box.classList.remove('fechando');
       drawer.classList.remove('fechando');
       drawer.classList.add('hidden');

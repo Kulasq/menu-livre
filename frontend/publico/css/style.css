@@ -574,6 +574,10 @@ a {
   backdrop-filter: blur(2px);
 }
 
+.modal-drag-handle {
+  touch-action: none;
+}
+
 .modal-box {
   position: relative;
   z-index: 1;
