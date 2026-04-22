@@ -585,7 +585,7 @@ window.pedido = (() => {
       // 2. enviar pedido
       const resultado = await _enviarPedido(cliente.id, token);
 
-      // 3. limpar carrinho e redirecionar para WhatsApp
+      // 3. limpar carrinho e fechar modal
       window.carrinho.limpar();
       fecharModal();
 
@@ -593,19 +593,37 @@ window.pedido = (() => {
         const dt = new Date(resultado.pedido.agendado_para);
         const formatado = dt.toLocaleString('pt-BR', {
           timeZone: 'America/Recife',
-          day: '2-digit', month: '2-digit', year: 'numeric',
+          day: '2-digit', month: '2-digit',
           hour: '2-digit', minute: '2-digit',
         });
-        alert(`Pedido agendado para ${formatado}. Você será atendido nesse horário!`);
+        _mostrarConfirmacaoAgendamento(formatado, () => {
+          window.open(resultado.whatsapp_url, '_blank');
+        });
+      } else {
+        window.open(resultado.whatsapp_url, '_blank');
       }
-
-      window.open(resultado.whatsapp_url, '_blank');
 
     } catch (err) {
       alert(`Erro: ${err.message}`);
       btn.disabled = false;
       btn.textContent = 'Confirmar pedido';
     }
+  }
+
+  function _mostrarConfirmacaoAgendamento(formatado, onOk) {
+    const modal = document.getElementById('modal-aviso-fechado');
+    const msgEl = document.getElementById('modal-aviso-msg');
+    const btn   = document.getElementById('modal-aviso-ok');
+
+    msgEl.innerHTML = `Seu pedido foi <strong>agendado para ${formatado}</strong>.<br>Você será atendido nesse horário!`;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    btn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+      onOk();
+    }, { once: true });
   }
 
   // ─── eventos ──────────────────────────────────────────────

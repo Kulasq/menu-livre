@@ -84,14 +84,14 @@ class TestFormatarFone:
 # formatar_mensagem — testa a estrutura geral da mensagem
 # ---------------------------------------------------------------------------
 
-def _mock_pedido(tipo="delivery", metodo="pix", com_modificador=False, com_obs=True, troco_para=None):
+def _mock_pedido(tipo="delivery", metodo="pix", com_modificador=False, com_obs=True, troco_para=None, agendado_para=None):
     """Cria um pedido fake com MagicMock para testar formatar_mensagem."""
     pedido = MagicMock()
     pedido.numero = "001"
     pedido.criado_em = datetime(2025, 1, 10, 14, 30, tzinfo=timezone.utc)
     pedido.tipo = tipo
     pedido.endereco_entrega = "Rua A, 123" if tipo == "delivery" else None
-    pedido.agendado_para = None
+    pedido.agendado_para = agendado_para
     pedido.subtotal = 30.00
     pedido.taxa_entrega = 5.00 if tipo == "delivery" else 0.00
     pedido.total = 35.00
@@ -170,7 +170,38 @@ class TestFormatarMensagem:
         assert "Troco para" in msg
         assert "R$ 50,00" in msg
 
+    def test_dinheiro_com_troco_mostra_troco_calculado(self):
+        # total=35, troco_para=50 → troco=15; troco calculado aparece no resumo, antes do pagamento
+        msg = formatar_mensagem(_mock_pedido(metodo="dinheiro", troco_para=50.00))
+        assert "R$ 15,00" in msg
+        assert msg.index("Troco:") < msg.index("Troco para")
+
     def test_pix_nao_mostra_troco(self):
         msg = formatar_mensagem(_mock_pedido(metodo="pix"))
         assert "Troco" not in msg
         assert "precisa de troco" not in msg
+
+    def test_delivery_usa_emoji_moto(self):
+        msg = formatar_mensagem(_mock_pedido(tipo="delivery"))
+        assert "🏍️" in msg
+
+    def test_retirada_nao_usa_emoji_moto(self):
+        msg = formatar_mensagem(_mock_pedido(tipo="retirada"))
+        assert "🏍️" not in msg
+
+    def test_agendado_exibe_bloco_destaque(self):
+        agendado = datetime(2025, 1, 11, 18, 0, tzinfo=timezone.utc)
+        msg = formatar_mensagem(_mock_pedido(agendado_para=agendado))
+        assert "⚠️" in msg
+        assert "PEDIDO AGENDADO" in msg
+        assert "Agendado para" in msg
+
+    def test_agendado_bloco_aparece_antes_do_cliente(self):
+        agendado = datetime(2025, 1, 11, 18, 0, tzinfo=timezone.utc)
+        msg = formatar_mensagem(_mock_pedido(agendado_para=agendado))
+        assert msg.index("PEDIDO AGENDADO") < msg.index("Cliente")
+
+    def test_nao_agendado_sem_bloco_destaque(self):
+        msg = formatar_mensagem(_mock_pedido())
+        assert "PEDIDO AGENDADO" not in msg
+        assert "⚠️" not in msg
