@@ -75,8 +75,8 @@ def formatar_mensagem(pedido, nome_loja: str = "Menu Livre") -> str:
 
     if pedido.metodo_pagamento == "dinheiro":
         if pedido.troco_para:
-            lines.append(f"💵 Troco para: {brl(pedido.troco_para)}")
-            lines.append(f"💵 Troco: {brl(pedido.troco_para - pedido.total)}")
+            lines.append(f"💵 Valor recebido: {brl(pedido.troco_para)}")
+            lines.append(f"💵 *Troco: {brl(pedido.troco_para - pedido.total)}*")
         else:
             lines.append("💵 Não precisa de troco")
 
