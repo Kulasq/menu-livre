@@ -1,5 +1,6 @@
 /**
- * Gestão de pedidos — listagem, filtros, status, pagamento, notificação sonora.
+ * Gestão de pedidos — listagem, filtros, status, pagamento.
+ * A notificação sonora e o FAB de novos pedidos vivem em notificacao-pedidos.js (global).
  * Depende de: config.js, auth.js (api, auth), utils.js (toast, formatarPreco, $)
  */
 
@@ -11,13 +12,6 @@ let filtroStatus = ''
 let filtroTipo = ''
 let paginaAtual = 1
 let autoRefreshTimer = null
-
-/* Notificação */
-let idsConhecidos = new Set()
-let primeiroCarregamento = true
-let alertaTocando = false
-let alertaInterval = null
-let audioCtx = null
 
 const STATUS_LABELS = {
   pendente:   { label: 'Pendente',    classe: 'badge-aviso',   icon: () => icons.relogio },
@@ -110,77 +104,21 @@ function setupEventos() {
   $('#modal-pedido-fechar').addEventListener('click', fecharModalPedido)
   $('#modal-pedido-overlay').addEventListener('click', fecharModalPedido)
 
-  /* Banner de alerta */
-  $('#alerta-novos').addEventListener('click', dispensarAlerta)
+  /* Highlight de pedido disparado pelo FAB global (notificacao-pedidos.js) */
+  window.addEventListener('pedido:highlight', (ev) => {
+    destacarCard(ev.detail?.id)
+  })
 }
 
-
-/* ══════════════════════════════════════════════════════════
-   NOTIFICAÇÃO SONORA
-   ══════════════════════════════════════════════════════════ */
-
-function getAudioContext() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-  }
-  return audioCtx
-}
-
-/**
- * Toca um "beep-beep" usando Web Audio API (sem arquivo externo).
- */
-function tocarBeep() {
-  try {
-    const ctx = getAudioContext()
-    if (ctx.state === 'suspended') ctx.resume()
-
-    const tocar = (startTime) => {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.frequency.value = 880
-      osc.type = 'sine'
-      gain.gain.setValueAtTime(0.3, startTime)
-      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.15)
-      osc.start(startTime)
-      osc.stop(startTime + 0.15)
-    }
-
-    const now = ctx.currentTime
-    tocar(now)
-    tocar(now + 0.2)
-  } catch {
-    /* Navegador pode bloquear áudio antes da primeira interação */
-  }
-}
-
-function iniciarAlerta(novos) {
-  if (alertaTocando) return
-  alertaTocando = true
-
-  /* Mostra banner */
-  const count = novos.length
-  $('#alerta-novos-texto').textContent = count === 1
-    ? '1 pedido novo!'
-    : `${count} pedidos novos!`
-  $('#alerta-novos').classList.remove('hidden')
-
-  /* Toca imediatamente e repete a cada 3 segundos */
-  tocarBeep()
-  alertaInterval = setInterval(tocarBeep, 3000)
-
-  /* Para sozinho depois de 30 segundos */
-  setTimeout(dispensarAlerta, 30000)
-}
-
-function dispensarAlerta() {
-  alertaTocando = false
-  if (alertaInterval) {
-    clearInterval(alertaInterval)
-    alertaInterval = null
-  }
-  $('#alerta-novos').classList.add('hidden')
+function destacarCard(id) {
+  if (!id) return
+  const card = document.querySelector(`.pedido-card[data-id="${id}"]`)
+  if (!card) return
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  card.classList.remove('highlight')
+  void card.offsetWidth /* força reflow para reiniciar animação */
+  card.classList.add('highlight')
+  setTimeout(() => card.classList.remove('highlight'), 3500)
 }
 
 
@@ -195,19 +133,6 @@ async function carregarPedidos() {
     if (filtroTipo) url += `&tipo=${filtroTipo}`
 
     const data = await api.get(url)
-
-    /* Detectar pedidos novos */
-    if (primeiroCarregamento) {
-      data.forEach(p => idsConhecidos.add(p.id))
-      primeiroCarregamento = false
-    } else {
-      const novos = data.filter(p => !idsConhecidos.has(p.id))
-      if (novos.length > 0) {
-        novos.forEach(p => idsConhecidos.add(p.id))
-        iniciarAlerta(novos)
-      }
-    }
-
     pedidos = data
     renderPedidos()
   } catch (err) {
@@ -235,6 +160,7 @@ function renderPedidos() {
 
   vazio.classList.add('hidden')
   container.innerHTML = pedidos.map(p => renderCardPedido(p)).join('')
+  window.dispatchEvent(new CustomEvent('pedidos:renderizados'))
 }
 
 function renderCardPedido(pedido) {
@@ -253,7 +179,7 @@ function renderCardPedido(pedido) {
   const pagamentoLabel = pedido.status_pagamento === 'pago' ? 'Pago' : 'Pendente'
 
   return `
-    <div class="pedido-card" onclick="abrirDetalhe(${pedido.id})">
+    <div class="pedido-card" data-id="${pedido.id}" onclick="abrirDetalhe(${pedido.id})">
       <div class="pedido-card-top">
         <div class="pedido-card-info">
           <div class="pedido-card-numero">
