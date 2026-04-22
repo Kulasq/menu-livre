@@ -154,11 +154,16 @@ class TestFormatarMensagem:
         assert "Sem cebola" in msg
 
     def test_metodo_pix_mostra_chave(self):
-        msg = formatar_mensagem(_mock_pedido(metodo="pix"))
+        msg = formatar_mensagem(_mock_pedido(metodo="pix"), chave_pix="81999990000")
         assert "Chave" in msg
+        assert "81999990000" in msg
+
+    def test_metodo_pix_sem_chave_nao_mostra_chave(self):
+        msg = formatar_mensagem(_mock_pedido(metodo="pix"), chave_pix=None)
+        assert "Chave" not in msg
 
     def test_metodo_cartao_nao_mostra_chave(self):
-        msg = formatar_mensagem(_mock_pedido(metodo="cartao"))
+        msg = formatar_mensagem(_mock_pedido(metodo="cartao"), chave_pix="81999990000")
         assert "Chave" not in msg
 
     def test_dinheiro_sem_troco_mostra_nao_precisa(self):

@@ -2012,6 +2012,124 @@ textarea.form-input {
 }
 
 /* ─────────────────────────────────────────────────────────
+   Modal de notificação global de novos pedidos
+   ───────────────────────────────────────────────────────── */
+
+.notif-pedido-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9900;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+  animation: notif-fadein .25s ease;
+}
+
+.notif-pedido-overlay.hidden {
+  display: none !important;
+}
+
+@keyframes notif-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.notif-pedido-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px 32px 32px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  animation: notif-slidein .3s cubic-bezier(.2,.8,.3,1);
+  position: relative;
+  overflow: hidden;
+}
+
+.notif-pedido-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--accent, #f59e0b), #ef4444);
+  animation: notif-barra 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes notif-barra {
+  from { opacity: 1; }
+  to   { opacity: .5; }
+}
+
+@keyframes notif-slidein {
+  from { transform: translateY(-24px) scale(.96); opacity: 0; }
+  to   { transform: translateY(0) scale(1);       opacity: 1; }
+}
+
+.notif-pedido-icone {
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 12px;
+  animation: notif-shake 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes notif-shake {
+  from { transform: rotate(-8deg); }
+  to   { transform: rotate(8deg); }
+}
+
+.notif-pedido-titulo {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+
+.notif-pedido-subtitulo {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0 0 28px;
+}
+
+.notif-pedido-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notif-btn-ver {
+  font-size: 1rem;
+  padding: 12px 24px;
+}
+
+.notif-btn-dispensar {
+  font-size: 0.9rem;
+  padding: 10px 24px;
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.notif-btn-dispensar:hover {
+  background: #f8fafc;
+  color: #475569;
+}
+
+/* Destaque de card ao navegar com highlight */
+.pedido-card.highlight {
+  animation: card-pulse 1s ease-in-out 3;
+  position: relative;
+}
+
+@keyframes card-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
+  50%      { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.35); }
+}
+
+/* ─────────────────────────────────────────────────────────
    IMPRESSÃO — oculta tudo (o cupom é gerado em janela nova
    por imprimirPedido() com HTML próprio para papel térmico)
    ───────────────────────────────────────────────────────── */
