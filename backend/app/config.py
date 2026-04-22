@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     # WhatsApp
     WHATSAPP_NUMBER: str = ""
+    CARDAPIO_URL: str = ""
 
     # Uploads
     UPLOAD_DIR: str = "./uploads"

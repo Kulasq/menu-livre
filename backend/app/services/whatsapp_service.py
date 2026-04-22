@@ -12,25 +12,37 @@ def formatar_mensagem(pedido, nome_loja: str = "Menu Livre") -> str:
     def brl(valor: float) -> str:
         return f"R$ {valor:.2f}".replace(".", ",")
 
-    lines = [
+    lines = []
+    if settings.CARDAPIO_URL:
+        lines.append(f"🌐 {settings.CARDAPIO_URL}")
+
+    lines += [
         f"🍔 *{nome_loja}* — Novo Pedido!",
         "",
         f"📋 Pedido: {pedido.numero}",
+    ]
+
+    if pedido.agendado_para:
+        agendado_brt = pedido.agendado_para.replace(tzinfo=timezone.utc).astimezone(BRT)
+        agendado_str = agendado_brt.strftime("%d/%m/%Y às %H:%M")
+        lines += [
+            "",
+            "⚠️ *PEDIDO AGENDADO*",
+            f"📅 *Agendado para:* {agendado_str}",
+            "",
+        ]
+
+    lines += [
         f"👤 Cliente: {pedido.cliente.nome}",
         f"📱 Telefone: {_formatar_fone(pedido.cliente.telefone)}",
         "",
     ]
 
     tipo_label = {"delivery": "Delivery", "retirada": "Retirada"}.get(pedido.tipo, pedido.tipo)
-    lines.append(f"🚚 *Tipo:* {tipo_label}")
+    lines.append(f"🏍️ *Tipo:* {tipo_label}" if pedido.tipo == "delivery" else f"🛍️ *Tipo:* {tipo_label}")
 
     if pedido.tipo == "delivery" and pedido.endereco_entrega:
         lines.append(f"📍 *Endereço:* {pedido.endereco_entrega}")
-
-    if pedido.agendado_para:
-        agendado_brt = pedido.agendado_para.replace(tzinfo=timezone.utc).astimezone(BRT)
-        agendado_str = agendado_brt.strftime("%d/%m/%Y às %H:%M")
-        lines.append(f"📅 *Agendado para:* {agendado_str}")
 
     lines += ["", "🛍️ *Produtos:*"]
 
@@ -52,6 +64,9 @@ def formatar_mensagem(pedido, nome_loja: str = "Menu Livre") -> str:
         lines.append(f"Entrega: {brl(pedido.taxa_entrega)}")
 
     lines.append(f"*Total: {brl(pedido.total)}*")
+
+    if pedido.metodo_pagamento == "dinheiro" and pedido.troco_para:
+        lines.append(f"💵 Troco: {brl(pedido.troco_para - pedido.total)}")
 
     metodo = {"pix": "PIX", "dinheiro": "Dinheiro", "cartao": "Cartão"}.get(
         pedido.metodo_pagamento or "", pedido.metodo_pagamento or ""
