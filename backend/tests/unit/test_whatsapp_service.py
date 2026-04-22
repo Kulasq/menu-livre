@@ -171,10 +171,10 @@ class TestFormatarMensagem:
         assert "R$ 50,00" in msg
 
     def test_dinheiro_com_troco_mostra_troco_calculado(self):
-        # total=35, troco_para=50 → troco=15; troco calculado aparece no resumo, antes do pagamento
+        # total=35, troco_para=50 → troco=15; "Troco para" aparece antes do troco calculado
         msg = formatar_mensagem(_mock_pedido(metodo="dinheiro", troco_para=50.00))
         assert "R$ 15,00" in msg
-        assert msg.index("Troco:") < msg.index("Troco para")
+        assert msg.index("Troco para") < msg.index("Troco:")
 
     def test_pix_nao_mostra_troco(self):
         msg = formatar_mensagem(_mock_pedido(metodo="pix"))
