@@ -3,7 +3,7 @@ from urllib.parse import quote
 from app.config import settings
 
 
-def formatar_mensagem(pedido, nome_loja: str = "Menu Livre") -> str:
+def formatar_mensagem(pedido, nome_loja: str = "Menu Livre", chave_pix: str | None = None) -> str:
     from datetime import timezone, timedelta
     BRT = timezone(timedelta(hours=-3))
     horario = pedido.criado_em.replace(tzinfo=timezone.utc).astimezone(BRT)
@@ -59,8 +59,8 @@ def formatar_mensagem(pedido, nome_loja: str = "Menu Livre") -> str:
     )
     lines += ["", f"💳 *Pagamento:* {metodo}"]
 
-    if pedido.metodo_pagamento == "pix":
-        lines.append(f"🔑 Chave: {settings.WHATSAPP_NUMBER}")
+    if pedido.metodo_pagamento == "pix" and chave_pix:
+        lines.append(f"🔑 Chave: {chave_pix}")
 
     lines += [
         "",

@@ -205,7 +205,8 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
     db.commit()
 
     nome_loja = config.nome_loja if config else "Menu Livre"
-    mensagem = formatar_mensagem(pedido_completo, nome_loja)
+    chave_pix = config.chave_pix if config else None
+    mensagem = formatar_mensagem(pedido_completo, nome_loja, chave_pix)
     url = gerar_url(mensagem)
 
     return {
