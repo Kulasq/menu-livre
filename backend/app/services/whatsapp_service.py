@@ -54,6 +54,14 @@ def formatar_mensagem(pedido, nome_loja: str = "Menu Livre") -> str:
         if item.observacao:
             lines.append(f"  └ Obs: {item.observacao}")
 
+    metodo = {"pix": "PIX", "dinheiro": "Dinheiro", "cartao": "Cartão"}.get(
+        pedido.metodo_pagamento or "", pedido.metodo_pagamento or ""
+    )
+    lines += ["", f"💳 *Pagamento:* {metodo}"]
+
+    if pedido.metodo_pagamento == "pix":
+        lines.append(f"🔑 Chave: {settings.WHATSAPP_NUMBER}")
+
     lines += [
         "",
         "💰 *Resumo:*",
@@ -65,20 +73,10 @@ def formatar_mensagem(pedido, nome_loja: str = "Menu Livre") -> str:
 
     lines.append(f"*Total: {brl(pedido.total)}*")
 
-    if pedido.metodo_pagamento == "dinheiro" and pedido.troco_para:
-        lines.append(f"💵 Troco: {brl(pedido.troco_para - pedido.total)}")
-
-    metodo = {"pix": "PIX", "dinheiro": "Dinheiro", "cartao": "Cartão"}.get(
-        pedido.metodo_pagamento or "", pedido.metodo_pagamento or ""
-    )
-    lines += ["", f"💳 *Pagamento:* {metodo}"]
-
-    if pedido.metodo_pagamento == "pix":
-        lines.append(f"🔑 Chave: {settings.WHATSAPP_NUMBER}")
-
     if pedido.metodo_pagamento == "dinheiro":
         if pedido.troco_para:
-            lines.append(f"💵 Troco para: {brl(pedido.troco_para)}")
+            lines.append(f"💵 Valor recebido: {brl(pedido.troco_para)}")
+            lines.append(f"💵 *Troco: {brl(pedido.troco_para - pedido.total)}*")
         else:
             lines.append("💵 Não precisa de troco")
 
