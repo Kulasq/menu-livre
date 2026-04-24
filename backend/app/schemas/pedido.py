@@ -16,7 +16,7 @@ class PedidoItemCreate(BaseModel):
 
 
 class PedidoCreate(BaseModel):
-    tipo: str = Field(pattern="^(delivery|retirada)$")
+    tipo: str = Field(pattern="^(delivery|retirada|balcao)$")
     endereco_entrega: str | None = None
     metodo_pagamento: str = Field(pattern="^(pix|dinheiro|cartao)$")
     troco_para: float | None = Field(default=None, gt=0)
@@ -86,6 +86,7 @@ class PedidoResponse(BaseModel):
     troco_para: float | None
     status_pagamento: str
     observacao: str | None
+    nome_cliente_balcao: str | None = None
     agendado_para: datetime | None
     criado_em: datetime
     itens: list[PedidoItemResponse] = []
@@ -104,3 +105,37 @@ class NovoPedidoResponse(BaseModel):
     pedido: PedidoResponse
     mensagem_whatsapp: str
     whatsapp_url: str
+
+
+class PedidoAdminCreate(BaseModel):
+    """Schema para criação de pedido pelo painel admin.
+
+    Diferenças do PedidoCreate público:
+    - Aceita cliente_id (existente) OU cliente_telefone + cliente_nome (novo cliente)
+      OU nenhum (cria/reutiliza cliente sistema 'Balcão')
+    - metodo_pagamento opcional (pode ser definido depois)
+    - Bypassa validações de horário/agendamento
+    - Não gera URL WhatsApp
+    """
+    tipo: str = Field(pattern="^(delivery|retirada|balcao)$")
+    endereco_entrega: str | None = None
+    metodo_pagamento: str | None = None
+    troco_para: float | None = Field(default=None, gt=0)
+    observacao: str | None = None
+    itens: list[PedidoItemCreate] = Field(min_length=1)
+    cliente_id: int | None = None
+    cliente_telefone: str | None = None
+    cliente_nome: str | None = None
+    nome_cliente_balcao: str | None = None   # nome opcional para pedidos de balcão
+
+    @model_validator(mode='after')
+    def validar_pagamento_e_troco(self) -> 'PedidoAdminCreate':
+        if self.metodo_pagamento and self.metodo_pagamento not in ('pix', 'dinheiro', 'cartao'):
+            raise ValueError("metodo_pagamento deve ser pix, dinheiro ou cartao.")
+        if self.metodo_pagamento != 'dinheiro':
+            self.troco_para = None
+        return self
+
+
+class PedidoAdminResponse(BaseModel):
+    pedido: PedidoResponse
