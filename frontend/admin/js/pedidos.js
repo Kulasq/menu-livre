@@ -387,57 +387,72 @@ function imprimirPedido() {
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 11pt;
+      font-family: Arial, Helvetica, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-size: 12pt;
+      font-weight: 500;
+      line-height: 1.35;
       width: ${largura};
       margin: 0 auto;
       padding: 4mm 2mm;
       color: #000;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      -webkit-font-smoothing: none;
+      font-smooth: never;
+      text-rendering: geometricPrecision;
+      font-synthesis: none;
     }
 
     .centro { text-align: center; }
     .sep { border-top: 1px dashed #000; margin: 6px 0; }
 
-    h1 { font-size: 14pt; font-weight: bold; text-align: center; }
-    .subtitulo { font-size: 9pt; text-align: center; margin-bottom: 2px; }
+    h1 { font-size: 15pt; font-weight: 700; text-align: center; }
+    .subtitulo { font-size: 10pt; text-align: center; margin-bottom: 2px; }
 
-    .pedido-num { font-size: 12pt; font-weight: bold; text-align: center; margin: 4px 0; }
-    .data { font-size: 9pt; text-align: center; margin-bottom: 4px; }
+    .pedido-num { font-size: 13pt; font-weight: 700; text-align: center; margin: 4px 0; }
+    .data { font-size: 10pt; text-align: center; margin-bottom: 4px; }
 
     .campo {
       display: flex;
       gap: 6px;
-      font-size: 10pt;
+      font-size: 11pt;
       margin: 2px 0;
     }
     .rotulo {
-      font-weight: bold;
+      font-weight: 700;
       min-width: 70px;
     }
 
-    .item { margin: 3px 0; font-size: 10pt; }
-    .item-row { display: flex; justify-content: space-between; font-weight: bold; }
-    .mod, .obs { font-size: 9pt; padding-left: 8px; }
+    .item { margin: 4px 0; font-size: 11pt; }
+    .item-row { display: flex; justify-content: space-between; font-weight: 700; }
+    .mod, .obs { font-size: 10pt; padding-left: 8px; }
 
     .subtotal-row {
       display: flex;
       justify-content: space-between;
-      font-size: 10pt;
+      font-size: 11pt;
       margin: 2px 0;
     }
     .total-row {
       display: flex;
       justify-content: space-between;
-      font-size: 12pt;
-      font-weight: bold;
+      font-size: 13pt;
+      font-weight: 700;
       margin-top: 4px;
     }
 
-    .status { text-align: center; font-weight: bold; font-size: 11pt; margin: 4px 0; }
-    .rodape { text-align: center; font-size: 8pt; margin-top: 8px; }
+    .status { text-align: center; font-weight: 700; font-size: 12pt; margin: 4px 0; }
+    .rodape { text-align: center; font-size: 10pt; margin-top: 8px; }
 
     @media print {
-      body { width: ${largura}; }
+      body {
+        width: ${largura};
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        -webkit-font-smoothing: none;
+        font-smooth: never;
+      }
       @page { margin: 2mm; size: ${largura} auto; }
     }
   </style>
