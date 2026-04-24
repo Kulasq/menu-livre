@@ -418,11 +418,11 @@ function renderCardPedido(pedido, isHistorico = false) {
     <div class="pedido-card" data-id="${pedido.id}" onclick="abrirDetalhe(${pedido.id}, ${isHistorico})">
       <div class="pedido-card-top">
         <div class="pedido-card-info">
+          <div class="pedido-card-cliente">${linhaCliente}</div>
           <div class="pedido-card-numero">
-            <strong>${esc(pedido.numero)}</strong>
+            <span>${esc(pedido.numero)}</span>
             <span class="pedido-card-hora">${horario}</span>
           </div>
-          <div class="pedido-card-cliente">${linhaCliente}</div>
         </div>
         <span class="badge ${statusInfo.classe}">${statusInfo.icon()} ${statusInfo.label}</span>
       </div>

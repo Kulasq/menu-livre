@@ -742,12 +742,13 @@ a {
 .pedido-card-numero {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  margin-top: 2px;
 }
 
-.pedido-card-numero strong {
-  font-size: 1rem;
-  color: var(--texto);
+.pedido-card-numero span:first-child {
+  font-size: .82rem;
+  color: var(--texto-sec);
 }
 
 .pedido-card-hora {
@@ -756,9 +757,9 @@ a {
 }
 
 .pedido-card-cliente {
-  font-size: .85rem;
-  color: var(--texto-sec);
-  margin-top: 2px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--texto);
 }
 
 .pedido-card-meio {
