@@ -1,5 +1,6 @@
 from __future__ import annotations
 import pytest
+from datetime import datetime
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 from fastapi import HTTPException
@@ -11,10 +12,13 @@ from app.models.cliente import Cliente
 from app.models.configuracao import Configuracao
 from app.models.modificador import GrupoModificador, Modificador
 from app.schemas.pedido import (
-    PedidoCreate, PedidoItemCreate, PedidoStatusUpdate,
+    PedidoCreate, PedidoAdminCreate, PedidoItemCreate, PedidoStatusUpdate,
     PedidoItemModificadorCreate,
 )
-from app.services.pedido_service import criar_pedido, atualizar_status
+from app.services.pedido_service import (
+    criar_pedido, criar_pedido_admin, atualizar_status,
+    deletar_pedido, deletar_pedidos_periodo, listar_pedidos,
+)
 
 
 def setup_db():
@@ -531,3 +535,186 @@ def test_modificador_indisponivel_rejeita_pedido():
             db,
         )
     assert exc.value.status_code == 400
+
+# ── Helper com telefone único (evita UNIQUE constraint ao criar múltiplos pedidos) ──
+_contador_telefone = 9000
+
+def _criar_pedido_com_cliente_unico(db):
+    """Cria pedido com um cliente de telefone único para evitar conflito de UNIQUE."""
+    global _contador_telefone
+    _contador_telefone += 1
+    cat = Categoria(nome=f"Cat-{_contador_telefone}")
+    db.add(cat)
+    db.flush()
+    produto = Produto(categoria_id=cat.id, nome="X", preco=10.0, disponivel=True)
+    cliente = Cliente(nome="Teste", telefone=f"819999{_contador_telefone:05d}")
+    db.add_all([produto, cliente])
+    db.commit()
+    return criar_pedido(
+        PedidoCreate(
+            tipo="retirada",
+            metodo_pagamento="pix",
+            itens=[PedidoItemCreate(produto_id=produto.id, quantidade=1)],
+        ),
+        cliente.id,
+        db,
+    )["pedido"]
+
+
+# ══════════════════════════════════════════════════════════
+# DELETAR PEDIDO
+# ══════════════════════════════════════════════════════════
+
+def test_deletar_pedido_individual():
+    db = setup_db()
+    pedido = _criar_pedido_base(db)
+    pedido_id = pedido.id
+
+    deletar_pedido(pedido_id, db)
+
+    from app.models.pedido import Pedido as PedidoModel
+    assert db.get(PedidoModel, pedido_id) is None
+
+
+def test_deletar_pedido_inexistente_retorna_404():
+    db = setup_db()
+    with pytest.raises(HTTPException) as exc:
+        deletar_pedido(99999, db)
+    assert exc.value.status_code == 404
+
+
+def test_deletar_pedidos_periodo_hoje():
+    """Deletar pedidos do periodo hoje remove todos do dia atual."""
+    db = setup_db()
+
+    _criar_pedido_com_cliente_unico(db)
+    _criar_pedido_com_cliente_unico(db)
+
+    total = deletar_pedidos_periodo("hoje", db)
+    assert total == 2
+
+    from app.models.pedido import Pedido as PedidoModel
+    restantes = db.query(PedidoModel).count()
+    assert restantes == 0
+
+
+def test_deletar_pedidos_periodo_invalido():
+    db = setup_db()
+    with pytest.raises(HTTPException) as exc:
+        deletar_pedidos_periodo("mes", db)
+    assert exc.value.status_code == 400
+
+
+# ══════════════════════════════════════════════════════════
+# FILTRO POR DATA em listar_pedidos
+# ══════════════════════════════════════════════════════════
+
+def test_listar_pedidos_filtra_por_data_hoje():
+    from datetime import date, timezone
+    db = setup_db()
+
+    _criar_pedido_com_cliente_unico(db)
+    _criar_pedido_com_cliente_unico(db)
+
+    # Filtra pelo dia UTC atual (mesma base usada pelo service)
+    hoje_utc = datetime.now(timezone.utc).date()
+    resultado = listar_pedidos(db, data_inicio=hoje_utc, data_fim=hoje_utc)
+    assert len(resultado) == 2
+
+
+def test_listar_pedidos_data_passada_retorna_vazio():
+    """Filtrar por data passada (2020-01-01) não deve retornar pedidos criados agora."""
+    from datetime import date
+    db = setup_db()
+
+    _criar_pedido_base(db)
+
+    passado = date(2020, 1, 1)
+    resultado = listar_pedidos(db, data_inicio=passado, data_fim=passado)
+    assert len(resultado) == 0
+
+
+# ══════════════════════════════════════════════════════════
+# CRIAR PEDIDO ADMIN
+# ══════════════════════════════════════════════════════════
+
+def test_criar_pedido_admin_com_cliente_existente():
+    db = setup_db()
+    produto, cliente = criar_base(db)
+
+    resultado = criar_pedido_admin(
+        PedidoAdminCreate(
+            tipo="balcao",
+            metodo_pagamento="pix",
+            itens=[PedidoItemCreate(produto_id=produto.id, quantidade=1)],
+            cliente_id=cliente.id,
+        ),
+        db,
+    )
+
+    pedido = resultado["pedido"]
+    assert pedido.numero.startswith("ML-")
+    assert pedido.tipo == "balcao"
+    assert pedido.status == "pendente"
+    assert pedido.total == 44.90
+
+
+def test_criar_pedido_admin_cria_cliente_novo():
+    db = setup_db()
+    produto, _ = criar_base(db)
+
+    resultado = criar_pedido_admin(
+        PedidoAdminCreate(
+            tipo="retirada",
+            metodo_pagamento="dinheiro",
+            itens=[PedidoItemCreate(produto_id=produto.id, quantidade=1)],
+            cliente_telefone="81999990099",
+            cliente_nome="Joao da Silva",
+        ),
+        db,
+    )
+
+    pedido = resultado["pedido"]
+    assert pedido.cliente.nome == "Joao da Silva"
+    assert pedido.cliente.telefone == "81999990099"
+
+
+def test_criar_pedido_admin_bypass_loja_fechada():
+    """Admin consegue criar pedido mesmo com loja fechada manualmente."""
+    db = setup_db()
+    produto, cliente = criar_base(db)
+
+    config = Configuracao(id=1, whatsapp="", fechado_manualmente=True, mensagem_fechado="Fechado")
+    db.add(config)
+    db.commit()
+
+    resultado = criar_pedido_admin(
+        PedidoAdminCreate(
+            tipo="balcao",
+            metodo_pagamento="pix",
+            itens=[PedidoItemCreate(produto_id=produto.id, quantidade=1)],
+            cliente_id=cliente.id,
+        ),
+        db,
+    )
+    assert resultado["pedido"] is not None
+
+
+def test_criar_pedido_admin_sem_cliente_usa_balcao():
+    """Sem cliente_id nem telefone, o service cria/reutiliza o cliente sistema 'Balcão'."""
+    db = setup_db()
+    produto, _ = criar_base(db)
+
+    config = Configuracao(id=1, whatsapp="")
+    db.add(config)
+    db.commit()
+
+    resultado = criar_pedido_admin(
+        PedidoAdminCreate(
+            tipo="balcao",
+            itens=[PedidoItemCreate(produto_id=produto.id, quantidade=1)],
+        ),
+        db,
+    )
+    assert resultado["pedido"] is not None
+    assert resultado["pedido"].cliente.nome == "Balcão"
