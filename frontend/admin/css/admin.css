@@ -2317,6 +2317,18 @@ textarea.form-input {
   white-space: nowrap;
 }
 
+/* Wrapper do card no histórico: checkbox à esquerda, card ocupa o resto */
+.hist-card-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.hist-card-wrapper .pedido-card {
+  flex: 1;
+  min-width: 0;
+}
+
 /* Checkbox de seleção no histórico */
 .hist-checkbox {
   width: 17px;
@@ -2324,8 +2336,7 @@ textarea.form-input {
   accent-color: var(--primaria, #f59e0b);
   cursor: pointer;
   flex-shrink: 0;
-  align-self: center;
-  margin-right: 4px;
+  margin-top: 20px; /* alinha verticalmente com o número do pedido */
 }
 
 /* Destaque de card ao navegar com highlight */
