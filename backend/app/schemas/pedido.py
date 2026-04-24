@@ -105,6 +105,8 @@ class NovoPedidoResponse(BaseModel):
     pedido: PedidoResponse
     mensagem_whatsapp: str
     whatsapp_url: str
+    pix_br_code: str | None = None
+    pix_qr_code_base64: str | None = None
 
 
 class PedidoAdminCreate(BaseModel):

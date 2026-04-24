@@ -2,6 +2,8 @@ window.pedido = (() => {
   // ─── estado ───────────────────────────────────────────────
   let _tipo   = 'retirada'; // 'retirada' | 'delivery'
   let _config = null;       // config pública carregada no init
+  let _pixBrCode = null;    // payload Pix Copia e Cola do pedido confirmado
+  let _pixWhatsappUrl = null;
 
   // ─── elementos ────────────────────────────────────────────
   const els = {
@@ -19,8 +21,6 @@ window.pedido = (() => {
     campoAgendamento:   () => document.getElementById('campo-agendamento'),
     inputHora:          () => document.getElementById('input-hora'),
     inputPagamento:     () => document.getElementById('input-pagamento'),
-    infoPix:            () => document.getElementById('info-pix'),
-    infoPixChave:       () => document.getElementById('info-pix-chave'),
     blocoTroco:         () => document.getElementById('bloco-troco'),
     inputTrocoPara:     () => document.getElementById('input-troco-para'),
     erroTroco:          () => document.getElementById('erro-troco'),
@@ -259,7 +259,6 @@ window.pedido = (() => {
 
     // Reseta pagamento e troco
     els.inputPagamento().value = '';
-    els.infoPix().classList.add('hidden');
     els.blocoTroco().classList.add('hidden');
     els.inputTrocoPara().classList.add('hidden');
     els.inputTrocoPara().value = '';
@@ -589,7 +588,9 @@ window.pedido = (() => {
       window.carrinho.limpar();
       fecharModal();
 
-      if (resultado.pedido.agendado_para) {
+      if (resultado.pix_br_code && resultado.pix_qr_code_base64) {
+        _abrirModalPix(resultado);
+      } else if (resultado.pedido.agendado_para) {
         const dt = new Date(resultado.pedido.agendado_para);
         const formatado = dt.toLocaleString('pt-BR', {
           timeZone: 'America/Recife',
@@ -608,6 +609,58 @@ window.pedido = (() => {
       btn.disabled = false;
       btn.textContent = 'Confirmar pedido';
     }
+  }
+
+  function _abrirModalPix(resultado) {
+    _pixBrCode = resultado.pix_br_code;
+    _pixWhatsappUrl = resultado.whatsapp_url;
+
+    document.getElementById('pix-num-pedido').textContent = resultado.pedido.numero;
+    document.getElementById('pix-valor').textContent = brl(resultado.pedido.total);
+    document.getElementById('pix-qr-img').src = resultado.pix_qr_code_base64;
+
+    const modalPix = document.getElementById('modal-pix-pagamento');
+    modalPix.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    document.getElementById('modal-pix-overlay').addEventListener('click', _fecharModalPix, { once: true });
+
+    const btnCopiar = document.getElementById('btn-copiar-pix');
+    btnCopiar.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(_pixBrCode);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = _pixBrCode;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      const original = btnCopiar.textContent;
+      btnCopiar.textContent = '✓ Copiado!';
+      setTimeout(() => { btnCopiar.textContent = original; }, 2000);
+    };
+
+    document.getElementById('btn-pix-whatsapp').onclick = () => {
+      const url = _pixWhatsappUrl;
+      _fecharModalPix();
+      window.open(url, '_blank');
+    };
+
+    _initDragFechar(
+      modalPix.querySelector('.modal-drag-handle'),
+      modalPix.querySelector('.modal-box'),
+      _fecharModalPix
+    );
+  }
+
+  function _fecharModalPix() {
+    const modalPix = document.getElementById('modal-pix-pagamento');
+    modalPix.classList.add('hidden');
+    document.body.style.overflow = '';
+    _pixBrCode = null;
+    _pixWhatsappUrl = null;
   }
 
   function _mostrarConfirmacaoAgendamento(formatado, onOk) {
@@ -662,7 +715,6 @@ window.pedido = (() => {
 
     els.inputPagamento().addEventListener('change', () => {
       const val = els.inputPagamento().value;
-      els.infoPix().classList.toggle('hidden', val !== 'pix');
       els.blocoTroco().classList.toggle('hidden', val !== 'dinheiro');
       if (val !== 'dinheiro') {
         // reset troco ao sair do dinheiro
@@ -699,11 +751,6 @@ window.pedido = (() => {
       const res = await fetch(`${CONFIG.API_URL}/api/configuracao`);
       if (!res.ok) return;
       _config = await res.json();
-      if (_config.chave_pix) {
-        els.infoPixChave().textContent = _config.chave_pix;
-      } else if (_config.whatsapp) {
-        els.infoPixChave().textContent = _config.whatsapp;
-      }
     } catch {
       // silencioso — config não é crítica para abrir o modal
     }

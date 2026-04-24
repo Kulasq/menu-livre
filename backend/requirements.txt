@@ -25,6 +25,9 @@ limits==3.14.0
 python-multipart==0.0.20
 Pillow==11.1.0
 
+# PIX QR Code
+qrcode[pil]==7.4.2
+
 # Agendamento (backup)
 schedule==1.2.2
 
