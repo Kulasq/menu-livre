@@ -300,9 +300,9 @@ a {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 4px 12px 20px;
+  padding: 4px 12px 12px;
   border-bottom: 1px solid rgba(255,255,255,.08);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .sidebar-brand-icon {
@@ -403,7 +403,6 @@ a {
   justify-content: space-between;
   padding: 0 32px;
   height: var(--header-h);
-  margin-left: var(--sidebar-w);
 }
 
 .admin-header-titulo {
@@ -442,8 +441,9 @@ a {
 .admin-conteudo {
   grid-area: conteudo;
   padding: 28px 32px 48px;
-  margin-left: var(--sidebar-w);
   max-width: 1200px;
+  width: 100%;
+  margin-inline: auto;
 }
 
 /* ── Botão menu mobile ── */
