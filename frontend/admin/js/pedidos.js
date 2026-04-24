@@ -693,14 +693,14 @@ function imprimirPedido() {
 
   const itensHtml = p.itens.map(item => {
     const mods = item.modificadores.length
-      ? item.modificadores.map(m => `<div class="mod">  + ${m.nome_snapshot}</div>`).join('')
+      ? item.modificadores.map(m => `<div class="mod">+ ${m.nome_snapshot}</div>`).join('')
       : ''
-    const obs = item.observacao ? `<div class="obs">  Obs: ${item.observacao}</div>` : ''
+    const obs = item.observacao ? `<div class="obs">Obs: ${item.observacao}</div>` : ''
     return `
       <div class="item">
         <div class="item-row">
-          <span>${item.quantidade}x ${item.nome_snapshot}</span>
-          <span>${formatarPreco(item.subtotal)}</span>
+          <span class="item-nome">${item.quantidade}x ${item.nome_snapshot}</span>
+          <span class="item-preco">${formatarPreco(item.subtotal)}</span>
         </div>
         ${mods}${obs}
       </div>`
@@ -723,6 +723,15 @@ function imprimirPedido() {
        <div class="subtotal-row" style="font-weight:bold"><span>Troco</span><span>${formatarPreco(p.troco_para - p.total)}</span></div>`
     : ''
 
+  // Para balcão: mostrar nome_cliente_balcao (se tiver) ou "Balcão"; ocultar telefone "00000000000"
+  const nomeImpressao = p.tipo === 'balcao'
+    ? (p.nome_cliente_balcao || 'Balcão')
+    : p.cliente.nome
+  const foneImpressao = p.tipo === 'balcao' ? null : p.cliente.telefone
+  const foneHtml = foneImpressao
+    ? `<div class="campo"><span class="rotulo">FONE</span><span>${foneImpressao}</span></div>`
+    : ''
+
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -730,20 +739,22 @@ function imprimirPedido() {
   <title>Pedido ${p.numero}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Courier New', Courier, monospace; font-size: 13pt; width: ${largura}; margin: 0 auto; padding: 4mm 2mm; color: #000; }
-    .centro { text-align: center; }
-    .sep { border-top: 1px dashed #000; margin: 6px 0; }
-    h1 { font-size: 16pt; font-weight: bold; text-align: center; }
-    .subtitulo { font-size: 11pt; text-align: center; margin-bottom: 2px; }
-    .pedido-num { font-size: 14pt; font-weight: bold; text-align: center; margin: 4px 0; }
-    .data { font-size: 11pt; text-align: center; margin-bottom: 4px; }
-    .campo { display: flex; gap: 6px; font-size: 12pt; margin: 2px 0; }
-    .rotulo { font-weight: bold; min-width: 70px; }
-    .item { margin: 3px 0; font-size: 12pt; }
-    .item-row { display: flex; justify-content: space-between; font-weight: bold; }
-    .mod, .obs { font-size: 11pt; padding-left: 8px; }
-    .subtotal-row { display: flex; justify-content: space-between; font-size: 12pt; margin: 2px 0; }
-    .total-row { display: flex; justify-content: space-between; font-size: 14pt; font-weight: bold; margin-top: 4px; }
+    body { font-family: 'Courier New', Courier, monospace; font-size: 12pt; width: ${largura}; margin: 0 auto; padding: 4mm 2mm; color: #000; }
+    .sep { border-top: 1px dashed #000; margin: 5px 0; }
+    h1 { font-size: 15pt; font-weight: bold; text-align: center; }
+    .subtitulo { font-size: 10pt; text-align: center; margin-bottom: 2px; }
+    .pedido-num { font-size: 13pt; font-weight: bold; text-align: center; margin: 4px 0; }
+    .data { font-size: 10pt; text-align: center; margin-bottom: 4px; }
+    .campo { display: flex; gap: 4px; font-size: 11pt; margin: 2px 0; word-break: break-word; }
+    .rotulo { font-weight: bold; min-width: 65px; flex-shrink: 0; }
+    .campo span:last-child { flex: 1; }
+    .item { margin: 4px 0; font-size: 11pt; }
+    .item-row { display: flex; gap: 6px; align-items: baseline; }
+    .item-nome { flex: 1; word-break: break-word; font-weight: bold; }
+    .item-preco { white-space: nowrap; font-weight: bold; }
+    .mod, .obs { font-size: 10pt; padding-left: 4px; }
+    .subtotal-row { display: flex; justify-content: space-between; font-size: 11pt; margin: 2px 0; }
+    .total-row { display: flex; justify-content: space-between; font-size: 13pt; font-weight: bold; margin-top: 4px; }
     .rodape { text-align: center; font-size: 10pt; margin-top: 8px; }
     @media print { body { width: ${largura}; } @page { margin: 2mm; size: ${largura} auto; } }
   </style>
@@ -755,10 +766,10 @@ function imprimirPedido() {
   <div class="pedido-num">Pedido ${p.numero}</div>
   <div class="data">${formatarDataHora(p.criado_em)}</div>
   <div class="sep"></div>
-  <div class="campo"><span class="rotulo">CLIENTE</span><span>${p.cliente.nome}</span></div>
-  <div class="campo"><span class="rotulo">FONE</span><span>${p.cliente.telefone}</span></div>
+  <div class="campo"><span class="rotulo">CLIENTE</span><span>${nomeImpressao}</span></div>
+  ${foneHtml}
   <div class="campo"><span class="rotulo">TIPO</span><span>${TIPO_TEXTO[p.tipo] || p.tipo}</span></div>
-  <div class="campo"><span class="rotulo">PGTO</span><span>${PGTO_TEXTO[p.metodo_pagamento] || p.metodo_pagamento}</span></div>
+  <div class="campo"><span class="rotulo">PGTO</span><span>${PGTO_TEXTO[p.metodo_pagamento] || '—'}</span></div>
   ${enderecoHtml}${agendadoHtml}${obsHtml}
   <div class="sep"></div>
   <div style="font-weight:bold;font-size:10pt;margin-bottom:4px;">ITENS:</div>
@@ -914,7 +925,7 @@ function pdvRenderProdutos(busca = '') {
     html += `<div class="pdv-categoria-titulo" data-cat="${cat.id}">${esc(cat.nome)}</div>`
     for (const prod of prods) {
       const imgHtml = prod.foto_url
-        ? `<img src="${esc(prod.foto_url)}" alt="${esc(prod.nome)}" class="pdv-produto-card-img" loading="lazy" />`
+        ? `<img src="${CONFIG.API_URL}${esc(prod.foto_url)}" alt="${esc(prod.nome)}" class="pdv-produto-card-img" loading="lazy" />`
         : `<div class="pdv-produto-card-img-placeholder"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:32px;height:32px"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg></div>`
       html += `
         <div class="pdv-produto-card" onclick="abrirModalProduto(${prod.id})">
@@ -947,7 +958,7 @@ function abrirModalProduto(produtoId) {
   // Imagem
   const img = $('#pdv-prod-img')
   if (produto.foto_url) {
-    img.src = produto.foto_url
+    img.src = CONFIG.API_URL + produto.foto_url
     img.alt = produto.nome
     img.classList.remove('hidden')
   } else {
@@ -1180,6 +1191,8 @@ async function pdvCriarPedido() {
 
   try {
     const res = await api.post('/api/admin/pedidos', payload)
+    // Auto-confirmar: pedido criado pelo admin já está ciente, não precisa notificar
+    await api.patch(`/api/admin/pedidos/${res.pedido.id}/status`, { status: 'confirmado' })
     toast.sucesso(`Pedido ${res.pedido.numero} criado!`)
     fecharPdv()
     await carregarPedidosHoje()
