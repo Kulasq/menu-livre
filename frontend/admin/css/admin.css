@@ -2556,6 +2556,9 @@ textarea.form-input {
   padding: 16px;
   overflow-y: auto;
   align-content: start;
+  align-items: start; /* células com altura do próprio conteúdo, sem esticar os cards */
+  flex: 1;
+  min-height: 0;
 }
 
 .pdv-produto-card {
@@ -2573,6 +2576,7 @@ textarea.form-input {
 }
 
 .pdv-produto-card-img {
+  display: block;
   width: 100%;
   aspect-ratio: 4/3;
   object-fit: cover;
@@ -2714,11 +2718,14 @@ textarea.form-input {
   background: var(--branco, #fff);
   cursor: pointer;
   font-size: 1rem;
+  line-height: 1;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--texto-pri, #0f172a);
   transition: background .15s;
+  user-select: none;
 }
 
 .pdv-qtd-btn:hover { background: var(--fundo-alt, #f1f5f9); }
