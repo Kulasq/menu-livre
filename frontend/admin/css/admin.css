@@ -2907,6 +2907,78 @@ textarea.form-input {
 
 
 /* ─────────────────────────────────────────────────────────
+   PDV — RESPONSIVIDADE MOBILE
+   ───────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  /* Layout: empilhar categorias (horizontal) → produtos → carrinho */
+  .pdv-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    overflow-y: auto;
+  }
+
+  /* Categorias: barra horizontal com scroll */
+  .pdv-categorias {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-bottom: 1px solid var(--borda, #e2e8f0);
+    padding: 6px 8px;
+    gap: 4px;
+    display: flex;
+    height: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .pdv-categorias::-webkit-scrollbar { display: none; }
+
+  .pdv-cat-btn {
+    white-space: nowrap;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--borda, #e2e8f0);
+    font-size: .82rem;
+    width: auto;
+  }
+  .pdv-cat-btn.ativa {
+    border-color: var(--accent, #f59e0b);
+  }
+
+  /* Produtos: altura limitada com scroll */
+  .pdv-produtos-col {
+    max-height: 45vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pdv-produtos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  /* Carrinho: abaixo dos produtos, borda no topo */
+  .pdv-carrinho {
+    border-left: none;
+    border-top: 2px solid var(--borda, #e2e8f0);
+    max-height: 50vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Modal de produto: fullscreen no mobile */
+  .pdv-modal-produto-box {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    overflow-y: auto;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
    IMPRESSÃO — oculta tudo (o cupom é gerado em janela nova
    por imprimirPedido() com HTML próprio para papel térmico)
    ───────────────────────────────────────────────────────── */
