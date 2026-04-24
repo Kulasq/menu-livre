@@ -344,8 +344,8 @@ function imprimirPedido() {
     return `
       <div class="item">
         <div class="item-row">
-          <span>${item.quantidade}x ${item.nome_snapshot}</span>
-          <span>${formatarPreco(item.subtotal)}</span>
+          <span class="item-nome">${item.quantidade}x ${item.nome_snapshot}</span>
+          <span class="item-preco">${formatarPreco(item.subtotal)}</span>
         </div>
         ${mods}${obs}
       </div>`
@@ -415,18 +415,23 @@ function imprimirPedido() {
 
     .campo {
       display: flex;
-      gap: 6px;
+      gap: 4px;
       font-size: 11pt;
       margin: 2px 0;
+      word-break: break-word;
     }
     .rotulo {
       font-weight: 700;
-      min-width: 70px;
+      min-width: 65px;
+      flex-shrink: 0;
     }
+    .campo span:last-child { flex: 1; }
 
     .item { margin: 4px 0; font-size: 11pt; }
-    .item-row { display: flex; justify-content: space-between; font-weight: 700; }
-    .mod, .obs { font-size: 10pt; padding-left: 8px; }
+    .item-row { display: flex; gap: 6px; align-items: baseline; }
+    .item-nome { flex: 1; word-break: break-word; font-weight: 700; }
+    .item-preco { white-space: nowrap; font-weight: 700; }
+    .mod, .obs { font-size: 10pt; padding-left: 4px; }
 
     .subtotal-row {
       display: flex;
