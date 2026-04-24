@@ -210,11 +210,23 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
     mensagem = formatar_mensagem(pedido_completo, nome_loja, chave_pix)
     url = gerar_url(mensagem)
 
-    return {
+    resultado: dict = {
         "pedido": pedido_completo,
         "mensagem_whatsapp": mensagem,
         "whatsapp_url": url,
+        "pix_br_code": None,
+        "pix_qr_code_base64": None,
     }
+
+    if dados.metodo_pagamento == "pix" and chave_pix:
+        from app.services.pix_service import gerar_cobranca_pix
+        tipo_chave = config.tipo_chave_pix if config else None
+        cobranca = gerar_cobranca_pix(chave_pix, total, nome_loja, tipo_chave=tipo_chave)
+        if cobranca:
+            resultado["pix_br_code"] = cobranca["br_code"]
+            resultado["pix_qr_code_base64"] = cobranca["qr_code_base64"]
+
+    return resultado
 
 
 def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
