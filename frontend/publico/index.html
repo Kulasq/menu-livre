@@ -224,9 +224,6 @@
             <option value="dinheiro">Dinheiro</option>
             <option value="cartao">Cartão (maquineta)</option>
           </select>
-          <p id="info-pix" class="info-pagamento hidden">
-            🔑 Chave PIX: <strong id="info-pix-chave"></strong>
-          </p>
           <div id="bloco-troco" class="info-pagamento hidden">
             <p class="troco-pergunta">Precisa de troco?</p>
             <div class="troco-radios">
@@ -252,6 +249,32 @@
       <div class="modal-rodape">
         <button id="btn-confirmar-pedido" class="btn-primario">
           Confirmar pedido
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL pagamento PIX (aparece após confirmar pedido com metodo=pix) -->
+  <div id="modal-pix-pagamento" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="pix-modal-titulo">
+    <div class="modal-overlay" id="modal-pix-overlay"></div>
+    <div class="modal-box modal-box-pix">
+      <div class="modal-drag-handle" aria-hidden="true"></div>
+      <div class="modal-scroll">
+        <h2 id="pix-modal-titulo" class="pix-titulo">Pague com PIX</h2>
+        <p class="pix-numero-pedido">Pedido <strong id="pix-num-pedido"></strong></p>
+        <p class="pix-total-label">Total a pagar: <strong id="pix-valor"></strong></p>
+        <div class="pix-qr-wrapper">
+          <img id="pix-qr-img" class="pix-qr-img" alt="QR Code PIX">
+          <button type="button" id="btn-copiar-pix" class="btn-copiar-pix">
+            Copiar código Pix
+          </button>
+          <p class="pix-hint">Cole no app do seu banco — o valor já vai preenchido</p>
+          <p class="pix-aviso">⚠️ Após pagar, envie o comprovante pelo WhatsApp para confirmarmos seu pedido</p>
+        </div>
+      </div>
+      <div class="modal-rodape">
+        <button id="btn-pix-whatsapp" class="btn-primario">
+          Finalizar pedido
         </button>
       </div>
     </div>
