@@ -865,6 +865,7 @@ async function abrirPdv(tipo) {
   $('#pdv-btn-criar').disabled = true
 
   $('#pdv-overlay').classList.remove('hidden')
+  document.body.style.overflow = 'hidden'
 
   // Carrega cardápio se necessário
   if (!cardapioCache) {
@@ -883,6 +884,7 @@ async function abrirPdv(tipo) {
 
 function fecharPdv() {
   $('#pdv-overlay').classList.add('hidden')
+  document.body.style.overflow = ''
 }
 
 /* ── Categorias ────────────────────────────────────────── */
