@@ -151,7 +151,7 @@ def test_criar_pedido_dinheiro_com_troco(client, db_teste, usuario_admin):
     assert r.status_code == 200
     data = r.json()
     assert data["pedido"]["troco_para"] == 60.0
-    assert "Troco para" in data["mensagem_whatsapp"]
+    assert "Valor recebido" in data["mensagem_whatsapp"]
 
 
 def test_criar_pedido_dinheiro_sem_troco(client, db_teste, usuario_admin):

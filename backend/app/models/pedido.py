@@ -26,6 +26,7 @@ class Pedido(Base):
     troco_para: Mapped[float | None] = mapped_column(Float, nullable=True)
     status_pagamento: Mapped[str] = mapped_column(String(20), default="pendente")
     observacao: Mapped[str | None] = mapped_column(Text, nullable=True)
+    nome_cliente_balcao: Mapped[str | None] = mapped_column(String(100), nullable=True)
     agendado_para: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     pontos_gerados: Mapped[int] = mapped_column(Integer, default=0)
     criado_em: Mapped[datetime] = mapped_column(
