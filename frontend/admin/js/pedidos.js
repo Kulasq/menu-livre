@@ -126,6 +126,10 @@ function setupEventos() {
   $('#btn-confirmacao-cancelar').addEventListener('click', fecharConfirmacao)
 
   // Histórico — dropdown período
+  const hoje = dataHoje()
+  $('#hist-data-inicio').max = hoje
+  $('#hist-data-fim').max = hoje
+
   $('#hist-periodo').addEventListener('change', () => {
     const periodo = $('#hist-periodo').value
     $('#hist-datas-custom').classList.toggle('hidden', periodo !== 'personalizado')
@@ -134,10 +138,30 @@ function setupEventos() {
       carregarHistorico()
     }
   })
-  $('#btn-buscar-historico').addEventListener('click', () => {
+
+  // Auto-busca ao mudar tipo no histórico
+  $('#hist-filtro-tipo').addEventListener('change', () => {
     histPagina = 1
     carregarHistorico()
   })
+
+  // Datas personalizadas — validação e auto-busca
+  $('#hist-data-inicio').addEventListener('change', () => {
+    const inicio = $('#hist-data-inicio').value
+    const fim = $('#hist-data-fim').value
+    // fim não pode ser anterior ao início
+    $('#hist-data-fim').min = inicio || ''
+    if (fim && inicio && fim < inicio) $('#hist-data-fim').value = inicio
+    if (inicio && fim) { histPagina = 1; carregarHistorico() }
+  })
+  $('#hist-data-fim').addEventListener('change', () => {
+    const inicio = $('#hist-data-inicio').value
+    const fim = $('#hist-data-fim').value
+    // início não pode ser posterior ao fim
+    $('#hist-data-inicio').max = fim || hoje
+    if (inicio && fim) { histPagina = 1; carregarHistorico() }
+  })
+
   $('#btn-excluir-selecionados').addEventListener('click', excluirSelecionados)
   $('#hist-selecionar-todos').addEventListener('change', (e) => selecionarTodosHist(e.target.checked))
   $('#hist-btn-anterior').addEventListener('click', () => {
@@ -390,17 +414,9 @@ function renderCardPedido(pedido, isHistorico = false) {
     linhaCliente = `${esc(pedido.cliente.nome)} · ${esc(pedido.cliente.telefone)}`
   }
 
-  const checkboxHtml = isHistorico ? `
-    <input type="checkbox" class="hist-checkbox" data-id="${pedido.id}"
-      onclick="event.stopPropagation()"
-      onchange="toggleSelecaoHist(${pedido.id}, this.checked)"
-      ${histSelecionados.has(pedido.id) ? 'checked' : ''}
-    />` : ''
-
-  return `
+  const cardHtml = `
     <div class="pedido-card" data-id="${pedido.id}" onclick="abrirDetalhe(${pedido.id}, ${isHistorico})">
       <div class="pedido-card-top">
-        ${checkboxHtml}
         <div class="pedido-card-info">
           <div class="pedido-card-numero">
             <strong>${esc(pedido.numero)}</strong>
@@ -436,6 +452,19 @@ function renderCardPedido(pedido, isHistorico = false) {
           ` : ''}
         </div>
       </div>
+    </div>
+  `
+
+  if (!isHistorico) return cardHtml
+
+  return `
+    <div class="hist-card-wrapper">
+      <input type="checkbox" class="hist-checkbox" data-id="${pedido.id}"
+        onclick="event.stopPropagation()"
+        onchange="toggleSelecaoHist(${pedido.id}, this.checked)"
+        ${histSelecionados.has(pedido.id) ? 'checked' : ''}
+      />
+      ${cardHtml}
     </div>
   `
 }
