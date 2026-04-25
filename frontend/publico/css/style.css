@@ -1598,6 +1598,333 @@ a {
   text-decoration: none;
 }
 
+/* =============================================
+   BOTÕES UTILITÁRIOS
+   ============================================= */
+.btn-secundario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--marrom-btn);
+  background: transparent;
+  color: var(--marrom-btn);
+  font-size: .95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+
+.btn-secundario:hover {
+  background: var(--marrom-btn);
+  color: #fff;
+}
+
+.btn-bloco {
+  width: 100%;
+}
+
+.btn-link-sutil {
+  background: none;
+  border: none;
+  color: var(--texto-sec);
+  font-size: .88rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 0;
+}
+
+/* =============================================
+   MODAL PEDIDO ENVIADO (confirmação pós-envio)
+   ============================================= */
+.enviado-check {
+  color: #22c55e;
+}
+
+/* HEADER — botão meus pedidos: herda tudo de .icon-btn, sem override */
+
+/* =============================================
+   PÁGINA MEUS PEDIDOS
+   ============================================= */
+.pagina-meus-pedidos {
+  background: var(--bg);
+  min-height: 100vh;
+}
+
+.mp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--bg-card, #fff);
+  border-bottom: 1px solid var(--borda, #e5e7eb);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.mp-voltar {
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  color: var(--texto);
+  border-radius: 8px;
+  transition: background .15s;
+}
+
+.mp-voltar:hover { background: var(--bg, #f3f4f6); }
+
+.mp-titulo {
+  flex: 1;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0;
+}
+
+.mp-header-espaco { width: 32px; }
+
+.mp-main {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+
+/* ── estados ─────────────────── */
+.mp-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--texto-sec);
+}
+
+.mp-estado-icone svg {
+  width: 56px;
+  height: 56px;
+  opacity: .4;
+}
+
+.mp-identificar-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.mp-identificar-form input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--borda, #d1d5db);
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #fff;
+}
+
+.mp-identificar-form input:focus {
+  outline: none;
+  border-color: var(--cor-primaria, #92400e);
+}
+
+.mp-identificar-form .btn-primario {
+  flex: unset;
+  width: 100%;
+}
+
+/* ── saudação ─────────────────── */
+.mp-saudacao {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--texto);
+  margin-bottom: 12px;
+}
+
+/* ── cards de pedido ─────────── */
+.mp-card {
+  background: var(--bg-card, #fff);
+  border-radius: 14px;
+  border: 1px solid var(--borda, #e5e7eb);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.mp-card-header {
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mp-card-header:hover { background: var(--bg, #f9fafb); }
+
+.mp-card-linha1,
+.mp-card-linha2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mp-numero {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.mp-data {
+  font-size: .8rem;
+  color: var(--texto-sec);
+}
+
+.mp-total {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+/* badges de status */
+.mp-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.mp-badge-amarelo   { background: #fef9c3; color: #854d0e; }
+.mp-badge-azul      { background: #dbeafe; color: #1e40af; }
+.mp-badge-verde-claro { background: #dcfce7; color: #166534; }
+.mp-badge-verde     { background: #16a34a; color: #fff; }
+.mp-badge-cinza     { background: #f1f5f9; color: #64748b; }
+
+/* corpo do card (sempre visível) */
+.mp-card-corpo {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--borda, #e5e7eb);
+}
+
+/* header do card sem cursor (não é mais clicável) */
+.mp-card-header {
+  cursor: default;
+}
+
+.mp-detalhe-linha {
+  display: flex;
+  justify-content: space-between;
+  font-size: .85rem;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--borda, #e5e7eb);
+  gap: 8px;
+}
+
+.mp-detalhe-linha span:first-child {
+  color: var(--texto-sec);
+  flex-shrink: 0;
+}
+
+.mp-detalhe-linha span:last-child {
+  text-align: right;
+}
+
+.mp-detalhe-obs {
+  font-size: .82rem;
+  color: var(--texto-sec);
+  padding: 6px 0;
+  font-style: italic;
+}
+
+/* itens */
+.mp-itens {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mp-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  font-size: .88rem;
+}
+
+.mp-item-nome { flex: 1; font-weight: 600; }
+.mp-item-preco { color: var(--texto-sec); font-size: .85rem; }
+
+.mp-mods {
+  width: 100%;
+  list-style: none;
+  padding-left: 16px;
+  color: var(--texto-sec);
+  font-size: .8rem;
+}
+
+.mp-mods li::before { content: '+ '; }
+
+/* botões de ação do pedido */
+.mp-acoes {
+  margin-top: 14px;
+}
+
+.mp-btn-pedir-igual {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1.5px solid var(--marrom-btn);
+  color: var(--marrom-btn);
+  border-radius: 10px;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+
+.mp-btn-pedir-igual:hover {
+  background: var(--marrom-btn);
+  color: #fff;
+}
+
+.mp-btn-contato {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 10px 14px;
+  background: #25d366;
+  color: #fff;
+  border-radius: 10px;
+  font-size: .9rem;
+  font-weight: 600;
+  text-decoration: none;
+  justify-content: center;
+  transition: background .15s;
+}
+
+.mp-btn-contato:hover { background: #1ebe5a; }
+
+/* campo de identificação modal */
+.mp-input-tel-modal {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1.5px solid var(--borda, #d1d5db);
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #fff;
+}
+
+.mp-input-tel-modal:focus {
+  outline: none;
+  border-color: var(--cor-primaria, #92400e);
+}
+
 #rodape-credito a:hover {
   text-decoration: underline;
 }
