@@ -11,6 +11,47 @@ import re
 _LIMITE_ENDERECOS = 5
 
 
+def _dias_desde_ultimo_pedido(cliente: Cliente) -> int | None:
+    if not cliente.ultimo_pedido:
+        return None
+    ultimo = cliente.ultimo_pedido
+    if ultimo.tzinfo is None:
+        ultimo = ultimo.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - ultimo).days
+
+
+def calcular_segmento_rfm(cliente: Cliente) -> str:
+    """Classifica o cliente por Recência, Frequência e Monetário."""
+    if cliente.total_pedidos == 0:
+        return "novo"
+
+    dias = _dias_desde_ultimo_pedido(cliente)
+
+    # Inativo: mais de 90 dias sem pedir
+    if dias is not None and dias > 90:
+        return "inativo"
+
+    # Novo: apenas 1 pedido
+    if cliente.total_pedidos == 1:
+        return "novo"
+
+    # Campeão: recente + frequente + bom gasto
+    if (dias is not None and dias <= 15
+            and cliente.total_pedidos >= 5
+            and cliente.total_gasto > 200):
+        return "campeao"
+
+    # Leal: recente + frequência média/alta
+    if dias is not None and dias <= 30 and cliente.total_pedidos >= 3:
+        return "leal"
+
+    # Em risco: frequente mas sumiu há mais de 45 dias
+    if cliente.total_pedidos >= 3 and dias is not None and dias > 45:
+        return "em_risco"
+
+    return "comum"
+
+
 def normalizar_telefone(telefone: str) -> str:
     return re.sub(r"\D", "", telefone)
 
@@ -28,9 +69,16 @@ def identificar_cliente(dados: ClienteIdentificar, db: Session) -> dict:
     cliente = db.query(Cliente).filter(Cliente.telefone == telefone).first()
 
     if cliente:
-        # Cliente existente — atualiza nome se fornecido
+        # Cliente existente — atualiza nome se fornecido e recalcula segmento
+        changed = False
         if dados.nome and dados.nome != cliente.nome:
             cliente.nome = dados.nome
+            changed = True
+        novo_segmento = calcular_segmento_rfm(cliente)
+        if cliente.segmento != novo_segmento:
+            cliente.segmento = novo_segmento
+            changed = True
+        if changed:
             db.commit()
     else:
         # Novo cliente

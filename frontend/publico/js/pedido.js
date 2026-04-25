@@ -602,6 +602,7 @@ window.pedido = (() => {
         });
       } else {
         window.open(resultado.whatsapp_url, '_blank');
+        _mostrarConfirmacaoPedido(resultado.pedido.numero);
       }
 
     } catch (err) {
@@ -661,6 +662,23 @@ window.pedido = (() => {
     document.body.style.overflow = '';
     _pixBrCode = null;
     _pixWhatsappUrl = null;
+  }
+
+  function _mostrarConfirmacaoPedido(numero) {
+    const modal  = document.getElementById('modal-pedido-enviado');
+    const msgEl  = document.getElementById('modal-enviado-msg');
+    const fechar = document.getElementById('modal-enviado-fechar');
+
+    msgEl.innerHTML = `Pedido <strong>${numero}</strong> enviado! Acompanhe o status em <em>Meus Pedidos</em>.`;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    const _fechar = () => {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    };
+    document.getElementById('modal-enviado-overlay').addEventListener('click', _fechar, { once: true });
+    fechar.addEventListener('click', _fechar, { once: true });
   }
 
   function _mostrarConfirmacaoAgendamento(formatado, onOk) {
