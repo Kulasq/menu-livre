@@ -98,15 +98,17 @@
       const ctx = _getAudioContext()
       if (ctx && ctx.state === 'suspended') ctx.resume()
     }
-    document.addEventListener('click', destravar, { once: true })
-    document.addEventListener('keydown', destravar, { once: true })
+    // Sem { once: true } — o navegador pode re-suspender o AudioContext após
+    // inatividade prolongada; precisamos destravá-lo em qualquer interação futura.
+    document.addEventListener('click', destravar)
+    document.addEventListener('keydown', destravar)
   }
 
-  function _tocarBeepUnico() {
+  async function _tocarBeepUnico() {
     try {
       const ctx = _getAudioContext()
       if (!ctx) return
-      if (ctx.state === 'suspended') ctx.resume()
+      if (ctx.state === 'suspended') await ctx.resume()
 
       const tocar = (startTime) => {
         const osc = ctx.createOscillator()

@@ -308,5 +308,21 @@ window.carrinho = (() => {
     _atualizar();
   }
 
-  return { init, adicionar, remover, alterarQuantidade, limpar, obterItens, total, quantidade, abrirDrawer, fecharDrawer };
+  function adicionarDireto(item) {
+    // Adiciona item com dados já prontos (vindo de "pedir igual")
+    _itens.push({
+      _id:           _gerarId(),
+      produto_id:    item.produto_id,
+      nome:          item.nome,
+      preco:         item.preco,
+      quantidade:    item.quantidade,
+      observacao:    item.observacao || null,
+      modificadores: item.modificadores || [],
+      _grupos:       [],
+    });
+    _salvar();
+    _atualizar();
+  }
+
+  return { init, adicionar, adicionarDireto, remover, alterarQuantidade, limpar, obterItens, total, quantidade, abrirDrawer, fecharDrawer };
 })();
