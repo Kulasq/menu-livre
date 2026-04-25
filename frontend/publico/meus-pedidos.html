@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meus Pedidos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="pagina-meus-pedidos">
+
+  <header class="mp-header">
+    <a href="index.html" class="mp-voltar" aria-label="Voltar ao cardápio">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+      </svg>
+    </a>
+    <h1 class="mp-titulo">Meus Pedidos</h1>
+    <div class="mp-header-espaco"></div>
+  </header>
+
+  <main class="mp-main">
+
+    <!-- estado: não identificado -->
+    <div id="mp-nao-identificado" class="mp-estado hidden">
+      <div class="mp-estado-icone">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+        </svg>
+      </div>
+      <p>Informe seu telefone para ver seus pedidos</p>
+      <div class="mp-identificar-form">
+        <input type="tel" id="mp-input-telefone" placeholder="(81) 99999-9999" inputmode="numeric" autocomplete="tel" />
+        <p id="mp-erro-tel" class="campo-erro hidden">Número inválido (10 ou 11 dígitos com DDD)</p>
+        <button id="mp-btn-identificar" class="btn-primario">Ver meus pedidos</button>
+      </div>
+    </div>
+
+    <!-- estado: carregando -->
+    <div id="mp-carregando" class="mp-estado hidden">
+      <div class="spinner"></div>
+      <p>Carregando pedidos…</p>
+    </div>
+
+    <!-- estado: vazio -->
+    <div id="mp-vazio" class="mp-estado hidden">
+      <div class="mp-estado-icone">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007Z" />
+        </svg>
+      </div>
+      <p>Você ainda não fez nenhum pedido por aqui</p>
+      <a href="index.html" class="btn-primario">Ver o cardápio</a>
+    </div>
+
+    <!-- lista de pedidos -->
+    <div id="mp-lista" class="mp-lista hidden">
+      <div id="mp-saudacao" class="mp-saudacao hidden"></div>
+      <div id="mp-cards"></div>
+    </div>
+
+  </main>
+
+  <!-- MODAL de identificação (quando vem de "pedir igual") -->
+  <div id="modal-mp-identificar" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-overlay" id="modal-mp-overlay"></div>
+    <div class="modal-box modal-box-aviso">
+      <p style="font-weight:600;margin-bottom:12px">Qual é o seu telefone?</p>
+      <input type="tel" id="modal-mp-telefone" class="mp-input-tel-modal" placeholder="(81) 99999-9999" inputmode="numeric" autocomplete="tel" />
+      <p id="modal-mp-erro" class="campo-erro hidden">Número inválido</p>
+      <button id="modal-mp-btn" class="btn-primario" style="margin-top:12px;width:100%">Continuar</button>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/meus-pedidos.js"></script>
+</body>
+</html>
