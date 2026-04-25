@@ -199,10 +199,11 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
         except Exception:
             pass
 
-    # Atualizar stats do cliente
+    # Atualizar stats e segmento do cliente
     cliente.total_pedidos += 1
     cliente.total_gasto += total
     cliente.ultimo_pedido = datetime.now(timezone.utc)
+    cliente.segmento = cliente_service.calcular_segmento_rfm(cliente)
     db.commit()
 
     nome_loja = config.nome_loja if config else "Menu Livre"
@@ -379,10 +380,11 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
 
     pedido_completo = _obter_pedido_completo(pedido.id, db)
 
-    # Atualizar stats do cliente
+    # Atualizar stats e segmento do cliente
     cliente.total_pedidos += 1
     cliente.total_gasto += total
     cliente.ultimo_pedido = datetime.now(timezone.utc)
+    cliente.segmento = cliente_service.calcular_segmento_rfm(cliente)
     db.commit()
 
     return {"pedido": pedido_completo}
@@ -390,6 +392,26 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
 
 def obter_pedido(pedido_id: int, db: Session) -> Pedido:
     return _obter_pedido_completo(pedido_id, db)
+
+
+def listar_pedidos_cliente(
+    cliente_id: int,
+    db: Session,
+    limite: int = 20,
+    offset: int = 0,
+) -> list[Pedido]:
+    return (
+        db.query(Pedido)
+        .filter(Pedido.cliente_id == cliente_id)
+        .options(
+            joinedload(Pedido.cliente),
+            joinedload(Pedido.itens).joinedload(PedidoItem.modificadores),
+        )
+        .order_by(Pedido.criado_em.desc())
+        .offset(offset)
+        .limit(min(limite, 50))
+        .all()
+    )
 
 
 def listar_pedidos(
