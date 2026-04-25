@@ -6,7 +6,7 @@
  *
  * Segurança: o access token (vida curta, 15min) fica apenas em memória —
  * nunca no localStorage. XSS não consegue roubá-lo.
- * O refresh token (30 dias) permanece no localStorage pois precisa sobreviver
+ * O refresh token (7 dias) permanece no localStorage pois precisa sobreviver
  * a recarregamentos de página. Essa é a melhor proteção possível sem httpOnly
  * cookies, que exigiriam arquitetura servidor-side diferente.
  */

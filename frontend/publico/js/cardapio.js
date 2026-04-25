@@ -88,6 +88,7 @@ window.cardapio = (() => {
 
       _renderNav();
       _renderCardapio();
+      window.dispatchEvent(new CustomEvent('cardapio:carregado'));
     } catch (err) {
       console.error(err);
       els.erro().classList.remove('hidden');
