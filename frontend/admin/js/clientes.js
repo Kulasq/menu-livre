@@ -164,12 +164,16 @@
         }
       })
 
-      // Kebab: abre/fecha dropdown
+      // Kebab: abre/fecha dropdown com posição calculada (evita corte por overflow)
       kebabBtn.addEventListener('click', e => {
         e.stopPropagation()
         const estaAberto = !kebabDrop.hidden
         _fecharTodosDropdowns()
         if (!estaAberto) {
+          const rect = kebabBtn.getBoundingClientRect()
+          kebabDrop.style.top  = (rect.bottom + 4) + 'px'
+          kebabDrop.style.right = (window.innerWidth - rect.right) + 'px'
+          kebabDrop.style.left = 'auto'
           kebabDrop.hidden = false
           kebabBtn.setAttribute('aria-expanded', 'true')
         }
@@ -263,13 +267,16 @@
     }
   }
 
+  // Abre o drawer em modo edição para um cliente existente
   async function abrirEdicao(clienteId) {
     estado.drawerClienteId = clienteId
 
+    document.getElementById('drawer-edit-titulo').textContent = 'Editar contato'
     document.getElementById('drawer-avatar-edit').textContent = '…'
     document.getElementById('edit-nome').value = ''
     document.getElementById('edit-telefone').value = ''
     document.getElementById('edit-enderecos-lista').innerHTML = '<div class="clientes-estado" style="font-size:.85rem">Carregando…</div>'
+    document.getElementById('drawer-edit-enderecos-section').hidden = false
     _setModoDrawer('edit')
     _abrirDrawerContainer()
 
@@ -279,7 +286,7 @@
         api.get(`/api/admin/clientes/${clienteId}/enderecos`),
       ])
 
-      // Popula cabeçalho de visualização também (para o cancelar funcionar)
+      // Popula cabeçalho de visualização (para o cancelar funcionar)
       preencherDrawerHeader(cliente)
       preencherStats(cliente)
       _dadosDrawer.enderecos = enderecos
@@ -288,13 +295,30 @@
       // Popula formulário
       document.getElementById('drawer-avatar-edit').textContent = inicialAvatar(cliente.nome)
       document.getElementById('edit-nome').value = cliente.nome
-      document.getElementById('edit-telefone').value = cliente.telefone
+      document.getElementById('edit-telefone').value = formatarTelefoneExibicao(cliente.telefone)
       renderEditEnderecos(enderecos)
     } catch (err) {
       document.getElementById('edit-enderecos-lista').innerHTML =
         '<div class="clientes-estado clientes-estado-erro" style="font-size:.85rem">Erro ao carregar dados.</div>'
       console.error(err)
     }
+  }
+
+  // Abre o drawer em modo criação (campos vazios, sem endereços)
+  function abrirNovoCliente() {
+    estado.drawerClienteId = null
+    _dadosDrawer.pedidos = null
+    _dadosDrawer.enderecos = null
+
+    document.getElementById('drawer-edit-titulo').textContent = 'Novo cliente'
+    document.getElementById('drawer-avatar-edit').textContent = '+'
+    document.getElementById('edit-nome').value = ''
+    document.getElementById('edit-telefone').value = ''
+    document.getElementById('drawer-edit-enderecos-section').hidden = true
+
+    _setModoDrawer('edit')
+    _abrirDrawerContainer()
+    setTimeout(() => document.getElementById('edit-nome').focus(), 80)
   }
 
   function fecharDrawer() {
@@ -426,22 +450,30 @@
   async function salvarEdicao() {
     const clienteId = estado.drawerClienteId
     const nome = document.getElementById('edit-nome').value.trim()
-    const telefone = document.getElementById('edit-telefone').value.trim()
+    const telefone = document.getElementById('edit-telefone').value.replace(/\D/g, '')
 
-    if (!nome) { toast.erro('Nome não pode ser vazio'); return }
-    if (!telefone) { toast.erro('Telefone não pode ser vazio'); return }
+    if (!nome) { toast.erro('Nome é obrigatório'); return }
+    if (!telefone) { toast.erro('Telefone é obrigatório'); return }
 
     const btn = document.getElementById('btn-salvar-edicao')
     btn.disabled = true
 
     try {
-      await api.put(`/api/admin/clientes/${clienteId}`, { nome, telefone })
-      toast.sucesso('Cliente atualizado')
-      carregarLista()
-      // Volta ao modo visualização com dados atualizados
-      await abrirDrawer(clienteId)
+      if (clienteId === null) {
+        // ── Criação ──
+        const novo = await api.post('/api/admin/clientes', { nome, telefone })
+        toast.sucesso('Cliente criado com sucesso')
+        carregarLista()
+        await abrirDrawer(novo.id)
+      } else {
+        // ── Edição ──
+        await api.put(`/api/admin/clientes/${clienteId}`, { nome, telefone })
+        toast.sucesso('Cliente atualizado')
+        carregarLista()
+        await abrirDrawer(clienteId)
+      }
     } catch (err) {
-      toast.erro(err.message || 'Erro ao salvar alterações')
+      toast.erro(err.message || 'Erro ao salvar')
     } finally {
       btn.disabled = false
     }
@@ -449,16 +481,16 @@
 
   function cancelarEdicao() {
     const clienteId = estado.drawerClienteId
-    if (clienteId) {
-      // Se já tem dados de visualização em cache, usa; senão re-abre
-      if (_dadosDrawer.pedidos !== null) {
-        _setModoDrawer('view')
-        _renderizarAba('pedidos')
-      } else {
-        abrirDrawer(clienteId)
-      }
-    } else {
+    if (clienteId === null) {
+      // Criação cancelada: fecha o drawer
       fecharDrawer()
+    } else if (_dadosDrawer.pedidos !== null) {
+      // Edição cancelada com dados em cache: volta à visualização
+      _setModoDrawer('view')
+      _renderizarAba('pedidos')
+    } else {
+      // Edição cancelada sem cache: recarrega no modo visualização
+      abrirDrawer(clienteId)
     }
   }
 
@@ -494,41 +526,22 @@
     }
   }
 
-  // ── Modal de novo cliente ─────────────────────────────────────────────────
+  // ── Máscara de telefone ───────────────────────────────────────────────────
 
-  function abrirModalNovoCliente() {
-    document.getElementById('novo-nome').value = ''
-    document.getElementById('novo-telefone').value = ''
-    document.getElementById('modal-novo-cliente').hidden = false
-    setTimeout(() => document.getElementById('novo-nome').focus(), 50)
-  }
-
-  function fecharModalNovoCliente() {
-    document.getElementById('modal-novo-cliente').hidden = true
-  }
-
-  async function confirmarNovoCliente() {
-    const nome = document.getElementById('novo-nome').value.trim()
-    const telefone = document.getElementById('novo-telefone').value.trim()
-
-    if (!nome) { toast.erro('Nome é obrigatório'); return }
-    if (!telefone) { toast.erro('Telefone é obrigatório'); return }
-
-    const btn = document.getElementById('btn-novo-confirmar')
-    btn.disabled = true
-
-    try {
-      const cliente = await api.post('/api/admin/clientes', { nome, telefone })
-      fecharModalNovoCliente()
-      carregarLista()
-      toast.sucesso('Cliente criado com sucesso')
-      // Abre drawer com o novo cliente
-      abrirDrawer(cliente.id)
-    } catch (err) {
-      toast.erro(err.message || 'Erro ao criar cliente')
-    } finally {
-      btn.disabled = false
-    }
+  function aplicarMascaraTelefone(input) {
+    input.addEventListener('input', e => {
+      let v = e.target.value.replace(/\D/g, '').slice(0, 11)
+      if (v.length > 7) {
+        v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`
+      } else if (v.length > 6) {
+        v = `(${v.slice(0,2)}) ${v.slice(2,6)}-${v.slice(6)}`
+      } else if (v.length > 2) {
+        v = `(${v.slice(0,2)}) ${v.slice(2)}`
+      } else if (v.length > 0) {
+        v = `(${v}`
+      }
+      e.target.value = v
+    })
   }
 
   // ── Filtros e eventos ─────────────────────────────────────────────────────
@@ -549,14 +562,27 @@
       document.getElementById('sidebar').classList.toggle('aberta')
     })
 
-    // Busca com debounce
-    document.getElementById('clientes-busca').addEventListener('input', e => {
+    // Busca com debounce + botão X customizado
+    const buscaInput = document.getElementById('clientes-busca')
+    const btnLimparBusca = document.getElementById('clientes-busca-limpar')
+
+    buscaInput.addEventListener('input', e => {
+      btnLimparBusca.hidden = !e.target.value
       clearTimeout(estado.debounceTimer)
       estado.debounceTimer = setTimeout(() => {
         estado.q = e.target.value.trim()
         estado.page = 1
         carregarLista()
       }, 300)
+    })
+
+    btnLimparBusca.addEventListener('click', () => {
+      buscaInput.value = ''
+      btnLimparBusca.hidden = true
+      estado.q = ''
+      estado.page = 1
+      carregarLista()
+      buscaInput.focus()
     })
 
     // Ordenação
@@ -608,6 +634,9 @@
       })
     })
 
+    // Máscara de telefone no drawer
+    aplicarMascaraTelefone(document.getElementById('edit-telefone'))
+
     // Edição: salvar e cancelar
     document.getElementById('btn-salvar-edicao').addEventListener('click', salvarEdicao)
     document.getElementById('btn-cancelar-edicao').addEventListener('click', cancelarEdicao)
@@ -643,17 +672,8 @@
     document.getElementById('modal-excluir-overlay').addEventListener('click', fecharModalExcluir)
     document.getElementById('btn-excluir-confirmar').addEventListener('click', confirmarExclusao)
 
-    // Modal de novo cliente
-    document.getElementById('btn-novo-cliente').addEventListener('click', abrirModalNovoCliente)
-    document.getElementById('btn-novo-cancelar').addEventListener('click', fecharModalNovoCliente)
-    document.getElementById('modal-novo-overlay').addEventListener('click', fecharModalNovoCliente)
-    document.getElementById('btn-novo-confirmar').addEventListener('click', confirmarNovoCliente)
-    document.getElementById('modal-novo-fechar').addEventListener('click', fecharModalNovoCliente)
-
-    // Enter no modal de novo cliente
-    document.getElementById('novo-telefone').addEventListener('keydown', e => {
-      if (e.key === 'Enter') confirmarNovoCliente()
-    })
+    // Novo cliente — abre o drawer diretamente
+    document.getElementById('btn-novo-cliente').addEventListener('click', abrirNovoCliente)
 
     // Fechar dropdowns ao clicar fora
     document.addEventListener('click', () => _fecharTodosDropdowns())

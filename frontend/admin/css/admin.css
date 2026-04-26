@@ -10,6 +10,9 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Garante que [hidden] sempre oculta, independente de display explícito no CSS */
+[hidden] { display: none !important; }
+
 html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
@@ -3021,7 +3024,7 @@ textarea.form-input {
 
 .clientes-busca-input {
   width: 100%;
-  padding: 8px 12px 8px 34px;
+  padding: 8px 36px 8px 34px; /* espaço à direita para o botão X */
   border: 1px solid var(--borda-input);
   border-radius: var(--radius-sm);
   background: var(--bg-input);
@@ -3033,6 +3036,28 @@ textarea.form-input {
 .clientes-busca-input:focus {
   outline: none;
   border-color: var(--borda-focus);
+}
+
+.clientes-busca-limpar {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--texto-sec);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  transition: color .15s, background .15s;
+}
+
+.clientes-busca-limpar:hover {
+  color: var(--texto);
+  background: rgba(0,0,0,.05);
 }
 
 .clientes-ordenar {
@@ -3515,10 +3540,8 @@ textarea.form-input {
 }
 
 .kebab-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  z-index: 200;
+  position: fixed; /* fixed para não ser cortado por overflow da tabela */
+  z-index: 500;
   background: var(--bg-card);
   border: 1px solid var(--borda);
   border-radius: var(--radius-md);

@@ -61,7 +61,10 @@
       <div class="clientes-toolbar">
         <div class="clientes-busca-wrap">
           <svg class="clientes-busca-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
-          <input type="search" id="clientes-busca" class="clientes-busca-input" placeholder="Buscar por nome ou telefone…" autocomplete="off" />
+          <input type="text" id="clientes-busca" class="clientes-busca-input" placeholder="Buscar por nome ou telefone…" autocomplete="off" />
+          <button class="clientes-busca-limpar" id="clientes-busca-limpar" type="button" aria-label="Limpar busca" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="15" height="15" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+          </button>
         </div>
         <select id="clientes-ordenar" class="clientes-ordenar" aria-label="Ordenar por">
           <option value="ultimo_pedido">Último pedido</option>
@@ -69,7 +72,7 @@
           <option value="total_gasto">Maior gasto</option>
           <option value="nome">Nome A–Z</option>
         </select>
-        <button class="btn btn-primario btn-sm" id="btn-novo-cliente" type="button">
+        <button class="btn btn-primary btn-sm" id="btn-novo-cliente" type="button">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
           Novo cliente
         </button>
@@ -110,12 +113,12 @@
 
       <!-- ── PAGINAÇÃO ── -->
       <div class="clientes-paginacao" id="clientes-paginacao" hidden>
-        <button id="clientes-pag-anterior" class="btn btn-sm btn-secundario" disabled>
+        <button id="clientes-pag-anterior" class="btn btn-sm btn-secondary" disabled>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
           Anterior
         </button>
         <span id="clientes-pag-info" class="clientes-pag-info"></span>
-        <button id="clientes-pag-proxima" class="btn btn-sm btn-secundario" disabled>
+        <button id="clientes-pag-proxima" class="btn btn-sm btn-secondary" disabled>
           Próxima
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
         </button>
@@ -148,11 +151,11 @@
     <div class="clientes-drawer-header" id="drawer-header-edit" hidden>
       <div style="display:flex;align-items:center;gap:8px;min-width:0">
         <div class="clientes-drawer-avatar" id="drawer-avatar-edit"></div>
-        <span class="clientes-drawer-nome" style="font-size:.9rem">Editar contato</span>
+        <span class="clientes-drawer-nome" id="drawer-edit-titulo" style="font-size:.9rem">Editar contato</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
-        <button class="btn btn-primario btn-sm" id="btn-salvar-edicao">Salvar</button>
-        <button class="btn btn-secundario btn-sm" id="btn-cancelar-edicao">Cancelar</button>
+        <button class="btn btn-primary btn-sm" id="btn-salvar-edicao">Salvar</button>
+        <button class="btn btn-secondary btn-sm" id="btn-cancelar-edicao">Cancelar</button>
       </div>
     </div>
 
@@ -178,12 +181,12 @@
         <label class="drawer-edit-label" for="edit-telefone">Telefone</label>
         <input class="drawer-edit-input" type="tel" id="edit-telefone" placeholder="(81) 99999-9999" />
       </div>
-      <div class="drawer-edit-enderecos-section">
+      <div class="drawer-edit-enderecos-section" id="drawer-edit-enderecos-section">
         <p class="drawer-edit-label">Endereços salvos</p>
         <div id="edit-enderecos-lista"></div>
         <div class="drawer-edit-add-end">
           <input class="drawer-edit-input" type="text" id="edit-novo-endereco" placeholder="Novo endereço…" />
-          <button class="btn btn-secundario btn-sm" id="btn-add-endereco" type="button">Adicionar</button>
+          <button class="btn btn-secondary btn-sm" id="btn-add-endereco" type="button">Adicionar</button>
         </div>
       </div>
     </div>
@@ -202,35 +205,8 @@
         <p style="margin-top:8px;font-size:.85rem;color:var(--texto-sec)">Esta ação é irreversível. Todos os endereços do cliente serão removidos.</p>
       </div>
       <div class="modal-admin-footer">
-        <button class="btn btn-secundario" id="btn-excluir-cancelar">Cancelar</button>
+        <button class="btn btn-secondary" id="btn-excluir-cancelar">Cancelar</button>
         <button class="btn btn-perigo" id="btn-excluir-confirmar">Excluir</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── MODAL DE NOVO CLIENTE ── -->
-  <div class="modal-admin" id="modal-novo-cliente" hidden>
-    <div class="modal-admin-overlay" id="modal-novo-overlay"></div>
-    <div class="modal-admin-box modal-admin-sm">
-      <div class="modal-admin-header">
-        <h3>Novo cliente</h3>
-        <button class="modal-admin-fechar" id="modal-novo-fechar" aria-label="Fechar">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-        </button>
-      </div>
-      <div class="modal-admin-body">
-        <div class="drawer-edit-campo">
-          <label class="drawer-edit-label" for="novo-nome">Nome</label>
-          <input class="drawer-edit-input" type="text" id="novo-nome" placeholder="Nome do cliente" />
-        </div>
-        <div class="drawer-edit-campo" style="margin-top:12px">
-          <label class="drawer-edit-label" for="novo-telefone">Telefone</label>
-          <input class="drawer-edit-input" type="tel" id="novo-telefone" placeholder="(81) 99999-9999" />
-        </div>
-      </div>
-      <div class="modal-admin-footer">
-        <button class="btn btn-secundario" id="btn-novo-cancelar">Cancelar</button>
-        <button class="btn btn-primario" id="btn-novo-confirmar">Criar cliente</button>
       </div>
     </div>
   </div>
