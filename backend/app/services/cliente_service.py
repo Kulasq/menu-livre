@@ -1,6 +1,7 @@
 from __future__ import annotations
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
+from sqlalchemy import func, desc, asc
 from fastapi import HTTPException
 
 from app.models.cliente import Cliente, Endereco
@@ -143,6 +144,118 @@ def deletar_endereco(db: Session, endereco_id: int, cliente_id: int) -> None:
         raise HTTPException(status_code=403, detail="Sem permissão para deletar este endereço")
     db.delete(endereco)
     db.commit()
+
+
+_ORDENACOES_VALIDAS = {"ultimo_pedido", "total_gasto", "total_pedidos", "nome"}
+
+
+def atualizar_cliente_admin(cliente_id: int, dados, db: Session) -> "Cliente":
+    """Atualiza nome e/ou telefone de um cliente. Normaliza e valida unicidade do telefone."""
+    cliente = db.get(Cliente, cliente_id)
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+
+    if dados.nome is not None:
+        nome = dados.nome.strip()
+        if not nome:
+            raise HTTPException(status_code=400, detail="Nome não pode ser vazio")
+        cliente.nome = nome
+
+    if dados.telefone is not None:
+        tel = normalizar_telefone(dados.telefone)
+        if len(tel) < 10 or len(tel) > 13:
+            raise HTTPException(status_code=400, detail="Telefone inválido. Use o formato: 81 99999-9999")
+        existente = db.query(Cliente).filter(Cliente.telefone == tel, Cliente.id != cliente_id).first()
+        if existente:
+            raise HTTPException(status_code=409, detail="Telefone já cadastrado para outro cliente")
+        cliente.telefone = tel
+
+    db.commit()
+    return db.get(Cliente, cliente_id)
+
+
+def deletar_cliente(cliente_id: int, db: Session) -> None:
+    """Remove um cliente e seus endereços (cascade via FK)."""
+    cliente = db.get(Cliente, cliente_id)
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    db.delete(cliente)
+    db.commit()
+
+
+def criar_cliente_admin(nome: str, telefone: str, db: Session) -> "Cliente":
+    """Cria um novo cliente diretamente pelo admin."""
+    tel = normalizar_telefone(telefone)
+    if len(tel) < 10 or len(tel) > 13:
+        raise HTTPException(status_code=400, detail="Telefone inválido. Use o formato: 81 99999-9999")
+    existente = db.query(Cliente).filter(Cliente.telefone == tel).first()
+    if existente:
+        raise HTTPException(status_code=409, detail="Telefone já cadastrado para outro cliente")
+    if not nome.strip():
+        raise HTTPException(status_code=400, detail="Nome não pode ser vazio")
+    cliente = Cliente(nome=nome.strip(), telefone=tel)
+    db.add(cliente)
+    db.commit()
+    return db.get(Cliente, cliente.id)
+
+
+def adicionar_endereco_admin(cliente_id: int, endereco: str, db: Session) -> "Endereco":
+    """Adiciona um endereço a um cliente (sem limite, sem dedup — uso admin)."""
+    if not db.get(Cliente, cliente_id):
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    texto = endereco.strip()
+    if not texto:
+        raise HTTPException(status_code=400, detail="Endereço não pode ser vazio")
+    novo = Endereco(cliente_id=cliente_id, endereco=texto)
+    db.add(novo)
+    db.commit()
+    return db.get(Endereco, novo.id)
+
+
+def deletar_endereco_admin(endereco_id: int, cliente_id: int, db: Session) -> None:
+    """Remove um endereço verificando que pertence ao cliente informado."""
+    endereco = db.get(Endereco, endereco_id)
+    if not endereco:
+        raise HTTPException(status_code=404, detail="Endereço não encontrado")
+    if endereco.cliente_id != cliente_id:
+        raise HTTPException(status_code=403, detail="Endereço não pertence a este cliente")
+    db.delete(endereco)
+    db.commit()
+
+
+def listar_clientes_admin(
+    db: Session,
+    q: str | None = None,
+    segmento: str | None = None,
+    ordenar: str = "ultimo_pedido",
+    page: int = 1,
+    page_size: int = 30,
+) -> tuple[list[Cliente], int]:
+    """Lista clientes para o painel admin com filtros, ordenação e paginação."""
+    query = db.query(Cliente)
+
+    if q:
+        termo = f"%{q.strip()}%"
+        query = query.filter(
+            (func.lower(Cliente.nome).like(func.lower(termo)))
+            | (Cliente.telefone.like(termo))
+        )
+
+    if segmento:
+        query = query.filter(Cliente.segmento == segmento)
+
+    if ordenar not in _ORDENACOES_VALIDAS:
+        ordenar = "ultimo_pedido"
+
+    col = getattr(Cliente, ordenar)
+    if ordenar == "nome":
+        query = query.order_by(asc(col))
+    else:
+        query = query.order_by(desc(col).nulls_last())
+
+    total = query.count()
+    clientes = query.offset((page - 1) * page_size).limit(min(page_size, 100)).all()
+    return clientes, total
 
 
 def salvar_endereco_se_novo(db: Session, cliente_id: int, endereco: str) -> None:
