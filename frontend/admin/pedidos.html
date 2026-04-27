@@ -339,27 +339,25 @@
       <!-- COL 3: CARRINHO -->
       <aside class="pdv-carrinho">
 
-        <!-- Cliente -->
+        <!-- Cliente (todos os tipos) -->
         <div class="pdv-section" id="pdv-cliente-section">
-          <!-- Balcão: nome opcional -->
-          <div id="pdv-balcao-campos">
-            <label class="pdv-label">Nome (opcional)</label>
-            <input type="text" id="pdv-balcao-nome" class="form-input" placeholder="Ex: Mesa 5, João..." />
+          <!-- Busca por nome -->
+          <div>
+            <label class="pdv-label">Buscar cliente</label>
+            <input type="text" id="pdv-busca-nome" class="form-input" placeholder="Nome do cliente..." autocomplete="off" />
           </div>
-          <!-- Retirada / Delivery: telefone + busca -->
-          <div id="pdv-cliente-campos" class="hidden">
-            <label class="pdv-label">Telefone do cliente</label>
-            <div style="display:flex;gap:6px">
-              <input type="tel" id="pdv-telefone" class="form-input" placeholder="81999999999" style="flex:1" />
-              <button type="button" class="btn btn-secondary btn-sm" id="pdv-btn-buscar-cliente">Buscar</button>
-            </div>
-            <div id="pdv-cliente-info" class="np-cliente-info hidden" style="margin-top:6px"></div>
-            <div id="pdv-nome-grupo" class="hidden" style="margin-top:6px">
-              <label class="pdv-label">Nome do cliente</label>
-              <input type="text" id="pdv-cliente-nome" class="form-input" placeholder="Nome completo" />
-            </div>
+          <!-- Dropdown de sugestões -->
+          <div id="pdv-sugestoes" class="pdv-sugestoes hidden"></div>
+          <!-- Cliente selecionado -->
+          <div id="pdv-cliente-selecionado" class="pdv-cliente-selecionado hidden">
+            <span id="pdv-cliente-selecionado-info"></span>
+            <button type="button" id="pdv-btn-limpar-cliente" class="pdv-btn-limpar" aria-label="Limpar cliente">✕</button>
           </div>
-          <!-- Delivery: endereço -->
+          <!-- Novo cliente: aviso de cadastro -->
+          <div id="pdv-novo-cliente-campos" class="hidden" style="margin-top:6px">
+            <p class="pdv-novo-cliente-aviso">Novo cliente — será cadastrado com este nome.</p>
+          </div>
+          <!-- Delivery: endereços salvos (injetados via JS) + campo manual -->
           <div id="pdv-endereco-grupo" class="hidden" style="margin-top:8px">
             <label class="pdv-label">Endereço de entrega</label>
             <input type="text" id="pdv-endereco" class="form-input" placeholder="Rua, número, bairro" />

@@ -2217,6 +2217,164 @@ textarea.form-input {
   display: inline-block;
 }
 
+/* PDV: busca de cliente (coluna única) */
+.pdv-campo-busca-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.pdv-sugestoes {
+  background: var(--bg-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius);
+  box-shadow: var(--sombra-lg);
+  margin-top: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.pdv-sugestao-item {
+  padding: 9px 12px;
+  cursor: pointer;
+  font-size: .875rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.pdv-sugestao-item:last-child { border-bottom: none; }
+
+.pdv-sugestao-item:hover {
+  background: var(--bg);
+}
+
+.pdv-sugestao-nome {
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.pdv-sugestao-tel {
+  font-size: .8rem;
+  color: var(--texto-sec);
+  white-space: nowrap;
+}
+
+.pdv-sugestao-vazio {
+  padding: 10px 12px;
+  font-size: .875rem;
+  color: var(--texto-sec);
+  font-style: italic;
+}
+
+.pdv-cliente-selecionado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  background: var(--sucesso-light);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  font-size: .875rem;
+  color: var(--sucesso);
+  font-weight: 600;
+}
+
+.pdv-btn-limpar {
+  background: none;
+  border: none;
+  color: var(--texto-sec);
+  cursor: pointer;
+  font-size: .9rem;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.pdv-btn-limpar:hover { color: var(--erro); }
+
+.pdv-novo-cliente-aviso {
+  font-size: .8125rem;
+  color: var(--aviso);
+  background: var(--aviso-light);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  margin: 0;
+}
+
+/* PDV: endereços salvos (delivery) — estilo radio list */
+.pdv-enderecos-salvos {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 6px;
+}
+
+.pdv-enderecos-titulo {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--texto-sec);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 4px;
+}
+
+.pdv-endereco-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--borda);
+  width: 100%;
+  min-width: 0;
+}
+
+.pdv-endereco-item:last-child { border-bottom: none; }
+
+.pdv-endereco-radio {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  margin: 0;
+}
+
+.pdv-endereco-texto {
+  flex: 1;
+  min-width: 0;
+  font-size: .875rem;
+  line-height: 1.35;
+  color: var(--texto);
+  cursor: pointer;
+  word-break: break-word;
+}
+
+.pdv-endereco-del {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: var(--texto-sec);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color .15s, background .15s;
+  font-size: .75rem;
+}
+
+.pdv-endereco-del:hover {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
 .np-itens-lista {
   display: flex;
   flex-direction: column;
@@ -3405,6 +3563,14 @@ textarea.form-input {
 .clientes-drawer-aba.ativa {
   color: var(--accent);
   border-bottom-color: var(--accent);
+}
+
+/* Área de visualização do drawer (stats + abas + conteúdo) */
+#drawer-view-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* Conteúdo das abas */

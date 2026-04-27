@@ -70,8 +70,6 @@ def criar_cliente(
     """Cria um novo cliente diretamente pelo painel admin."""
     if not dados.nome:
         raise HTTPException(status_code=400, detail="Nome é obrigatório")
-    if not dados.telefone:
-        raise HTTPException(status_code=400, detail="Telefone é obrigatório")
     return criar_cliente_admin(dados.nome, dados.telefone, db)
 
 

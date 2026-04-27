@@ -410,8 +410,12 @@ function renderCardPedido(pedido, isHistorico = false) {
     linhaCliente = pedido.nome_cliente_balcao
       ? `${esc(pedido.nome_cliente_balcao)} <span style="color:var(--texto-terc);font-size:.82em">(Balcão)</span>`
       : 'Balcão'
+  } else if (pedido.cliente) {
+    linhaCliente = pedido.cliente.telefone
+      ? `${esc(pedido.cliente.nome)} · ${esc(pedido.cliente.telefone)}`
+      : esc(pedido.cliente.nome)
   } else {
-    linhaCliente = `${esc(pedido.cliente.nome)} · ${esc(pedido.cliente.telefone)}`
+    linhaCliente = '—'
   }
 
   const cardHtml = `
@@ -487,7 +491,9 @@ function abrirDetalhe(id, isHistorico = false) {
 
   $('#detalhe-numero').textContent = pedido.numero
   $('#detalhe-status').innerHTML = `<span class="badge ${statusInfo.classe}">${statusInfo.icon()} ${statusInfo.label}</span>`
-  $('#detalhe-cliente').textContent = `${pedido.cliente.nome} · ${pedido.cliente.telefone}`
+  $('#detalhe-cliente').textContent = pedido.cliente
+    ? (pedido.cliente.telefone ? `${pedido.cliente.nome} · ${pedido.cliente.telefone}` : pedido.cliente.nome)
+    : '—'
   $('#detalhe-tipo').textContent = tipoLabel
   $('#detalhe-horario').textContent = formatarDataHora(pedido.criado_em)
   $('#detalhe-pagamento').textContent = `${pagLabel} — ${pagStatus}`
@@ -726,8 +732,8 @@ function imprimirPedido() {
   // Para balcão: mostrar nome_cliente_balcao (se tiver) ou "Balcão"; ocultar telefone "00000000000"
   const nomeImpressao = p.tipo === 'balcao'
     ? (p.nome_cliente_balcao || 'Balcão')
-    : p.cliente.nome
-  const foneImpressao = p.tipo === 'balcao' ? null : p.cliente.telefone
+    : (p.cliente?.nome ?? '—')
+  const foneImpressao = p.tipo === 'balcao' ? null : (p.cliente?.telefone ?? null)
   const foneHtml = foneImpressao
     ? `<div class="campo"><span class="rotulo">FONE</span><span>${foneImpressao}</span></div>`
     : ''
@@ -830,9 +836,17 @@ function setupEventosNovoPedido() {
   // PDV — fechar
   $('#pdv-fechar').addEventListener('click', fecharPdv)
 
-  // PDV — cliente (retirada/delivery)
-  $('#pdv-btn-buscar-cliente').addEventListener('click', pdvBuscarCliente)
-  $('#pdv-telefone').addEventListener('keydown', e => { if (e.key === 'Enter') pdvBuscarCliente() })
+  // PDV — busca de cliente (debounce no campo nome)
+  let _pdvDebounceNome
+  $('#pdv-busca-nome').addEventListener('input', () => {
+    clearTimeout(_pdvDebounceNome)
+    _pdvDebounceNome = setTimeout(() => pdvBuscarCliente(), 300)
+  })
+  $('#pdv-btn-limpar-cliente').addEventListener('click', pdvLimparCliente)
+  // Fechar sugestões ao clicar fora
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#pdv-cliente-section')) pdvFecharSugestoes()
+  })
 
   // PDV — pagamento → troco
   $('#pdv-pagamento').addEventListener('change', () => {
@@ -860,23 +874,19 @@ async function abrirPdv(tipo) {
   npItens = []
   npClienteId = null
 
-  // Configura badge e campos de cliente
+  // Configura badge de tipo
   const labels = { balcao: 'Balcão', retirada: 'Retirada', delivery: 'Delivery' }
   $('#pdv-badge-tipo').textContent = labels[tipo] || tipo
-  $('#pdv-balcao-campos').classList.toggle('hidden', tipo !== 'balcao')
-  $('#pdv-cliente-campos').classList.toggle('hidden', tipo === 'balcao')
-  $('#pdv-endereco-grupo').classList.toggle('hidden', tipo !== 'delivery')
 
   // Reset campos
-  if ($('#pdv-balcao-nome')) $('#pdv-balcao-nome').value = ''
-  $('#pdv-telefone').value = ''
-  if ($('#pdv-cliente-nome')) $('#pdv-cliente-nome').value = ''
+  pdvLimparCliente()
+  $('#pdv-busca-nome').value = ''
   $('#pdv-endereco').value = ''
+  $('#pdv-enderecos-salvos-container')?.remove()
+  $('#pdv-endereco-grupo').classList.toggle('hidden', tipo !== 'delivery')
   $('#pdv-pagamento').value = ''
   $('#pdv-troco').value = ''
   $('#pdv-obs').value = ''
-  $('#pdv-cliente-info').classList.add('hidden')
-  $('#pdv-nome-grupo').classList.add('hidden')
   $('#pdv-troco-grupo').classList.add('hidden')
 
   pdvRenderCarrinho()
@@ -1143,32 +1153,118 @@ function pdvAtualizarTotal() {
 
 /* ── Buscar cliente no PDV ─────────────────────────────── */
 
+function pdvFecharSugestoes() {
+  $('#pdv-sugestoes').classList.add('hidden')
+  $('#pdv-sugestoes').innerHTML = ''
+}
+
+function pdvLimparCliente() {
+  npClienteId = null
+  $('#pdv-cliente-selecionado').classList.add('hidden')
+  $('#pdv-novo-cliente-campos').classList.add('hidden')
+  document.getElementById('pdv-enderecos-salvos-container')?.remove()
+  pdvFecharSugestoes()
+}
+
+function pdvSelecionarCliente(cliente) {
+  npClienteId = cliente.id
+  $('#pdv-busca-nome').value = cliente.nome
+  const info = cliente.telefone ? `✓ ${cliente.nome} — ${cliente.telefone}` : `✓ ${cliente.nome}`
+  $('#pdv-cliente-selecionado-info').textContent = info
+  $('#pdv-cliente-selecionado').classList.remove('hidden')
+  $('#pdv-novo-cliente-campos').classList.add('hidden')
+  pdvFecharSugestoes()
+  if (pdvTipo === 'delivery') pdvCarregarEnderecos(cliente.id)
+}
+
+async function pdvCarregarEnderecos(clienteId) {
+  document.getElementById('pdv-enderecos-salvos-container')?.remove()
+  try {
+    const enderecos = await api.get(`/api/admin/clientes/${clienteId}/enderecos`)
+    if (!enderecos || enderecos.length === 0) return
+
+    const grupoEndereco = $('#pdv-endereco-grupo')
+    const container = document.createElement('div')
+    container.id = 'pdv-enderecos-salvos-container'
+    container.className = 'pdv-enderecos-salvos'
+
+    const titulo = document.createElement('p')
+    titulo.className = 'pdv-enderecos-titulo'
+    titulo.textContent = 'Endereços salvos:'
+    container.appendChild(titulo)
+
+    enderecos.forEach((e, idx) => {
+      const radioId = `pdv-end-${idx}`
+      const item = document.createElement('div')
+      item.className = 'pdv-endereco-item'
+
+      const radio = document.createElement('input')
+      radio.type = 'radio'
+      radio.name = 'pdv-endereco-salvo'
+      radio.id = radioId
+      radio.className = 'pdv-endereco-radio'
+      radio.value = e.endereco
+      radio.addEventListener('change', () => { $('#pdv-endereco').value = e.endereco })
+
+      const label = document.createElement('label')
+      label.htmlFor = radioId
+      label.className = 'pdv-endereco-texto'
+      label.textContent = e.endereco
+
+      const del = document.createElement('button')
+      del.type = 'button'
+      del.className = 'pdv-endereco-del'
+      del.setAttribute('aria-label', 'Remover endereço')
+      del.textContent = '✕'
+      del.addEventListener('click', async () => {
+        try {
+          await api.delete(`/api/admin/clientes/${clienteId}/enderecos/${e.id}`)
+          if (radio.checked) $('#pdv-endereco').value = ''
+          item.remove()
+          if (!container.querySelector('.pdv-endereco-item')) container.remove()
+        } catch { toast.erro('Erro ao remover endereço.') }
+      })
+
+      item.append(radio, label, del)
+      container.appendChild(item)
+    })
+
+    grupoEndereco.insertBefore(container, grupoEndereco.firstChild)
+  } catch { /* silencioso */ }
+}
+
 async function pdvBuscarCliente() {
-  const telefone = $('#pdv-telefone').value.trim().replace(/\D/g, '')
-  if (!telefone) { toast.aviso('Informe o telefone.'); return }
+  const q = $('#pdv-busca-nome').value.trim()
+  if (!q) { pdvFecharSugestoes(); return }
 
   try {
-    const res = await api.get(`/api/admin/clientes?telefone=${telefone}`)
-    const clientes = Array.isArray(res) ? res : [res]
-    const cliente = clientes.find(c => c.telefone.replace(/\D/g, '') === telefone)
+    const res = await api.get(`/api/admin/clientes/lista?q=${encodeURIComponent(q)}&page_size=5`)
+    const lista = res?.clientes ?? []
+    const sug = $('#pdv-sugestoes')
 
-    if (cliente) {
-      npClienteId = cliente.id
-      $('#pdv-cliente-info').innerHTML = `<span class="np-cliente-encontrado">✓ ${esc(cliente.nome)} — ${esc(cliente.telefone)}</span>`
-      $('#pdv-cliente-info').classList.remove('hidden')
-      $('#pdv-nome-grupo').classList.add('hidden')
-    } else {
+    if (lista.length === 0) {
+      sug.innerHTML = `<div class="pdv-sugestao-vazio">Nenhum cliente encontrado — será cadastrado com este nome.</div>`
+      sug.classList.remove('hidden')
       npClienteId = null
-      $('#pdv-cliente-info').innerHTML = `<span class="np-cliente-novo">Novo cliente — será cadastrado.</span>`
-      $('#pdv-cliente-info').classList.remove('hidden')
-      $('#pdv-nome-grupo').classList.remove('hidden')
+      $('#pdv-cliente-selecionado').classList.add('hidden')
+      $('#pdv-novo-cliente-campos').classList.remove('hidden')
+      return
     }
-  } catch {
-    npClienteId = null
-    $('#pdv-cliente-info').innerHTML = `<span class="np-cliente-novo">Novo cliente — será cadastrado.</span>`
-    $('#pdv-cliente-info').classList.remove('hidden')
-    $('#pdv-nome-grupo').classList.remove('hidden')
-  }
+
+    sug.innerHTML = lista.map(c =>
+      `<div class="pdv-sugestao-item" data-id="${c.id}" data-nome="${esc(c.nome)}" data-tel="${esc(c.telefone ?? '')}">
+        <span class="pdv-sugestao-nome">${esc(c.nome)}</span>
+        <span class="pdv-sugestao-tel">${esc(c.telefone ?? '—')}</span>
+      </div>`
+    ).join('')
+    sug.classList.remove('hidden')
+
+    sug.querySelectorAll('.pdv-sugestao-item').forEach(item => {
+      item.addEventListener('click', () => {
+        pdvSelecionarCliente({ id: +item.dataset.id, nome: item.dataset.nome, telefone: item.dataset.tel || null })
+      })
+    })
+  } catch { pdvFecharSugestoes() }
 }
 
 /* ── Criar pedido ─────────────────────────────────────── */
@@ -1182,9 +1278,7 @@ async function pdvCriarPedido() {
   const pagamento = $('#pdv-pagamento').value
   const troco = $('#pdv-troco').value ? parseFloat($('#pdv-troco').value) : null
   const obs = $('#pdv-obs').value.trim()
-  const telefone = $('#pdv-telefone').value.trim().replace(/\D/g, '')
-  const nomeCliente = $('#pdv-cliente-nome')?.value.trim()
-  const nomeBalcao = $('#pdv-balcao-nome')?.value.trim()
+  const nomeBusca = $('#pdv-busca-nome').value.trim()
 
   const itens = npItens.map(i => ({
     produto_id: i.produto.id,
@@ -1200,10 +1294,8 @@ async function pdvCriarPedido() {
     troco_para: pagamento === 'dinheiro' ? troco : null,
     observacao: obs || null,
     itens,
-    cliente_id:           npClienteId || null,
-    cliente_telefone:     (!npClienteId && telefone) ? telefone : null,
-    cliente_nome:         (!npClienteId && telefone) ? (nomeCliente || null) : null,
-    nome_cliente_balcao:  pdvTipo === 'balcao' ? (nomeBalcao || null) : null,
+    cliente_id:   npClienteId || null,
+    cliente_nome: (!npClienteId && nomeBusca) ? nomeBusca : null,
   }
 
   const btn = $('#pdv-btn-criar')
