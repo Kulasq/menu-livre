@@ -67,7 +67,7 @@ class PedidoItemResponse(BaseModel):
 class PedidoClienteResponse(BaseModel):
     id: int
     nome: str
-    telefone: str
+    telefone: str | None
 
     model_config = {"from_attributes": True}
 
@@ -75,7 +75,7 @@ class PedidoClienteResponse(BaseModel):
 class PedidoResponse(BaseModel):
     id: int
     numero: str
-    cliente: PedidoClienteResponse
+    cliente: PedidoClienteResponse | None
     tipo: str
     status: str
     endereco_entrega: str | None
