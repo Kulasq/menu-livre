@@ -765,13 +765,31 @@ a {
 
 .modificador-opcao:last-child { border-bottom: none; }
 
-.modificador-opcao input[type="radio"],
 .modificador-opcao input[type="checkbox"] {
   accent-color: var(--marrom-btn);
   width: 18px;
   height: 18px;
   flex-shrink: 0;
   cursor: pointer;
+}
+
+.modificador-opcao input[type="radio"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: 2px solid var(--borda);
+  border-radius: 50%;
+  background: #fff;
+  transition: border-color .15s;
+}
+
+.modificador-opcao input[type="radio"]:checked {
+  border-color: var(--marrom-btn);
+  background-color: #fff;
+  background-image: radial-gradient(circle, var(--marrom-btn) 38%, transparent 39%);
 }
 
 .modificador-label {
@@ -1249,13 +1267,24 @@ a {
 }
 
 .endereco-salvo-radio {
+  -webkit-appearance: none;
+  appearance: none;
   flex-shrink: 0;
   width: 16px !important;
   max-width: 16px !important;
   height: 16px;
-  accent-color: var(--marrom-btn);
   cursor: pointer;
   margin: 0;
+  border: 2px solid var(--borda);
+  border-radius: 50%;
+  background: #fff;
+  transition: border-color .15s;
+}
+
+.endereco-salvo-radio:checked {
+  border-color: var(--marrom-btn);
+  background-color: #fff;
+  background-image: radial-gradient(circle, var(--marrom-btn) 38%, transparent 39%);
 }
 
 .endereco-salvo-texto {
