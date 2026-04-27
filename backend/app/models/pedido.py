@@ -14,7 +14,7 @@ class Pedido(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     numero: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
-    cliente_id: Mapped[int] = mapped_column(ForeignKey("clientes.id"), index=True)
+    cliente_id: Mapped[int | None] = mapped_column(ForeignKey("clientes.id", ondelete="SET NULL"), nullable=True, index=True)
     mesa_id: Mapped[int | None] = mapped_column(ForeignKey("mesas.id"), nullable=True)
     tipo: Mapped[str] = mapped_column(String(20), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="pendente")
