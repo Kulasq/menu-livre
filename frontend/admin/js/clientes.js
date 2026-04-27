@@ -42,13 +42,16 @@
   }
 
   function formatarTelefoneExibicao(tel) {
+    if (!tel) return '—'
     const d = tel.replace(/\D/g, '')
+    if (!d || /^0+$/.test(d)) return '—'
     if (d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`
     if (d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`
     return tel
   }
 
   function urlWhatsApp(telefone) {
+    if (!telefone) return null
     const num = telefone.replace(/\D/g, '')
     const completo = num.startsWith('55') ? num : `55${num}`
     return `https://api.whatsapp.com/send/?phone=${completo}`
@@ -132,9 +135,7 @@
               ${SVG_TRES_PONTOS}
             </button>
             <div class="kebab-dropdown" hidden role="menu">
-              <a class="kebab-item" href="${urlWhatsApp(c.telefone)}" target="_blank" rel="noopener noreferrer" role="menuitem">
-                ${SVG_WHATSAPP} WhatsApp
-              </a>
+              ${c.telefone ? `<a class="kebab-item" href="${urlWhatsApp(c.telefone)}" target="_blank" rel="noopener noreferrer" role="menuitem">${SVG_WHATSAPP} WhatsApp</a>` : ''}
               <button class="kebab-item" type="button" data-action="editar" role="menuitem">
                 ${SVG_LAPIZ} Editar contato
               </button>
