@@ -242,7 +242,7 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
         if not cliente:
             raise HTTPException(status_code=404, detail="Cliente não encontrado")
     elif dados.cliente_telefone:
-        # Buscar por telefone ou criar novo
+        # Buscar por telefone ou criar novo com telefone
         cliente = db.query(Cliente).filter(
             Cliente.telefone == dados.cliente_telefone
         ).first()
@@ -253,6 +253,11 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
             )
             db.add(cliente)
             db.flush()
+    elif dados.cliente_nome:
+        # Criar cliente só com nome (sem telefone — cadastro rápido do PDV)
+        cliente = Cliente(nome=dados.cliente_nome, telefone=None)
+        db.add(cliente)
+        db.flush()
     else:
         # Sem identificação — usa/cria cliente sistema "Balcão"
         cliente = db.query(Cliente).filter(
