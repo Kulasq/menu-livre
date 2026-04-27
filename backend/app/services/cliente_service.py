@@ -175,7 +175,7 @@ def atualizar_cliente_admin(cliente_id: int, dados, db: Session) -> "Cliente":
 
 
 def deletar_cliente(cliente_id: int, db: Session) -> None:
-    """Remove um cliente e seus endereços (cascade via FK)."""
+    """Remove um cliente. Pedidos ficam com cliente_id=NULL (ON DELETE SET NULL)."""
     cliente = db.get(Cliente, cliente_id)
     if not cliente:
         raise HTTPException(status_code=404, detail="Cliente não encontrado")
@@ -183,16 +183,18 @@ def deletar_cliente(cliente_id: int, db: Session) -> None:
     db.commit()
 
 
-def criar_cliente_admin(nome: str, telefone: str, db: Session) -> "Cliente":
-    """Cria um novo cliente diretamente pelo admin."""
-    tel = normalizar_telefone(telefone)
-    if len(tel) < 10 or len(tel) > 13:
-        raise HTTPException(status_code=400, detail="Telefone inválido. Use o formato: 81 99999-9999")
-    existente = db.query(Cliente).filter(Cliente.telefone == tel).first()
-    if existente:
-        raise HTTPException(status_code=409, detail="Telefone já cadastrado para outro cliente")
+def criar_cliente_admin(nome: str, telefone: str | None, db: Session) -> "Cliente":
+    """Cria um novo cliente diretamente pelo admin. Telefone é opcional."""
     if not nome.strip():
         raise HTTPException(status_code=400, detail="Nome não pode ser vazio")
+    tel: str | None = None
+    if telefone:
+        tel = normalizar_telefone(telefone)
+        if len(tel) < 10 or len(tel) > 13:
+            raise HTTPException(status_code=400, detail="Telefone inválido. Use o formato: 81 99999-9999")
+        existente = db.query(Cliente).filter(Cliente.telefone == tel).first()
+        if existente:
+            raise HTTPException(status_code=409, detail="Telefone já cadastrado para outro cliente")
     cliente = Cliente(nome=nome.strip(), telefone=tel)
     db.add(cliente)
     db.commit()

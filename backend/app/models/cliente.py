@@ -10,7 +10,7 @@ class Cliente(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str] = mapped_column(String(100), nullable=False)
-    telefone: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
+    telefone: Mapped[str | None] = mapped_column(String(20), unique=True, index=True, nullable=True)
     endereco_padrao: Mapped[str | None] = mapped_column(Text, nullable=True)
     pontos: Mapped[int] = mapped_column(Integer, default=0)
     nivel_fidelidade: Mapped[str] = mapped_column(String(20), default="bronze")

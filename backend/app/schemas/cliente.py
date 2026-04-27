@@ -16,7 +16,7 @@ class ClienteUpdate(BaseModel):
 class ClienteResponse(BaseModel):
     id: int
     nome: str
-    telefone: str
+    telefone: str | None
     endereco_padrao: str | None
     total_pedidos: int
     segmento: str
@@ -52,7 +52,7 @@ class EnderecoCreate(BaseModel):
 class ClienteAdminListItem(BaseModel):
     id: int
     nome: str
-    telefone: str
+    telefone: str | None
     total_pedidos: int
     total_gasto: float
     ultimo_pedido: datetime | None
@@ -69,7 +69,7 @@ class ClienteAdminListResponse(BaseModel):
 class ClienteAdminDetalhe(BaseModel):
     id: int
     nome: str
-    telefone: str
+    telefone: str | None
     endereco_padrao: str | None
     total_pedidos: int
     total_gasto: float
