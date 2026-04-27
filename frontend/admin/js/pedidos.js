@@ -404,18 +404,18 @@ function renderCardPedido(pedido, isHistorico = false) {
   const pagamentoLabel = pedido.status_pagamento === 'pago' ? 'Pago' : 'Pendente'
 
   // Linha de cliente no card
-  // Balcão com nome → "Nome (Balcão)"  |  Balcão sem nome → "Balcão"  |  outros → "Nome · telefone"
+  // Com cliente vinculado → "Nome · telefone" (qualquer tipo)
+  // Balcão sem cliente, mas com nome manual → nome simples
+  // Sem cliente → tipo do pedido como fallback
   let linhaCliente
-  if (pedido.tipo === 'balcao') {
-    linhaCliente = pedido.nome_cliente_balcao
-      ? `${esc(pedido.nome_cliente_balcao)} <span style="color:var(--texto-terc);font-size:.82em">(Balcão)</span>`
-      : 'Balcão'
-  } else if (pedido.cliente) {
+  if (pedido.cliente) {
     linhaCliente = pedido.cliente.telefone
       ? `${esc(pedido.cliente.nome)} · ${esc(pedido.cliente.telefone)}`
       : esc(pedido.cliente.nome)
+  } else if (pedido.tipo === 'balcao' && pedido.nome_cliente_balcao) {
+    linhaCliente = esc(pedido.nome_cliente_balcao)
   } else {
-    linhaCliente = '—'
+    linhaCliente = tipoLabel
   }
 
   const cardHtml = `
@@ -729,11 +729,10 @@ function imprimirPedido() {
        <div class="subtotal-row" style="font-weight:bold"><span>Troco</span><span>${formatarPreco(p.troco_para - p.total)}</span></div>`
     : ''
 
-  // Para balcão: mostrar nome_cliente_balcao (se tiver) ou "Balcão"; ocultar telefone "00000000000"
-  const nomeImpressao = p.tipo === 'balcao'
-    ? (p.nome_cliente_balcao || 'Balcão')
-    : (p.cliente?.nome ?? '—')
-  const foneImpressao = p.tipo === 'balcao' ? null : (p.cliente?.telefone ?? null)
+  // Cliente vinculado tem prioridade; balcão sem cliente usa nome_cliente_balcao ou fallback
+  const nomeImpressao = p.cliente?.nome
+    ?? (p.tipo === 'balcao' ? (p.nome_cliente_balcao || 'Balcão') : '—')
+  const foneImpressao = p.cliente?.telefone ?? null
   const foneHtml = foneImpressao
     ? `<div class="campo"><span class="rotulo">FONE</span><span>${foneImpressao}</span></div>`
     : ''
