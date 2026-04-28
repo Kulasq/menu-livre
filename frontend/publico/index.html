@@ -189,6 +189,7 @@
         <div id="passo-identificacao" class="passo">
           <label for="input-nome">Seu nome</label>
           <input type="text" id="input-nome" placeholder="Ex: Maria" autocomplete="given-name" />
+          <p id="erro-nome" class="campo-erro hidden">Por favor, informe seu nome.</p>
 
           <label for="input-telefone">Telefone (WhatsApp)</label>
           <input type="tel" id="input-telefone" placeholder="(81) 99999-9999" autocomplete="tel" inputmode="numeric" />
@@ -201,6 +202,7 @@
           <div id="wrap-endereco-novo">
             <label for="input-endereco">Endereço de entrega</label>
             <input type="text" id="input-endereco" placeholder="Rua, número, bairro…" autocomplete="street-address" />
+            <p id="erro-endereco" class="campo-erro hidden">Por favor, selecione ou informe o endereço de entrega.</p>
           </div>
         </div>
 
@@ -217,6 +219,7 @@
           <div id="campo-agendamento" class="hidden">
             <label for="input-hora">Horário</label>
             <select id="input-hora"></select>
+            <p id="erro-agendamento" class="campo-erro hidden">Por favor, selecione o horário do agendamento.</p>
           </div>
         </div>
 
@@ -229,6 +232,7 @@
             <option value="dinheiro">Dinheiro</option>
             <option value="cartao">Cartão (maquineta)</option>
           </select>
+          <p id="erro-pagamento" class="campo-erro hidden">Por favor, selecione a forma de pagamento.</p>
           <div id="bloco-troco" class="info-pagamento hidden">
             <p class="troco-pergunta">Precisa de troco?</p>
             <div class="troco-radios">
@@ -252,6 +256,7 @@
       </div>
 
       <div class="modal-rodape">
+        <p id="erro-envio-pedido" class="campo-erro hidden"></p>
         <button id="btn-confirmar-pedido" class="btn-primario">
           Confirmar pedido
         </button>

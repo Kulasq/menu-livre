@@ -142,39 +142,57 @@ window.pedido = (() => {
     if (!sel.value && slots.length) sel.value = slots[0];
   }
 
+  // ─── helpers de validação inline ────────────────────────
+
+  function _mostrarErroInline(id, inputEl) {
+    const erroEl = document.getElementById(id);
+    if (erroEl) erroEl.classList.remove('hidden');
+    if (inputEl) {
+      inputEl.classList.add('input-invalido');
+      // Foca apenas se o elemento estiver visível (evita scroll para campos ocultos)
+      if (inputEl.offsetParent !== null) inputEl.focus();
+    }
+  }
+
+  function _limparErrosValidacao() {
+    ['erro-nome', 'erro-telefone', 'erro-endereco', 'erro-agendamento',
+     'erro-pagamento', 'erro-envio-pedido'].forEach(id => {
+      document.getElementById(id)?.classList.add('hidden');
+    });
+    [els.inputNome(), els.inputTelefone(), els.inputEndereco(),
+     els.inputHora(), els.inputPagamento()].forEach(el => {
+      el?.classList.remove('input-invalido');
+    });
+  }
+
   function _validar() {
     const nome = els.inputNome().value.trim();
     const tel  = _limparTelefone(els.inputTelefone().value);
 
     if (!nome) {
-      alert('Por favor, informe seu nome.');
-      els.inputNome().focus();
+      _mostrarErroInline('erro-nome', els.inputNome());
       return false;
     }
 
     if (tel.length !== 10 && tel.length !== 11) {
-      alert('Telefone inválido. Informe DDD + número (10 ou 11 dígitos).');
-      els.inputTelefone().focus();
+      _mostrarErroInline('erro-telefone', els.inputTelefone());
       return false;
     }
 
     if (_tipo === 'delivery' && !_obterEnderecoEntrega()) {
-      alert('Por favor, selecione ou informe o endereço de entrega.');
-      els.inputEndereco().focus();
+      _mostrarErroInline('erro-endereco', els.inputEndereco());
       return false;
     }
 
     if (els.inputTipoPedido().value === 'agendado') {
       if (!els.inputHora().value) {
-        alert('Por favor, selecione o horário do agendamento.');
-        els.inputHora().focus();
+        _mostrarErroInline('erro-agendamento', els.inputHora());
         return false;
       }
     }
 
     if (!els.inputPagamento().value) {
-      alert('Por favor, selecione a forma de pagamento.');
-      els.inputPagamento().focus();
+      _mostrarErroInline('erro-pagamento', els.inputPagamento());
       return false;
     }
 
@@ -265,6 +283,8 @@ window.pedido = (() => {
     els.erroTroco().classList.add('hidden');
     const naoTroco = document.querySelector('input[name="precisa-troco"][value="nao"]');
     if (naoTroco) naoTroco.checked = true;
+
+    _limparErrosValidacao();
 
     const box = els.modal().querySelector('.modal-box');
     box.style.maxHeight = `${Math.round(window.innerHeight * 0.92)}px`;
@@ -606,7 +626,11 @@ window.pedido = (() => {
       }
 
     } catch (err) {
-      alert(`Erro: ${err.message}`);
+      const erroEnvio = document.getElementById('erro-envio-pedido');
+      if (erroEnvio) {
+        erroEnvio.textContent = `Erro: ${err.message}`;
+        erroEnvio.classList.remove('hidden');
+      }
       btn.disabled = false;
       btn.textContent = 'Confirmar pedido';
     }
@@ -719,6 +743,20 @@ window.pedido = (() => {
     _aplicarMascaraTelefone(telInput);
     telInput.addEventListener('blur', _lookupClienteBlur);
 
+    // Limpa erros inline ao corrigir os campos
+    els.inputNome().addEventListener('input', () => {
+      document.getElementById('erro-nome')?.classList.add('hidden');
+      els.inputNome().classList.remove('input-invalido');
+    });
+    els.inputEndereco().addEventListener('input', () => {
+      document.getElementById('erro-endereco')?.classList.add('hidden');
+      els.inputEndereco().classList.remove('input-invalido');
+    });
+    els.inputHora().addEventListener('change', () => {
+      document.getElementById('erro-agendamento')?.classList.add('hidden');
+      els.inputHora().classList.remove('input-invalido');
+    });
+
     els.inputTipoPedido().addEventListener('change', () => {
       const agendado = els.inputTipoPedido().value === 'agendado';
       els.campoAgendamento().classList.toggle('hidden', !agendado);
@@ -732,6 +770,8 @@ window.pedido = (() => {
     _aplicarMascaraMoeda(els.inputTrocoPara());
 
     els.inputPagamento().addEventListener('change', () => {
+      document.getElementById('erro-pagamento')?.classList.add('hidden');
+      els.inputPagamento().classList.remove('input-invalido');
       const val = els.inputPagamento().value;
       els.blocoTroco().classList.toggle('hidden', val !== 'dinheiro');
       if (val !== 'dinheiro') {
