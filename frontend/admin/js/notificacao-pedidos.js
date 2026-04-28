@@ -187,6 +187,14 @@
     delete _modalEl.dataset.primeiroId
   }
 
+  /* ── ESC dispensa o modal de notificação ─────────────── */
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && _modalEl && !_modalEl.classList.contains('hidden')) {
+      _dispensarModal()
+    }
+  })
+
   function _aoClicarVer() {
     const id = _modalEl?.dataset?.primeiroId
     _dispensarModal()
