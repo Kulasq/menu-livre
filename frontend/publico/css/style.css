@@ -1203,12 +1203,12 @@ a {
   min-width: 0;
 }
 
-.passo input,
+.passo input:not([type="radio"]):not([type="checkbox"]),
 .passo textarea,
 .passo select {
   width: 100%;
-  /* cap absoluto: viewport - padding do modal (16px) - padding do passo (32px) */
-  max-width: calc(100vw - 48px);
+  /* modal 32px + passo 32px = 64px de padding horizontal total */
+  max-width: calc(100vw - 64px);
   min-width: 0;
   padding: 11px 13px;
   border: 1px solid var(--borda-input);
@@ -1219,7 +1219,7 @@ a {
   transition: border-color .15s;
 }
 
-.passo input:focus,
+.passo input:not([type="radio"]):not([type="checkbox"]):focus,
 .passo textarea:focus,
 .passo select:focus {
   outline: none;
@@ -1270,11 +1270,12 @@ a {
   -webkit-appearance: none;
   appearance: none;
   flex-shrink: 0;
-  width: 16px !important;
-  max-width: 16px !important;
-  height: 16px;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
   cursor: pointer;
   margin: 0;
+  outline: none;
   border: 2px solid var(--borda);
   border-radius: 50%;
   background: #fff;
@@ -1285,6 +1286,10 @@ a {
   border-color: var(--marrom-btn);
   background-color: #fff;
   background-image: radial-gradient(circle, var(--marrom-btn) 38%, transparent 39%);
+}
+
+.endereco-salvo-radio:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--marrom-btn) 30%, transparent);
 }
 
 .endereco-salvo-texto {
@@ -1956,4 +1961,63 @@ a {
 
 #rodape-credito a:hover {
   text-decoration: underline;
+}
+
+/* ── Banner de mensagens inline (meus-pedidos) ────────── */
+
+.mp-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: .9rem;
+  font-weight: 500;
+  margin: 12px 16px 16px;
+  line-height: 1.45;
+  transition: opacity .2s;
+}
+
+.mp-banner.hidden {
+  display: none;
+}
+
+.mp-banner-info {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.mp-banner-erro {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.mp-banner-sucesso {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.mp-banner-btn {
+  display: block;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--marrom-btn);
+  color: #fff;
+  border-radius: var(--radius-xl);
+  font-size: .92rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mp-banner-btn:hover,
+.mp-banner-btn:active {
+  background: var(--marrom-hover);
+  color: #fff;
 }
