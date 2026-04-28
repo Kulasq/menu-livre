@@ -1344,3 +1344,15 @@ function esc(str) {
   el.textContent = str
   return el.innerHTML
 }
+
+
+/* ── ESC fecha o modal de topo ──────────────────────────── */
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return
+  // Fecha em ordem decrescente de z-index (o do topo primeiro)
+  if (!$('#pdv-modal-produto').classList.contains('hidden')) return fecharModalProduto()
+  if (!$('#modal-confirmacao').classList.contains('hidden')) return fecharConfirmacao()
+  if (!$('#modal-pedido').classList.contains('hidden')) return fecharModalPedido()
+  if (!$('#pdv-overlay').classList.contains('hidden')) return fecharPdv()
+})
