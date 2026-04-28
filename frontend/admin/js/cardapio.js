@@ -709,3 +709,18 @@ function esc(str) {
   el.textContent = str
   return el.innerHTML
 }
+
+
+/* ── ESC fecha o modal de topo ──────────────────────────── */
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return
+  // Ordem decrescente de z-index: confirmação (330) → opção (320) → grupo (310)
+  // → modificadores → produto → categoria
+  if (!$('#modal-confirmar').classList.contains('hidden')) return fecharConfirmacao()
+  if (!$('#modal-opcao').classList.contains('hidden')) return fecharModalOpcao()
+  if (!$('#modal-grupo').classList.contains('hidden')) return fecharModalGrupo()
+  if (!$('#modal-modificadores').classList.contains('hidden')) return fecharModalModificadores()
+  if (!$('#modal-produto').classList.contains('hidden')) return fecharModalProduto()
+  if (!$('#modal-categoria').classList.contains('hidden')) return fecharModalCategoria()
+})

@@ -45,6 +45,28 @@
     });
   }
 
+  // ─── banner inline de mensagens ──────────────────────────
+
+  function _banner(msg, tipo = 'info', persistente = false) {
+    const el   = document.getElementById('mp-banner');
+    const span = document.getElementById('mp-banner-msg');
+    if (!el || !span) return;
+    span.textContent = msg;
+    el.className = `mp-banner mp-banner-${tipo}`;
+    if (!persistente) {
+      setTimeout(() => el.classList.add('hidden'), 6000);
+    }
+  }
+
+  function _bannerHtml(html, tipo = 'info') {
+    const el   = document.getElementById('mp-banner');
+    const span = document.getElementById('mp-banner-msg');
+    if (!el || !span) return;
+    span.innerHTML = html;
+    el.className = `mp-banner mp-banner-${tipo}`;
+    // mensagens com HTML (ex: link) são persistentes — o usuário deve agir
+  }
+
   // ─── localStorage ─────────────────────────────────────────
   function _carregarSessao() {
     try {
@@ -294,16 +316,25 @@
     }
 
     if (!itensParaCarrinho.length) {
-      alert('Nenhum item deste pedido está disponível no momento.');
+      _banner('Nenhum item deste pedido está disponível no momento.', 'erro');
       return;
     }
 
     if (pulados > 0) {
-      alert(`${itensParaCarrinho.length} itens adicionados.\n(${pulados} ${pulados === 1 ? 'item não está' : 'itens não estão'} mais disponível${pulados > 1 ? 'is' : ''} e foi${pulados > 1 ? 'am' : ''} pulado${pulados > 1 ? 's' : ''}.)`);
+      // Mostra aviso antes de redirecionar para o usuário ter tempo de ler
+      _banner(
+        `${itensParaCarrinho.length} ${itensParaCarrinho.length === 1 ? 'item adicionado' : 'itens adicionados'} ao carrinho. ` +
+        `(${pulados} ${pulados === 1 ? 'item indisponível foi pulado' : 'itens indisponíveis foram pulados'}.)`,
+        'info'
+      );
+      setTimeout(() => {
+        sessionStorage.setItem('ml_pedir_igual', JSON.stringify(itensParaCarrinho));
+        window.location.href = 'index.html';
+      }, 2500);
+    } else {
+      sessionStorage.setItem('ml_pedir_igual', JSON.stringify(itensParaCarrinho));
+      window.location.href = 'index.html';
     }
-
-    sessionStorage.setItem('ml_pedir_igual', JSON.stringify(itensParaCarrinho));
-    window.location.href = 'index.html';
   }
 
   // ─── inicialização ────────────────────────────────────────
@@ -331,7 +362,17 @@
         _mostrar('mp-carregando');
         await _carregar();
       } catch (err) {
-        alert(err.message || 'Erro ao identificar');
+        const msg = err.message || '';
+        if (msg.toLowerCase().includes('nome obrigatório')) {
+          // Telefone não cadastrado — mensagem amigável com botão para o cardápio
+          _bannerHtml(
+            'Não encontramos pedidos para esse telefone.' +
+            '<a href="index.html" class="mp-banner-btn">Ver o cardápio</a>',
+            'info'
+          );
+        } else {
+          _banner(msg || 'Erro ao identificar. Tente novamente.', 'erro');
+        }
       } finally {
         btn.disabled = false;
         btn.textContent = 'Ver meus pedidos';
