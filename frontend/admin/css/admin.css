@@ -105,6 +105,113 @@ a {
   /* Transições */
   --trans-fast: 150ms ease;
   --trans-base: 200ms ease;
+
+  /* Cores semânticas (light mode) */
+  --info:        #3b82f6;
+  --info-light:  rgba(59,130,246,.1);
+  --neutro:      #6b7280;
+  --neutro-light: rgba(107,114,128,.1);
+  --laranja:     #f97316;
+  --laranja-light: rgba(249,115,22,.1);
+
+  /* Segmentos RFM (light mode) */
+  --seg-campeao-bg:  #fef3c7; --seg-campeao-fg:  #92400e;
+  --seg-leal-bg:     #dbeafe; --seg-leal-fg:     #1e40af;
+  --seg-novo-bg:     #ede9fe; --seg-novo-fg:     #6d28d9;
+  --seg-comum-bg:    #f1f5f9; --seg-comum-fg:    #475569;
+  --seg-em-risco-bg: #fef9c3; --seg-em-risco-fg: #854d0e;
+  --seg-inativo-bg:  #fee2e2; --seg-inativo-fg:  #991b1b;
+
+  /* Overlay */
+  --overlay: rgba(15, 23, 42, .45);
+}
+
+/* =============================================
+   TEMA ESCURO
+   ============================================= */
+[data-theme="dark"] {
+  /* Superfícies */
+  --bg:              #0f172a;
+  --bg-card:         #1e293b;
+  --bg-sidebar:      #020617;
+  --bg-sidebar-item: rgba(255,255,255,.05);
+  --bg-sidebar-ativo: rgba(245,158,11,.15);
+  --bg-input:        #1e293b;
+  --bg-login:        #020617;
+
+  /* Texto — terc precisa de contraste real no fundo escuro */
+  --texto:           #f1f5f9;
+  --texto-sec:       #cbd5e1;
+  --texto-terc:      #94a3b8;
+
+  /* Accent — mantém laranja da marca, um tick mais brilhante */
+  --accent:          #f59e0b;
+  --accent-hover:    #fbbf24;
+  --accent-light:    rgba(245,158,11,.2);
+
+  /* Feedback — opacidade maior para valer no fundo escuro */
+  --sucesso-light:   rgba(16,185,129,.28);
+  --erro-light:      rgba(239,68,68,.28);
+  --aviso-light:     rgba(245,158,11,.28);
+
+  /* Bordas — um tick mais visíveis */
+  --borda:           #3d5068;
+  --borda-input:     #3d5068;
+
+  /* Sombras — mais densas para valer no fundo escuro */
+  --sombra-sm:   0 1px 2px rgba(0,0,0,.4);
+  --sombra-md:   0 4px 12px rgba(0,0,0,.5);
+  --sombra-lg:   0 8px 24px rgba(0,0,0,.6);
+  --sombra-card: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+
+  /* Cores semânticas extras */
+  --info:        #60a5fa;
+  --info-light:  rgba(96,165,250,.25);
+  --neutro:      #94a3b8;
+  --neutro-light: rgba(148,163,184,.2);
+  --laranja:     #fb923c;
+  --laranja-light: rgba(251,146,60,.25);
+
+  /* Segmentos RFM — versão dark (matiz preservado, saturação maior) */
+  --seg-campeao-bg: rgba(245,158,11,.28);
+  --seg-campeao-fg: #fbbf24;
+  --seg-leal-bg:    rgba(96,165,250,.25);
+  --seg-leal-fg:    #93c5fd;
+  --seg-novo-bg:    rgba(167,139,250,.25);
+  --seg-novo-fg:    #c4b5fd;
+  --seg-comum-bg:   rgba(148,163,184,.18);
+  --seg-comum-fg:   #cbd5e1;
+  --seg-em-risco-bg: rgba(251,191,36,.25);
+  --seg-em-risco-fg: #fcd34d;
+  --seg-inativo-bg: rgba(239,68,68,.28);
+  --seg-inativo-fg: #fca5a5;
+
+  /* Overlay */
+  --overlay: rgba(0,0,0,.65);
+
+  /* Aliases do PDV — sem esses, o PDV usa fallbacks hardcoded brancos */
+  --fundo:     #0f172a;
+  --branco:    #1e293b;
+  --fundo-alt: #16213a;
+  --texto-pri: #f1f5f9;
+  --primaria:  #f59e0b;
+}
+
+/* ── Transições suaves ao trocar de tema ── */
+body,
+.admin-card,
+.card,
+.dash-card,
+.form-input,
+.modal-box,
+.sidebar-link,
+.conta-dropdown,
+.clientes-drawer,
+.btn-tema {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
 }
 
 /* =============================================
@@ -438,6 +545,37 @@ a {
   border-radius: 50%;
   font-size: .82rem;
   font-weight: 700;
+}
+
+/* ── Botão de tema (toggle claro/escuro/sistema) ── */
+.btn-tema {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  color: var(--texto-sec);
+  cursor: pointer;
+  transition: background var(--trans-fast), color var(--trans-fast);
+  flex-shrink: 0;
+}
+
+.btn-tema svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-tema:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.btn-tema:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ── Conteúdo principal ── */
@@ -832,18 +970,18 @@ a {
 
 /* Badges extras para status */
 .badge-info {
-  background: rgba(59,130,246,.1);
-  color: #3b82f6;
+  background: var(--info-light, rgba(59,130,246,.1));
+  color: var(--info, #3b82f6);
 }
 
 .badge-preparo {
-  background: rgba(249,115,22,.1);
-  color: #f97316;
+  background: var(--laranja-light, rgba(249,115,22,.1));
+  color: var(--laranja, #f97316);
 }
 
 .badge-entregue {
-  background: rgba(107,114,128,.1);
-  color: #6b7280;
+  background: var(--neutro-light, rgba(107,114,128,.1));
+  color: var(--neutro, #6b7280);
 }
 
 /* ── Modal detalhe do pedido ── */
@@ -1048,10 +1186,10 @@ a {
   height: 26px;
 }
 
-.dash-icon-pedidos { background: rgba(59,130,246,.1); color: #3b82f6; }
+.dash-icon-pedidos { background: var(--info-light, rgba(59,130,246,.1)); color: var(--info, #3b82f6); }
 .dash-icon-vendas  { background: var(--sucesso-light); color: var(--sucesso); }
 .dash-icon-ticket  { background: var(--accent-light); color: var(--accent); }
-.dash-icon-andamento { background: rgba(249,115,22,.1); color: #f97316; }
+.dash-icon-andamento { background: var(--laranja-light, rgba(249,115,22,.1)); color: var(--laranja, #f97316); }
 
 .dash-card-info {
   display: flex;
@@ -1857,7 +1995,7 @@ textarea.form-input {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, .45);
+  background: var(--overlay, rgba(15, 23, 42, .45));
   z-index: 300;
   display: flex;
   align-items: center;
@@ -2042,7 +2180,7 @@ textarea.form-input {
 }
 
 .notif-pedido-box {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 20px;
   padding: 40px 32px 32px;
   max-width: 380px;
@@ -2088,13 +2226,13 @@ textarea.form-input {
 .notif-pedido-titulo {
   font-size: 1.6rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--texto);
   margin: 0 0 6px;
 }
 
 .notif-pedido-subtitulo {
   font-size: 0.95rem;
-  color: #64748b;
+  color: var(--texto-sec);
   margin: 0 0 28px;
 }
 
@@ -2113,13 +2251,13 @@ textarea.form-input {
   font-size: 0.9rem;
   padding: 10px 24px;
   background: transparent;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  color: var(--texto-sec);
+  border: 1px solid var(--borda);
 }
 
 .notif-btn-dispensar:hover {
-  background: #f8fafc;
-  color: #475569;
+  background: var(--bg);
+  color: var(--texto);
 }
 
 /* ── Abas (Hoje / Histórico) ─────────────────────────── */
@@ -2382,8 +2520,8 @@ textarea.form-input {
 }
 
 .pdv-endereco-del:hover {
-  color: #dc2626;
-  background: #fee2e2;
+  color: var(--erro);
+  background: var(--erro-light);
 }
 
 .np-itens-lista {
@@ -2952,7 +3090,7 @@ textarea.form-input {
 .pdv-modal-produto-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(15,23,42,.45);
+  background: var(--overlay, rgba(15,23,42,.45));
 }
 
 .pdv-modal-produto-box {
@@ -3428,26 +3566,26 @@ textarea.form-input {
   white-space: nowrap;
 }
 
-.seg-campeao  { background: #fef3c7; color: #92400e; }
-.seg-leal     { background: #dbeafe; color: #1e40af; }
-.seg-novo     { background: #ede9fe; color: #6d28d9; }
-.seg-comum    { background: #f1f5f9; color: #475569; }
-.seg-em-risco { background: #fef9c3; color: #854d0e; }
-.seg-inativo  { background: #fee2e2; color: #991b1b; }
+.seg-campeao  { background: var(--seg-campeao-bg,  #fef3c7); color: var(--seg-campeao-fg,  #92400e); }
+.seg-leal     { background: var(--seg-leal-bg,     #dbeafe); color: var(--seg-leal-fg,     #1e40af); }
+.seg-novo     { background: var(--seg-novo-bg,     #ede9fe); color: var(--seg-novo-fg,     #6d28d9); }
+.seg-comum    { background: var(--seg-comum-bg,    #f1f5f9); color: var(--seg-comum-fg,    #475569); }
+.seg-em-risco { background: var(--seg-em-risco-bg, #fef9c3); color: var(--seg-em-risco-fg, #854d0e); }
+.seg-inativo  { background: var(--seg-inativo-bg,  #fee2e2); color: var(--seg-inativo-fg,  #991b1b); }
 
 /* Badges de status de pedido (reutiliza padrão) */
-.status-pendente   { background: var(--aviso-light);  color: var(--aviso);   }
-.status-preparando { background: #dbeafe; color: #1e40af; }
-.status-pronto     { background: var(--sucesso-light); color: var(--sucesso); }
-.status-entregue   { background: var(--sucesso-light); color: var(--sucesso); }
-.status-cancelado  { background: var(--erro-light);    color: var(--erro);    }
-.status-agendado   { background: #ede9fe; color: #6d28d9; }
+.status-pendente   { background: var(--aviso-light);                              color: var(--aviso);   }
+.status-preparando { background: var(--seg-leal-bg,     #dbeafe);                 color: var(--seg-leal-fg,  #1e40af); }
+.status-pronto     { background: var(--sucesso-light);                            color: var(--sucesso); }
+.status-entregue   { background: var(--sucesso-light);                            color: var(--sucesso); }
+.status-cancelado  { background: var(--erro-light);                               color: var(--erro);    }
+.status-agendado   { background: var(--seg-novo-bg,     #ede9fe);                 color: var(--seg-novo-fg,  #6d28d9); }
 
 /* ── Drawer overlay ── */
 .drawer-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, .4);
+  background: var(--overlay, rgba(15, 23, 42, .4));
   z-index: 200;
   animation: fadeIn .2s ease;
 }

@@ -44,6 +44,7 @@ A maioria dos sistemas de cardápio digital cobra assinatura mensal cara por fun
 ### Painel administrativo
 - Login com JWT — access token em memória, refresh token em localStorage
 - **Minha conta** — alterar nome, e-mail e senha diretamente pelo avatar no header
+- **Modo escuro** — toggle de 3 estados (claro / escuro / sistema) ao lado do avatar, sem flash ao navegar entre páginas; persiste em localStorage e sincroniza entre abas
 - Gestão completa de categorias, produtos e **grupos de modificadores** (drag & drop de ordem)
 - Upload de fotos com redimensionamento automático (Pillow) — salvo com UUID
 - **Fila de pedidos** com atualização automática a cada 5s + **notificação sonora em qualquer tela** do painel
@@ -141,7 +142,6 @@ cd backend && pytest tests/ -v
 
 ## Em desenvolvimento
 
-- **Modo escuro** no painel admin (claro / escuro / sistema), sem afetar o cardápio público
 - **Grupos de modificadores reutilizáveis** entre múltiplos produtos
 - **Múltiplos horários por dia** — intervalos como 11h–14h e 18h–22h
 - **Selos de produto** — ícones de "picante", "vegetariano", "low carb" etc. ao lado do nome
