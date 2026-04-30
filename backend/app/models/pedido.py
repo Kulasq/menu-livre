@@ -51,8 +51,8 @@ class PedidoItem(Base):
     pedido_id: Mapped[int] = mapped_column(
         ForeignKey("pedidos.id", ondelete="CASCADE"), index=True
     )
-    produto_id: Mapped[int | None] = mapped_column(ForeignKey("produtos.id"), nullable=True)
-    variante_id: Mapped[int | None] = mapped_column(ForeignKey("variantes.id"), nullable=True)
+    produto_id: Mapped[int | None] = mapped_column(ForeignKey("produtos.id", ondelete="SET NULL"), nullable=True)
+    variante_id: Mapped[int | None] = mapped_column(ForeignKey("variantes.id", ondelete="SET NULL"), nullable=True)
     nome_snapshot: Mapped[str] = mapped_column(String(200), nullable=False)
     preco_snapshot: Mapped[float] = mapped_column(Float, nullable=False)
     quantidade: Mapped[int] = mapped_column(Integer, default=1)
