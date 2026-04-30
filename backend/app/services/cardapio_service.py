@@ -1,15 +1,17 @@
 from __future__ import annotations
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import select, delete, func
 from fastapi import HTTPException
 
 from app.models.categoria import Categoria
 from app.models.produto import Produto
-from app.models.modificador import GrupoModificador, Modificador
+from app.models.modificador import GrupoModificador, Modificador, produto_grupo_modificador
 from app.schemas.cardapio import (
     CategoriaCreate, CategoriaUpdate,
     ProdutoCreate, ProdutoUpdate,
     GrupoModificadorCreate, GrupoModificadorUpdate,
     ModificadorCreate, ModificadorUpdate,
+    VincularGrupoRequest,
 )
 
 
@@ -27,7 +29,6 @@ def criar_categoria(dados: CategoriaCreate, db: Session) -> Categoria:
     db.add(categoria)
     db.commit()
     categoria_id = categoria.id
-    categoria_nome = categoria.nome
     db.expire(categoria)
     return db.get(Categoria, categoria_id)
 
@@ -118,6 +119,11 @@ def obter_cardapio_publico(db: Session) -> dict:
     destaques = []
 
     for produto in produtos:
+        # Filtra grupos inativos — não expõe ao cliente grupos desativados pelo admin.
+        # Mutação em memória é segura: sem commit, sessão expira ao fim do request.
+        produto.grupos_modificadores = [
+            g for g in (produto.grupos_modificadores or []) if g.ativo
+        ]
         produtos_por_categoria.setdefault(produto.categoria_id, []).append(produto)
         if produto.destaque:
             destaques.append(produto)
@@ -134,22 +140,59 @@ def obter_cardapio_publico(db: Session) -> dict:
 
     return {"categorias": resultado, "destaques": destaques}
 
-def criar_grupo_modificador(produto_id: int, dados: GrupoModificadorCreate, db: Session) -> GrupoModificador:
-    produto = db.get(Produto, produto_id)
-    if not produto:
-        raise HTTPException(status_code=404, detail="Produto não encontrado")
- 
+
+# ── Grupos de Modificadores (autônomos) ──────────────────────────────────────
+
+def _carregar_grupo(grupo_id: int, db: Session) -> GrupoModificador:
+    grupo = db.query(GrupoModificador).options(
+        joinedload(GrupoModificador.modificadores)
+    ).filter(GrupoModificador.id == grupo_id).first()
+    if not grupo:
+        raise HTTPException(status_code=404, detail="Grupo de modificador não encontrado")
+    return grupo
+
+
+def listar_grupos_modificadores(db: Session) -> list[dict]:
+    """Retorna todos os grupos com contagem de produtos vinculados."""
+    grupos = db.query(GrupoModificador).options(
+        joinedload(GrupoModificador.modificadores)
+    ).order_by(GrupoModificador.nome).all()
+
+    # Contagem de produtos por grupo via subquery
+    contagens_raw = db.execute(
+        select(
+            produto_grupo_modificador.c.grupo_id,
+            func.count().label("total")
+        ).group_by(produto_grupo_modificador.c.grupo_id)
+    ).all()
+    contagens = {row.grupo_id: row.total for row in contagens_raw}
+
+    resultado = []
+    for g in grupos:
+        resultado.append({
+            "id": g.id,
+            "nome": g.nome,
+            "obrigatorio": g.obrigatorio,
+            "selecao_minima": g.selecao_minima,
+            "selecao_maxima": g.selecao_maxima,
+            "ativo": g.ativo,
+            "modificadores": g.modificadores,
+            "total_produtos": contagens.get(g.id, 0),
+        })
+    return resultado
+
+
+def criar_grupo_modificador(dados: GrupoModificadorCreate, db: Session) -> GrupoModificador:
     grupo = GrupoModificador(
-        produto_id=produto_id,
         nome=dados.nome,
         obrigatorio=dados.obrigatorio,
         selecao_minima=dados.selecao_minima,
         selecao_maxima=dados.selecao_maxima,
-        ordem=dados.ordem,
+        ativo=dados.ativo,
     )
     db.add(grupo)
     db.flush()
- 
+
     for mod_dados in dados.modificadores:
         mod = Modificador(
             grupo_id=grupo.id,
@@ -159,45 +202,148 @@ def criar_grupo_modificador(produto_id: int, dados: GrupoModificadorCreate, db: 
             ordem=mod_dados.ordem,
         )
         db.add(mod)
- 
+
     db.commit()
-    grupo_id = grupo.id
-    return db.query(GrupoModificador).options(
-        joinedload(GrupoModificador.modificadores)
-    ).filter(GrupoModificador.id == grupo_id).first()
- 
- 
+    return _carregar_grupo(grupo.id, db)
+
+
 def atualizar_grupo_modificador(
-    grupo_id: int, dados: "GrupoModificadorUpdate", db: Session
+    grupo_id: int, dados: GrupoModificadorUpdate, db: Session
 ) -> GrupoModificador:
     grupo = db.get(GrupoModificador, grupo_id)
     if not grupo:
         raise HTTPException(status_code=404, detail="Grupo de modificador não encontrado")
- 
+
     for campo, valor in dados.model_dump(exclude_unset=True).items():
         setattr(grupo, campo, valor)
- 
+
     db.commit()
-    return db.query(GrupoModificador).options(
-        joinedload(GrupoModificador.modificadores)
-    ).filter(GrupoModificador.id == grupo_id).first()
- 
- 
+    return _carregar_grupo(grupo_id, db)
+
+
 def deletar_grupo_modificador(grupo_id: int, db: Session) -> None:
     grupo = db.get(GrupoModificador, grupo_id)
     if not grupo:
         raise HTTPException(status_code=404, detail="Grupo de modificador não encontrado")
+
+    # Antes de deletar, anula referências históricas em pedido_item_modificadores
+    # para os modificadores deste grupo. A FK não tem ondelete no SQLite (limitação
+    # de batch_alter sem constraint nomeada), então zeramos via ORM antes do delete.
+    # Os snapshots (nome_snapshot, preco_snapshot) preservam o histórico visual.
+    from app.models.pedido import PedidoItemModificador
+    ids_mods = [m.id for m in grupo.modificadores]
+    if ids_mods:
+        db.query(PedidoItemModificador).filter(
+            PedidoItemModificador.modificador_id.in_(ids_mods)
+        ).update({"modificador_id": None}, synchronize_session=False)
+
     db.delete(grupo)
     db.commit()
- 
- 
+
+
+def contar_produtos_do_grupo(grupo_id: int, db: Session) -> int:
+    row = db.execute(
+        select(func.count()).where(produto_grupo_modificador.c.grupo_id == grupo_id)
+    ).scalar()
+    return row or 0
+
+
+# ── Vínculos produto ↔ grupo ──────────────────────────────────────────────────
+
+def vincular_grupo_a_produtos(
+    grupo_id: int, dados: VincularGrupoRequest, db: Session
+) -> int:
+    """Vincula o grupo a um conjunto de produtos. Ignora duplicatas. Retorna qtd de vínculos criados."""
+    grupo = db.get(GrupoModificador, grupo_id)
+    if not grupo:
+        raise HTTPException(status_code=404, detail="Grupo de modificador não encontrado")
+
+    if dados.modo == "todos":
+        produto_ids = [r[0] for r in db.query(Produto.id).all()]
+    elif dados.modo == "categoria":
+        if not dados.categoria_id:
+            raise HTTPException(status_code=422, detail="categoria_id obrigatório para modo 'categoria'")
+        if not db.get(Categoria, dados.categoria_id):
+            raise HTTPException(status_code=404, detail="Categoria não encontrada")
+        produto_ids = [
+            r[0] for r in db.query(Produto.id).filter(Produto.categoria_id == dados.categoria_id).all()
+        ]
+    else:  # "produtos"
+        if not dados.produtos_ids:
+            raise HTTPException(status_code=422, detail="produtos_ids obrigatório para modo 'produtos'")
+        produto_ids = dados.produtos_ids
+
+    if not produto_ids:
+        return 0
+
+    # Filtra os que já estão vinculados para não violar UNIQUE
+    ja_vinculados = set(
+        r[0] for r in db.execute(
+            select(produto_grupo_modificador.c.produto_id).where(
+                produto_grupo_modificador.c.grupo_id == grupo_id,
+                produto_grupo_modificador.c.produto_id.in_(produto_ids),
+            )
+        ).all()
+    )
+
+    novos = [pid for pid in produto_ids if pid not in ja_vinculados]
+    if not novos:
+        return 0
+
+    # Calcula a próxima ordem para cada produto (append ao final)
+    ordens_atuais = dict(
+        db.execute(
+            select(
+                produto_grupo_modificador.c.produto_id,
+                func.max(produto_grupo_modificador.c.ordem).label("max_ordem"),
+            ).where(produto_grupo_modificador.c.produto_id.in_(novos))
+            .group_by(produto_grupo_modificador.c.produto_id)
+        ).all()
+    )
+
+    rows = [
+        {"produto_id": pid, "grupo_id": grupo_id, "ordem": (ordens_atuais.get(pid) or 0) + 1}
+        for pid in novos
+    ]
+    db.execute(produto_grupo_modificador.insert(), rows)
+    db.commit()
+    return len(rows)
+
+
+def desvincular_grupo_de_produto(grupo_id: int, produto_id: int, db: Session) -> None:
+    if not db.get(GrupoModificador, grupo_id):
+        raise HTTPException(status_code=404, detail="Grupo de modificador não encontrado")
+    if not db.get(Produto, produto_id):
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    result = db.execute(
+        delete(produto_grupo_modificador).where(
+            produto_grupo_modificador.c.grupo_id == grupo_id,
+            produto_grupo_modificador.c.produto_id == produto_id,
+        )
+    )
+    db.commit()
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Vínculo não encontrado")
+
+
+def vinculos_do_produto(produto_id: int, db: Session) -> list[int]:
+    """Retorna lista de grupo_ids vinculados a um produto."""
+    rows = db.execute(
+        select(produto_grupo_modificador.c.grupo_id).where(
+            produto_grupo_modificador.c.produto_id == produto_id
+        ).order_by(produto_grupo_modificador.c.ordem)
+    ).all()
+    return [r[0] for r in rows]
+
+
 # ── Modificadores (opções individuais) ────────────────────────────────────────
- 
+
 def criar_modificador(grupo_id: int, dados: ModificadorCreate, db: Session) -> Modificador:
     grupo = db.get(GrupoModificador, grupo_id)
     if not grupo:
         raise HTTPException(status_code=404, detail="Grupo de modificador não encontrado")
- 
+
     mod = Modificador(
         grupo_id=grupo_id,
         nome=dados.nome,
@@ -209,22 +355,22 @@ def criar_modificador(grupo_id: int, dados: ModificadorCreate, db: Session) -> M
     db.commit()
     mod_id = mod.id
     return db.get(Modificador, mod_id)
- 
- 
+
+
 def atualizar_modificador(
-    modificador_id: int, dados: "ModificadorUpdate", db: Session
+    modificador_id: int, dados: ModificadorUpdate, db: Session
 ) -> Modificador:
     mod = db.get(Modificador, modificador_id)
     if not mod:
         raise HTTPException(status_code=404, detail="Modificador não encontrado")
- 
+
     for campo, valor in dados.model_dump(exclude_unset=True).items():
         setattr(mod, campo, valor)
- 
+
     db.commit()
     return db.get(Modificador, modificador_id)
- 
- 
+
+
 def deletar_modificador(modificador_id: int, db: Session) -> None:
     mod = db.get(Modificador, modificador_id)
     if not mod:

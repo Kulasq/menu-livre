@@ -7,8 +7,10 @@ from app.deps import get_current_admin
 from app.schemas.cardapio import (
     CategoriaCreate, CategoriaUpdate, CategoriaResponse,
     ProdutoCreate, ProdutoUpdate, ProdutoResponse,
-    GrupoModificadorCreate, GrupoModificadorUpdate, GrupoModificadorResponse,
+    GrupoModificadorCreate, GrupoModificadorUpdate,
+    GrupoModificadorResponse, GrupoModificadorAdminResponse,
     ModificadorCreate, ModificadorUpdate, ModificadorResponse,
+    VincularGrupoRequest,
 )
 from app.services import cardapio_service
 
@@ -90,26 +92,27 @@ def deletar_produto(
 ):
     cardapio_service.deletar_produto(produto_id, db)
 
-# ── Grupos de Modificadores ──────────────────────────────────────────────────
- 
-@router.post(
-    "/produtos/{produto_id}/modificadores",
-    response_model=GrupoModificadorResponse,
-    status_code=201,
-)
+
+# ── Grupos de Modificadores (autônomos) ──────────────────────────────────────
+
+@router.get("/grupos-modificadores", response_model=list[GrupoModificadorAdminResponse])
+def listar_grupos_modificadores(
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    return cardapio_service.listar_grupos_modificadores(db)
+
+
+@router.post("/grupos-modificadores", response_model=GrupoModificadorResponse, status_code=201)
 def criar_grupo_modificador(
-    produto_id: int,
     dados: GrupoModificadorCreate,
     db: Session = Depends(get_db),
     _=Depends(get_current_admin),
 ):
-    return cardapio_service.criar_grupo_modificador(produto_id, dados, db)
- 
- 
-@router.put(
-    "/modificadores/{grupo_id}",
-    response_model=GrupoModificadorResponse,
-)
+    return cardapio_service.criar_grupo_modificador(dados, db)
+
+
+@router.put("/grupos-modificadores/{grupo_id}", response_model=GrupoModificadorResponse)
 def atualizar_grupo_modificador(
     grupo_id: int,
     dados: GrupoModificadorUpdate,
@@ -117,21 +120,42 @@ def atualizar_grupo_modificador(
     _=Depends(get_current_admin),
 ):
     return cardapio_service.atualizar_grupo_modificador(grupo_id, dados, db)
- 
- 
-@router.delete("/modificadores/{grupo_id}", status_code=204)
+
+
+@router.delete("/grupos-modificadores/{grupo_id}", status_code=204)
 def deletar_grupo_modificador(
     grupo_id: int,
     db: Session = Depends(get_db),
     _=Depends(get_current_admin),
 ):
     cardapio_service.deletar_grupo_modificador(grupo_id, db)
- 
- 
+
+
+@router.post("/grupos-modificadores/{grupo_id}/vincular", status_code=200)
+def vincular_grupo(
+    grupo_id: int,
+    dados: VincularGrupoRequest,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    criados = cardapio_service.vincular_grupo_a_produtos(grupo_id, dados, db)
+    return {"vinculados": criados}
+
+
+@router.delete("/grupos-modificadores/{grupo_id}/vinculos/{produto_id}", status_code=204)
+def desvincular_grupo(
+    grupo_id: int,
+    produto_id: int,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    cardapio_service.desvincular_grupo_de_produto(grupo_id, produto_id, db)
+
+
 # ── Modificadores (opções individuais) ───────────────────────────────────────
- 
+
 @router.post(
-    "/modificadores/{grupo_id}/opcoes",
+    "/grupos-modificadores/{grupo_id}/opcoes",
     response_model=ModificadorResponse,
     status_code=201,
 )
@@ -142,8 +166,8 @@ def criar_modificador(
     _=Depends(get_current_admin),
 ):
     return cardapio_service.criar_modificador(grupo_id, dados, db)
- 
- 
+
+
 @router.put(
     "/modificadores/opcoes/{modificador_id}",
     response_model=ModificadorResponse,
@@ -155,8 +179,8 @@ def atualizar_modificador(
     _=Depends(get_current_admin),
 ):
     return cardapio_service.atualizar_modificador(modificador_id, dados, db)
- 
- 
+
+
 @router.delete("/modificadores/opcoes/{modificador_id}", status_code=204)
 def deletar_modificador(
     modificador_id: int,
@@ -164,3 +188,80 @@ def deletar_modificador(
     _=Depends(get_current_admin),
 ):
     cardapio_service.deletar_modificador(modificador_id, db)
+
+
+# ── Compat: rota antiga de adicionar grupo via produto (mantida para não quebrar) ──
+# Redireciona para a criação autônoma + vínculo automático com o produto
+
+@router.post(
+    "/produtos/{produto_id}/modificadores",
+    response_model=GrupoModificadorResponse,
+    status_code=201,
+)
+def criar_grupo_via_produto(
+    produto_id: int,
+    dados: GrupoModificadorCreate,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    """Cria grupo e o vincula imediatamente ao produto."""
+    from app.models.produto import Produto
+    from app.models.modificador import produto_grupo_modificador as pgm
+    from sqlalchemy import func, select as sa_select
+
+    produto = db.get(Produto, produto_id)
+    if not produto:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Produto não encontrado")
+
+    grupo = cardapio_service.criar_grupo_modificador(dados, db)
+
+    # Determina próxima ordem para este produto
+    max_ordem = db.execute(
+        sa_select(func.max(pgm.c.ordem)).where(pgm.c.produto_id == produto_id)
+    ).scalar() or 0
+
+    db.execute(pgm.insert().values(
+        produto_id=produto_id, grupo_id=grupo.id, ordem=max_ordem + 1
+    ))
+    db.commit()
+    return grupo
+
+
+# Compat: rota antiga de editar grupo (por /modificadores/{id})
+@router.put(
+    "/modificadores/{grupo_id}",
+    response_model=GrupoModificadorResponse,
+)
+def atualizar_grupo_compat(
+    grupo_id: int,
+    dados: GrupoModificadorUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    return cardapio_service.atualizar_grupo_modificador(grupo_id, dados, db)
+
+
+# Compat: rota antiga de deletar grupo (por /modificadores/{id})
+@router.delete("/modificadores/{grupo_id}", status_code=204)
+def deletar_grupo_compat(
+    grupo_id: int,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    cardapio_service.deletar_grupo_modificador(grupo_id, db)
+
+
+# Compat: rota antiga de criar opção (por /modificadores/{grupo_id}/opcoes)
+@router.post(
+    "/modificadores/{grupo_id}/opcoes",
+    response_model=ModificadorResponse,
+    status_code=201,
+)
+def criar_modificador_compat(
+    grupo_id: int,
+    dados: ModificadorCreate,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    return cardapio_service.criar_modificador(grupo_id, dados, db)
