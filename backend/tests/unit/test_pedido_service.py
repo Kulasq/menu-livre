@@ -471,9 +471,11 @@ def test_modificador_preco_adicional_incluido_no_subtotal():
     db.add(produto)
     db.flush()
 
-    grupo = GrupoModificador(produto_id=produto.id, nome="Adicionais", obrigatorio=False)
+    from app.models.modificador import produto_grupo_modificador as pgm
+    grupo = GrupoModificador(nome="Adicionais", obrigatorio=False)
     db.add(grupo)
     db.flush()
+    db.execute(pgm.insert().values(produto_id=produto.id, grupo_id=grupo.id, ordem=1))
 
     mod = Modificador(grupo_id=grupo.id, nome="Bacon extra", preco_adicional=5.0, disponivel=True)
     db.add(mod)
@@ -509,9 +511,11 @@ def test_modificador_indisponivel_rejeita_pedido():
     db.add(produto)
     db.flush()
 
-    grupo = GrupoModificador(produto_id=produto.id, nome="Adicionais", obrigatorio=False)
+    from app.models.modificador import produto_grupo_modificador as pgm
+    grupo = GrupoModificador(nome="Adicionais", obrigatorio=False)
     db.add(grupo)
     db.flush()
+    db.execute(pgm.insert().values(produto_id=produto.id, grupo_id=grupo.id, ordem=1))
 
     mod = Modificador(grupo_id=grupo.id, nome="Bacon", preco_adicional=5.0, disponivel=False)
     db.add(mod)
