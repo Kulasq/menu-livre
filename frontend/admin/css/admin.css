@@ -1500,8 +1500,15 @@ textarea.form-input {
   border: 2px solid var(--borda);
 }
 
+.foto-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-self: center;
+}
+
 .foto-remover {
-  align-self: flex-end;
+  /* sem align-self: flex-end — controlado pelo flex-direction:column do pai */
 }
 
 /* =============================================

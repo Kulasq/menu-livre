@@ -2,17 +2,32 @@
 
 let categorias = []
 let produtos = []
+let gruposGlobais = []        // lista de grupos autônomos
 let categoriaEditando = null
 let produtoEditando = null
 let fotoParaUpload = null
 let filtroCategoria = ''
 let confirmacaoCallback = null
 
-/* Estado dos modificadores */
-let modProdutoId = null        // produto cujos modificadores estão abertos
-let grupoEditando = null       // null = criando, obj = editando
-let opcaoEditando = null       // null = criando, obj = editando
-let opcaoGrupoId = null        // grupo ao qual a opção pertence
+/* Estado dos modificadores (modal por produto) */
+let modProdutoId = null
+let grupoEditando = null
+let opcaoEditando = null
+let opcaoGrupoId = null
+
+/* Estado dos grupos globais */
+let grupoGlobalEditando = null   // null = criando, obj = editando
+let grupoOpcoesSelecionado = null // grupo cujas opções estão abertas
+let opcaoGlobalEditando = null
+let grupoVincularId = null       // grupo que está sendo vinculado
+
+/* Estado dos dropdowns de ações */
+let dropdownCategoriaId = null
+let dropdownGrupoId = null
+let dropdownProdutoId = null
+
+/* Estado do modal de vínculos */
+let vinculadosIniciais = new Set()   // IDs de produtos vinculados ao abrir o modal
 
 
 /* ── Inicialização ──────────────────────────────────────── */
@@ -73,22 +88,87 @@ function setupEventos() {
     renderProdutos()
   })
 
-  /* Modificadores */
+  /* Modificadores (modal por produto) */
   $('#modal-modificadores-fechar').addEventListener('click', fecharModalModificadores)
   $('#modal-modificadores-overlay').addEventListener('click', fecharModalModificadores)
   $('#btn-novo-grupo').addEventListener('click', () => abrirModalGrupo())
-
-  /* Grupo */
   $('#form-grupo').addEventListener('submit', handleSubmitGrupo)
   $('#modal-grupo-fechar').addEventListener('click', fecharModalGrupo)
   $('#modal-grupo-overlay').addEventListener('click', fecharModalGrupo)
   $('#modal-grupo-cancelar').addEventListener('click', fecharModalGrupo)
-
-  /* Opção */
-  $('#form-opcao').addEventListener('submit', handleSubmitOpcao)
+  $('#form-opcao').addEventListener('submit', handleSubmitOpcaoUnificado)
   $('#modal-opcao-fechar').addEventListener('click', fecharModalOpcao)
   $('#modal-opcao-overlay').addEventListener('click', fecharModalOpcao)
   $('#modal-opcao-cancelar').addEventListener('click', fecharModalOpcao)
+
+  /* Grupos globais */
+  $('#btn-novo-grupo-global').addEventListener('click', () => abrirModalGrupoGlobal())
+  $('#form-grupo-global').addEventListener('submit', handleSubmitGrupoGlobal)
+  $('#modal-grupo-global-fechar').addEventListener('click', fecharModalGrupoGlobal)
+  $('#modal-grupo-global-overlay').addEventListener('click', fecharModalGrupoGlobal)
+  $('#modal-grupo-global-cancelar').addEventListener('click', fecharModalGrupoGlobal)
+
+  /* Opções do grupo global */
+  $('#modal-opcoes-grupo-fechar').addEventListener('click', fecharModalOpcoesGrupo)
+  $('#modal-opcoes-grupo-overlay').addEventListener('click', fecharModalOpcoesGrupo)
+  $('#btn-nova-opcao-grupo').addEventListener('click', () => abrirModalOpcaoGlobal())
+
+  /* Vincular */
+  $('#modal-vincular-fechar').addEventListener('click', fecharModalVincular)
+  $('#modal-vincular-overlay').addEventListener('click', fecharModalVincular)
+  $('#modal-vincular-cancelar').addEventListener('click', fecharModalVincular)
+  $('#btn-confirmar-vincular').addEventListener('click', handleConfirmarVincular)
+
+  /* Ações rápidas da lista hierárquica */
+  $('#v-btn-todos').addEventListener('click', () => {
+    $('#v-lista-hierarquica').querySelectorAll('.vp-produto').forEach(cb => { cb.checked = true })
+    $('#v-lista-hierarquica').querySelectorAll('.vp-categoria').forEach(cb => { cb.checked = true; cb.indeterminate = false })
+  })
+  $('#v-btn-nenhum').addEventListener('click', () => {
+    $('#v-lista-hierarquica').querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = false; cb.indeterminate = false })
+  })
+
+  /* Delegação de eventos na lista hierárquica — categoria e produto */
+  $('#v-lista-hierarquica').addEventListener('change', (e) => {
+    if (e.target.matches('.vp-categoria')) _vCatChange(e.target)
+    else if (e.target.matches('.vp-produto')) _vProdChange(e.target)
+  })
+
+  /* Dropdown — categorias */
+  $('#dd-cat-editar').addEventListener('click', () => { const id = dropdownCategoriaId; fecharDropdowns(); if (id) abrirModalCategoria(id) })
+  $('#dd-cat-excluir').addEventListener('click', () => {
+    const cat = categorias.find(c => c.id === dropdownCategoriaId)
+    fecharDropdowns()
+    if (cat) confirmarExcluirCategoria(cat.id, cat.nome)
+  })
+
+  /* Dropdown — grupos globais */
+  $('#dd-grupo-opcoes').addEventListener('click', () => { const id = dropdownGrupoId; fecharDropdowns(); if (id) abrirModalOpcoesGrupo(id) })
+  $('#dd-grupo-vincular').addEventListener('click', () => { const id = dropdownGrupoId; fecharDropdowns(); if (id) abrirModalVincular(id) })
+  $('#dd-grupo-editar').addEventListener('click', () => { const id = dropdownGrupoId; fecharDropdowns(); if (id) abrirModalGrupoGlobal(id) })
+  $('#dd-grupo-excluir').addEventListener('click', () => {
+    const grupo = gruposGlobais.find(g => g.id === dropdownGrupoId)
+    fecharDropdowns()
+    if (grupo) confirmarExcluirGrupoGlobal(grupo.id, grupo.nome, grupo.total_produtos || 0)
+  })
+
+  /* Dropdown — produtos */
+  $('#dd-prod-editar').addEventListener('click', () => { const id = dropdownProdutoId; fecharDropdowns(); if (id) abrirModalProduto(id) })
+  $('#dd-prod-excluir').addEventListener('click', () => {
+    const prod = produtos.find(p => p.id === dropdownProdutoId)
+    fecharDropdowns()
+    if (prod) confirmarExcluirProduto(prod.id, prod.nome)
+  })
+
+  /* Fecha dropdowns ao clicar fora */
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#dropdown-acoes-categoria') && !e.target.closest('.btn-dd-categoria')) fecharDropdownCategoria()
+    if (!e.target.closest('#dropdown-acoes-grupo') && !e.target.closest('.btn-dd-grupo')) fecharDropdownGrupo()
+    if (!e.target.closest('#dropdown-acoes-produto') && !e.target.closest('.btn-dd-produto')) fecharDropdownProduto()
+  })
+
+  /* Fecha dropdowns ao rolar (qualquer elemento scrollável) */
+  window.addEventListener('scroll', fecharDropdowns, { passive: true, capture: true })
 
   /* Confirmação */
   $('#modal-confirmar-sim').addEventListener('click', () => {
@@ -103,17 +183,21 @@ async function carregarDados() {
   try {
     $('#categorias-loading').classList.remove('hidden')
     $('#produtos-loading').classList.remove('hidden')
+    $('#grupos-loading').classList.remove('hidden')
 
-    const [cats, prods] = await Promise.all([
+    const [cats, prods, grupos] = await Promise.all([
       api.get('/api/admin/categorias'),
       api.get('/api/admin/produtos'),
+      api.get('/api/admin/grupos-modificadores'),
     ])
 
     categorias = cats
     produtos = prods
+    gruposGlobais = grupos
 
     renderCategorias()
     renderProdutos()
+    renderGruposGlobais()
     atualizarFiltroCategorias()
     atualizarSelectCategoria()
   } catch (err) {
@@ -121,6 +205,7 @@ async function carregarDados() {
   } finally {
     $('#categorias-loading').classList.add('hidden')
     $('#produtos-loading').classList.add('hidden')
+    $('#grupos-loading').classList.add('hidden')
   }
 }
 
@@ -141,22 +226,22 @@ function renderCategorias() {
 
   vazio.classList.add('hidden')
   tbody.innerHTML = categorias.map(cat => `
-    <tr>
+    <tr style="will-change:opacity;${cat.ativo ? '' : 'opacity:.55'}">
       <td>
         <strong>${esc(cat.nome)}</strong>
-        ${cat.descricao ? `<br><span class="text-terc" style="font-size:.82rem">${esc(cat.descricao)}</span>` : ''}
       </td>
       <td>${cat.ordem}</td>
       <td>
-        <span class="badge ${cat.ativo ? 'badge-sucesso' : 'badge-erro'}">
-          ${cat.ativo ? 'Ativa' : 'Inativa'}
-        </span>
+        <button class="btn btn-sm ${cat.ativo ? 'btn-secondary' : 'btn-danger'}"
+                onclick="toggleAtivoCategoria(${cat.id})"
+                title="${cat.ativo ? 'Ativa — clique para desativar' : 'Inativa — clique para ativar'}">
+          ${cat.ativo ? icons.check : icons.x_circulo}
+        </button>
       </td>
-      <td>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-secondary btn-sm" onclick="abrirModalCategoria(${cat.id})" title="Editar">${icons.editar}</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmarExcluirCategoria(${cat.id}, '${esc(cat.nome)}')" title="Excluir">${icons.excluir}</button>
-        </div>
+      <td style="position:relative">
+        <button class="btn btn-secondary btn-sm btn-dd-categoria" onclick="abrirDropdownCategoria(${cat.id}, this)" title="Ações" style="padding:6px 8px">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px;vertical-align:middle"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" /></svg>
+        </button>
       </td>
     </tr>
   `).join('')
@@ -166,16 +251,7 @@ function abrirModalCategoria(id = null) {
   categoriaEditando = id ? categorias.find(c => c.id === id) : null
   $('#modal-categoria-titulo').textContent = categoriaEditando ? 'Editar categoria' : 'Nova categoria'
   $('#categoria-nome').value = categoriaEditando?.nome || ''
-  $('#categoria-descricao').value = categoriaEditando?.descricao || ''
   $('#categoria-ordem').value = categoriaEditando?.ordem ?? 0
-
-  const ativoGroup = $('#categoria-ativo-group')
-  if (categoriaEditando) {
-    ativoGroup.classList.remove('hidden')
-    $('#categoria-ativo').checked = categoriaEditando.ativo
-  } else {
-    ativoGroup.classList.add('hidden')
-  }
 
   $('#modal-categoria').classList.remove('hidden')
   $('#categoria-nome').focus()
@@ -194,10 +270,9 @@ async function handleSubmitCategoria(e) {
 
   const dados = {
     nome: $('#categoria-nome').value.trim(),
-    descricao: $('#categoria-descricao').value.trim() || null,
     ordem: parseInt($('#categoria-ordem').value) || 0,
   }
-  if (categoriaEditando) dados.ativo = $('#categoria-ativo').checked
+  // ativo é controlado pelo botão inline na tabela, não pelo modal
 
   try {
     if (categoriaEditando) {
@@ -227,6 +302,18 @@ function confirmarExcluirCategoria(id, nome) {
   })
 }
 
+async function toggleAtivoCategoria(id) {
+  const cat = categorias.find(c => c.id === id)
+  if (!cat) return
+  const novoAtivo = !cat.ativo
+  try {
+    await api.put(`/api/admin/categorias/${id}`, { ativo: novoAtivo })
+    cat.ativo = novoAtivo          // atualiza local — sem re-fetch, sem flicker
+    renderCategorias()
+    toast.sucesso(novoAtivo ? 'Categoria ativada!' : 'Categoria desativada!')
+  } catch (err) { toast.erro(err.message) }
+}
+
 
 /* ══════════════════════════════════════════════════════════
    PRODUTOS
@@ -252,17 +339,15 @@ function renderProdutos() {
       ? `<img src="${CONFIG.API_URL}${prod.foto_url}" alt="${esc(prod.nome)}" style="width:48px;height:48px;object-fit:cover;border-radius:6px">`
       : `<div style="width:48px;height:48px;border-radius:6px;background:var(--borda);display:flex;align-items:center;justify-content:center;color:var(--texto-terc)"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:22px;height:22px"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" /></svg></div>`
 
-    const modCount = prod.grupos_modificadores?.length || 0
-
     return `
-      <tr>
+      <tr style="${prod.disponivel ? '' : 'opacity:.55'}">
         <td>${fotoHtml}</td>
         <td>
           <strong>${esc(prod.nome)}</strong>
           ${prod.descricao ? `<br><span class="text-terc" style="font-size:.82rem">${esc(prod.descricao).substring(0, 60)}${prod.descricao.length > 60 ? '…' : ''}</span>` : ''}
         </td>
         <td>${formatarPreco(prod.preco)}</td>
-        <td><span class="badge badge-aviso">${cat ? esc(cat.nome) : '—'}</span></td>
+        <td><span class="badge badge-aviso" style="white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle" title="${cat ? esc(cat.nome) : ''}">${cat ? esc(cat.nome) : '—'}</span></td>
         <td>
           <button class="btn btn-sm ${prod.disponivel ? 'btn-secondary' : 'btn-danger'}" onclick="toggleDisponivel(${prod.id})" title="${prod.disponivel ? 'Disponível' : 'Indisponível'}">
             ${prod.disponivel ? icons.check : icons.x_circulo}
@@ -273,14 +358,10 @@ function renderProdutos() {
             ${prod.destaque ? icons.estrela : icons.estrela_vazia}
           </button>
         </td>
-        <td>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-secondary btn-sm" onclick="abrirModalModificadores(${prod.id})" title="Modificadores">
-              ${icons.modificadores}${modCount > 0 ? `<span class="mod-badge">${modCount}</span>` : ''}
-            </button>
-            <button class="btn btn-secondary btn-sm" onclick="abrirModalProduto(${prod.id})" title="Editar">${icons.editar}</button>
-            <button class="btn btn-danger btn-sm" onclick="confirmarExcluirProduto(${prod.id}, '${esc(prod.nome)}')" title="Excluir">${icons.excluir}</button>
-          </div>
+        <td style="position:relative">
+          <button class="btn btn-secondary btn-sm btn-dd-produto" onclick="abrirDropdownProduto(${prod.id}, this)" title="Ações" style="padding:6px 8px">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px;vertical-align:middle"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" /></svg>
+          </button>
         </td>
       </tr>
     `
@@ -455,7 +536,7 @@ function confirmarExcluirProduto(id, nome) {
 
 
 /* ══════════════════════════════════════════════════════════
-   MODIFICADORES
+   MODIFICADORES (modal por produto — fluxo legado)
    ══════════════════════════════════════════════════════════ */
 
 function getProdutoAtual() {
@@ -524,7 +605,7 @@ function renderModificadores() {
           <div class="mod-grupo-acoes">
             <button class="btn btn-secondary btn-sm" onclick="abrirModalOpcao(${grupo.id})" title="Nova opção">+ Opção</button>
             <button class="btn btn-secondary btn-sm" onclick="abrirModalGrupo(${grupo.id})" title="Editar grupo">${icons.editar}</button>
-            <button class="btn btn-danger btn-sm" onclick="confirmarExcluirGrupo(${grupo.id}, '${esc(grupo.nome)}')" title="Excluir grupo">${icons.excluir}</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmarDesvincularGrupo(${grupo.id}, '${esc(grupo.nome)}')" title="Remover do produto">${icons.excluir}</button>
           </div>
         </div>
         <div class="mod-opcoes">
@@ -536,7 +617,7 @@ function renderModificadores() {
 }
 
 
-/* ── Modal Grupo ── */
+/* ── Modal Grupo (por produto) ── */
 
 function abrirModalGrupo(grupoId = null) {
   const prod = getProdutoAtual()
@@ -550,7 +631,7 @@ function abrirModalGrupo(grupoId = null) {
   $('#grupo-nome').value = grupoEditando?.nome || ''
   $('#grupo-selecao-min').value = grupoEditando?.selecao_minima ?? 0
   $('#grupo-selecao-max').value = grupoEditando?.selecao_maxima ?? 1
-  $('#grupo-ordem').value = grupoEditando?.ordem ?? 0
+  $('#grupo-ordem').value = 0
   $('#grupo-obrigatorio').checked = grupoEditando?.obrigatorio ?? false
 
   $('#modal-grupo').classList.remove('hidden')
@@ -573,14 +654,14 @@ async function handleSubmitGrupo(e) {
     obrigatorio: $('#grupo-obrigatorio').checked,
     selecao_minima: parseInt($('#grupo-selecao-min').value) || 0,
     selecao_maxima: parseInt($('#grupo-selecao-max').value) || 1,
-    ordem: parseInt($('#grupo-ordem').value) || 0,
   }
 
   try {
     if (grupoEditando) {
-      await api.put(`/api/admin/modificadores/${grupoEditando.id}`, dados)
+      await api.put(`/api/admin/grupos-modificadores/${grupoEditando.id}`, dados)
       toast.sucesso('Grupo atualizado!')
     } else {
+      // Cria e vincula ao produto atual via rota legada
       await api.post(`/api/admin/produtos/${modProdutoId}/modificadores`, dados)
       toast.sucesso('Grupo criado!')
     }
@@ -594,18 +675,22 @@ async function handleSubmitGrupo(e) {
   }
 }
 
-function confirmarExcluirGrupo(grupoId, nome) {
-  abrirConfirmacao(`Excluir o grupo "${nome}" e todas suas opções?`, async () => {
+function confirmarDesvincularGrupo(grupoId, nome) {
+  const totalProdutos = (gruposGlobais.find(g => g.id === grupoId)?.total_produtos) || 0
+  const aviso = totalProdutos > 1
+    ? ` Este grupo está em ${totalProdutos} produtos — será removido apenas deste.`
+    : ''
+  abrirConfirmacao(`Remover o grupo "${nome}" deste produto?${aviso}`, async () => {
     try {
-      await api.delete(`/api/admin/modificadores/${grupoId}`)
-      toast.sucesso('Grupo excluído!')
+      await api.delete(`/api/admin/grupos-modificadores/${grupoId}/vinculos/${modProdutoId}`)
+      toast.sucesso('Grupo removido do produto!')
       await recarregarModificadores()
     } catch (err) { toast.erro(err.message) }
   })
 }
 
 
-/* ── Modal Opção ── */
+/* ── Modal Opção (por produto) ── */
 
 function abrirModalOpcao(grupoId, opcaoId = null) {
   opcaoGrupoId = grupoId
@@ -650,7 +735,7 @@ async function handleSubmitOpcao(e) {
       await api.put(`/api/admin/modificadores/opcoes/${opcaoEditando.id}`, dados)
       toast.sucesso('Opção atualizada!')
     } else {
-      await api.post(`/api/admin/modificadores/${opcaoGrupoId}/opcoes`, dados)
+      await api.post(`/api/admin/grupos-modificadores/${opcaoGrupoId}/opcoes`, dados)
       toast.sucesso('Opção adicionada!')
     }
     fecharModalOpcao()
@@ -673,17 +758,522 @@ function confirmarExcluirOpcao(opcaoId, nome) {
   })
 }
 
-
-/* ── Recarregar modificadores ── */
-
 async function recarregarModificadores() {
   try {
-    const produtosAtualizados = await api.get('/api/admin/produtos')
+    const [produtosAtualizados, gruposAtualizados] = await Promise.all([
+      api.get('/api/admin/produtos'),
+      api.get('/api/admin/grupos-modificadores'),
+    ])
     produtos = produtosAtualizados
+    gruposGlobais = gruposAtualizados
     renderProdutos()
     renderModificadores()
+    renderGruposGlobais()
   } catch (err) {
     toast.erro('Erro ao recarregar: ' + err.message)
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   GRUPOS GLOBAIS (3ª seção)
+   ══════════════════════════════════════════════════════════ */
+
+function renderGruposGlobais() {
+  const tbody = $('#grupos-tbody')
+  const vazio = $('#grupos-vazio')
+
+  if (gruposGlobais.length === 0) {
+    tbody.innerHTML = ''
+    vazio.classList.remove('hidden')
+    return
+  }
+
+  vazio.classList.add('hidden')
+  tbody.innerHTML = gruposGlobais.map(grupo => {
+    const totalOpcoes = grupo.modificadores?.length || 0
+    const totalProdutos = grupo.total_produtos || 0
+    const ativo = grupo.ativo !== false  // default true se campo ausente (migração pendente)
+    const obrigTag = grupo.obrigatorio
+      ? '<span class="badge badge-erro" style="font-size:.7rem">Sim</span>'
+      : '<span class="badge badge-sucesso" style="font-size:.7rem">Não</span>'
+
+    return `
+      <tr style="${ativo ? '' : 'opacity:.55'}">
+        <td>
+          <strong>${esc(grupo.nome)}</strong>
+          <br><span class="text-terc" style="font-size:.78rem">Sel. ${grupo.selecao_minima}–${grupo.selecao_maxima}</span>
+        </td>
+        <td>
+          <span class="badge badge-aviso">${totalOpcoes}</span>
+        </td>
+        <td>
+          <span class="${totalProdutos > 0 ? 'badge badge-sucesso' : 'text-terc'}" style="font-size:.8rem">
+            ${totalProdutos > 0 ? `${totalProdutos} produto${totalProdutos > 1 ? 's' : ''}` : '—'}
+          </span>
+        </td>
+        <td>${obrigTag}</td>
+        <td>
+          <button class="btn btn-sm ${ativo ? 'btn-secondary' : 'btn-danger'}"
+                  onclick="toggleAtivoGrupo(${grupo.id})"
+                  title="${ativo ? 'Desativar grupo' : 'Ativar grupo'}">
+            ${ativo ? icons.check : icons.x_circulo}
+          </button>
+        </td>
+        <td style="position:relative">
+          <button class="btn btn-secondary btn-sm btn-dd-grupo" onclick="abrirDropdownGrupo(${grupo.id}, this)" title="Ações" style="padding:6px 8px">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:16px;height:16px;vertical-align:middle"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" /></svg>
+          </button>
+        </td>
+      </tr>
+    `
+  }).join('')
+}
+
+
+/* ── Modal Grupo Global (criar/editar) ── */
+
+function abrirModalGrupoGlobal(grupoId = null) {
+  grupoGlobalEditando = grupoId ? gruposGlobais.find(g => g.id === grupoId) : null
+
+  $('#modal-grupo-global-titulo').textContent = grupoGlobalEditando ? 'Editar grupo' : 'Novo grupo'
+  $('#gg-nome').value = grupoGlobalEditando?.nome || ''
+  $('#gg-selecao-max').value = grupoGlobalEditando?.selecao_maxima ?? 1
+  $('#gg-obrigatorio').checked = grupoGlobalEditando?.obrigatorio ?? false
+
+  $('#modal-grupo-global').classList.remove('hidden')
+  $('#gg-nome').focus()
+}
+
+function fecharModalGrupoGlobal() {
+  $('#modal-grupo-global').classList.add('hidden')
+  grupoGlobalEditando = null
+}
+
+async function handleSubmitGrupoGlobal(e) {
+  e.preventDefault()
+  const btn = $('#btn-salvar-grupo-global')
+  btn.disabled = true
+  btn.textContent = 'Salvando…'
+
+  const dados = {
+    nome: $('#gg-nome').value.trim(),
+    obrigatorio: $('#gg-obrigatorio').checked,
+    selecao_minima: 0,
+    selecao_maxima: Math.max(1, parseInt($('#gg-selecao-max').value) || 1),
+  }
+
+  try {
+    if (grupoGlobalEditando) {
+      await api.put(`/api/admin/grupos-modificadores/${grupoGlobalEditando.id}`, dados)
+      toast.sucesso('Grupo atualizado!')
+    } else {
+      await api.post('/api/admin/grupos-modificadores', dados)
+      toast.sucesso('Grupo criado!')
+    }
+    fecharModalGrupoGlobal()
+    await recarregarGruposGlobais()
+  } catch (err) {
+    toast.erro(err.message)
+  } finally {
+    btn.disabled = false
+    btn.textContent = 'Salvar'
+  }
+}
+
+async function toggleAtivoGrupo(grupoId) {
+  const grupo = gruposGlobais.find(g => g.id === grupoId)
+  if (!grupo) return
+  const novoAtivo = !grupo.ativo
+  try {
+    await api.put(`/api/admin/grupos-modificadores/${grupoId}`, { ativo: novoAtivo })
+    grupo.ativo = novoAtivo        // atualiza local — sem re-fetch, sem flicker
+    renderGruposGlobais()
+    toast.sucesso(novoAtivo ? 'Grupo ativado!' : 'Grupo desativado!')
+  } catch (err) { toast.erro(err.message) }
+}
+
+function confirmarExcluirGrupoGlobal(grupoId, nome, totalProdutos) {
+  const aviso = totalProdutos > 0
+    ? ` Ele está vinculado a ${totalProdutos} produto${totalProdutos > 1 ? 's' : ''} e será removido de todos.`
+    : ''
+  abrirConfirmacao(`Excluir o grupo "${nome}" e todas suas opções?${aviso}`, async () => {
+    try {
+      await api.delete(`/api/admin/grupos-modificadores/${grupoId}`)
+      toast.sucesso('Grupo excluído!')
+      await recarregarGruposGlobais()
+    } catch (err) { toast.erro(err.message) }
+  })
+}
+
+
+/* ── Modal Opções do Grupo Global ── */
+
+function abrirModalOpcoesGrupo(grupoId) {
+  grupoOpcoesSelecionado = gruposGlobais.find(g => g.id === grupoId)
+  if (!grupoOpcoesSelecionado) return
+
+  $('#modal-opcoes-grupo-titulo').textContent = `Opções — ${grupoOpcoesSelecionado.nome}`
+  renderOpcoesGrupoGlobal()
+  $('#modal-opcoes-grupo').classList.remove('hidden')
+}
+
+function fecharModalOpcoesGrupo() {
+  $('#modal-opcoes-grupo').classList.add('hidden')
+  grupoOpcoesSelecionado = null
+  opcaoGlobalEditando = null
+}
+
+function renderOpcoesGrupoGlobal() {
+  const grupo = grupoOpcoesSelecionado
+  if (!grupo) return
+
+  const opcoes = grupo.modificadores || []
+  const lista = $('#opcoes-grupo-lista')
+  const vazio = $('#opcoes-grupo-vazio')
+
+  if (opcoes.length === 0) {
+    lista.innerHTML = ''
+    vazio.classList.remove('hidden')
+    return
+  }
+
+  vazio.classList.add('hidden')
+  lista.innerHTML = opcoes.map(mod => `
+    <div class="mod-opcao" style="will-change:opacity;${mod.disponivel ? '' : 'opacity:.5'}">
+      <div class="mod-opcao-info">
+        <span>${esc(mod.nome)}</span>
+        ${mod.preco_adicional > 0 ? `<span class="mod-opcao-preco">+${formatarPreco(mod.preco_adicional)}</span>` : ''}
+        ${!mod.disponivel ? '<span class="badge badge-erro" style="font-size:.65rem">Esgotado</span>' : ''}
+      </div>
+      <div class="mod-opcao-acoes">
+        <button class="btn btn-sm ${mod.disponivel ? 'btn-secondary' : 'btn-danger'}"
+                onclick="toggleDisponivelOpcao(${mod.id})"
+                title="${mod.disponivel ? 'Disponível — clique para esgotar' : 'Esgotado — clique para reativar'}">
+          ${mod.disponivel ? icons.check : icons.x_circulo}
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="abrirModalOpcaoGlobal(${mod.id})" title="Editar">${icons.editar}</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmarExcluirOpcaoGlobal(${mod.id}, '${esc(mod.nome)}')" title="Excluir">${icons.excluir}</button>
+      </div>
+    </div>
+  `).join('')
+}
+
+function abrirModalOpcaoGlobal(opcaoId = null) {
+  if (!grupoOpcoesSelecionado) return
+  opcaoGlobalEditando = opcaoId
+    ? (grupoOpcoesSelecionado.modificadores || []).find(m => m.id === opcaoId)
+    : null
+
+  // Usa os mesmos campos do modal de opção compartilhado
+  $('#modal-opcao-titulo').textContent = opcaoGlobalEditando ? 'Editar opção' : 'Nova opção'
+  $('#opcao-nome').value = opcaoGlobalEditando?.nome || ''
+  $('#opcao-preco').value = opcaoGlobalEditando?.preco_adicional ?? 0
+  $('#opcao-disponivel').checked = opcaoGlobalEditando?.disponivel ?? true
+
+  $('#modal-opcao').classList.remove('hidden')
+  $('#opcao-nome').focus()
+}
+
+async function handleSubmitOpcaoUnificado(e) {
+  e.preventDefault()
+  const btn = $('#btn-salvar-opcao')
+  btn.disabled = true
+  btn.textContent = 'Salvando…'
+
+  const dados = {
+    nome: $('#opcao-nome').value.trim(),
+    preco_adicional: parseFloat($('#opcao-preco').value) || 0,
+    disponivel: $('#opcao-disponivel').checked,
+  }
+
+  // Contexto: modal de opções do grupo global está aberto
+  const contextoGlobal = !$('#modal-opcoes-grupo').classList.contains('hidden') && grupoOpcoesSelecionado
+
+  try {
+    if (contextoGlobal) {
+      if (opcaoGlobalEditando) {
+        await api.put(`/api/admin/modificadores/opcoes/${opcaoGlobalEditando.id}`, dados)
+        toast.sucesso('Opção atualizada!')
+      } else {
+        await api.post(`/api/admin/grupos-modificadores/${grupoOpcoesSelecionado.id}/opcoes`, dados)
+        toast.sucesso('Opção adicionada!')
+      }
+      fecharModalOpcao()
+      await recarregarGruposGlobais()
+      // Reabre modal de opções com dados frescos
+      const grupoAtualizado = gruposGlobais.find(g => g.id === grupoOpcoesSelecionado?.id)
+      if (grupoAtualizado) {
+        grupoOpcoesSelecionado = grupoAtualizado
+        renderOpcoesGrupoGlobal()
+        $('#modal-opcoes-grupo').classList.remove('hidden')
+      }
+    } else {
+      // Contexto: modificador por produto
+      if (opcaoEditando) {
+        await api.put(`/api/admin/modificadores/opcoes/${opcaoEditando.id}`, dados)
+        toast.sucesso('Opção atualizada!')
+      } else {
+        await api.post(`/api/admin/grupos-modificadores/${opcaoGrupoId}/opcoes`, dados)
+        toast.sucesso('Opção adicionada!')
+      }
+      fecharModalOpcao()
+      await recarregarModificadores()
+    }
+  } catch (err) {
+    toast.erro(err.message)
+  } finally {
+    btn.disabled = false
+    btn.textContent = 'Salvar'
+  }
+}
+
+function confirmarExcluirOpcaoGlobal(opcaoId, nome) {
+  abrirConfirmacao(`Excluir a opção "${nome}"?`, async () => {
+    try {
+      await api.delete(`/api/admin/modificadores/opcoes/${opcaoId}`)
+      toast.sucesso('Opção excluída!')
+      await recarregarGruposGlobais()
+      const grupoAtualizado = gruposGlobais.find(g => g.id === grupoOpcoesSelecionado?.id)
+      if (grupoAtualizado && !$('#modal-opcoes-grupo').classList.contains('hidden')) {
+        grupoOpcoesSelecionado = grupoAtualizado
+        renderOpcoesGrupoGlobal()
+      }
+    } catch (err) { toast.erro(err.message) }
+  })
+}
+
+async function toggleDisponivelOpcao(opcaoId) {
+  if (!grupoOpcoesSelecionado) return
+  const mod = (grupoOpcoesSelecionado.modificadores || []).find(m => m.id === opcaoId)
+  if (!mod) return
+
+  try {
+    await api.put(`/api/admin/modificadores/opcoes/${opcaoId}`, { disponivel: !mod.disponivel })
+    mod.disponivel = !mod.disponivel
+    renderOpcoesGrupoGlobal()
+  } catch (err) {
+    toast.erro(err.message)
+  }
+}
+
+
+/* ── Modal Vincular ── */
+
+function abrirModalVincular(grupoId) {
+  grupoVincularId = grupoId
+  const grupo = gruposGlobais.find(g => g.id === grupoId)
+  if (!grupo) return
+
+  $('#vincular-nome-grupo').textContent = `"${grupo.nome}"`
+
+  // Captura estado inicial de vínculos (para diff no save)
+  vinculadosIniciais = new Set(
+    produtos.filter(p => p.grupos_modificadores?.some(g => g.id === grupoId)).map(p => p.id)
+  )
+
+  // Monta lista hierárquica: categoria → produtos
+  const listEl = $('#v-lista-hierarquica')
+  if (categorias.length === 0) {
+    listEl.innerHTML = '<p class="text-terc" style="font-size:.85rem;padding:8px 0">Nenhuma categoria cadastrada.</p>'
+  } else {
+    let html = ''
+    for (const cat of categorias) {
+      const prodsCat = produtos.filter(p => p.categoria_id === cat.id)
+      if (prodsCat.length === 0) continue   // pula categorias sem produtos
+
+      const vinculadosNaCat = prodsCat.filter(p => vinculadosIniciais.has(p.id)).length
+      const catChecked      = vinculadosNaCat === prodsCat.length ? 'checked' : ''
+      const catIndet        = vinculadosNaCat > 0 && vinculadosNaCat < prodsCat.length
+
+      html += `<div class="v-cat-grupo" style="padding:6px 0 2px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:3px 0;user-select:none">
+          <input type="checkbox" class="vp-categoria" data-cat="${cat.id}" ${catChecked} />
+          <span style="font-weight:600;font-size:.88rem">${esc(cat.nome)}</span>
+          <span class="text-terc" style="font-size:.74rem;font-weight:normal">${prodsCat.length} produto${prodsCat.length !== 1 ? 's' : ''}</span>
+        </label>`
+
+      for (const p of prodsCat) {
+        const checked = vinculadosIniciais.has(p.id)
+        html += `
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:2px 0 2px 22px;user-select:none">
+          <input type="checkbox" class="vp-produto" data-cat="${cat.id}" value="${p.id}" ${checked ? 'checked' : ''} />
+          <span style="font-size:.85rem">${esc(p.nome)}</span>
+          ${checked ? '<span class="badge badge-sucesso" style="font-size:.62rem;flex-shrink:0">vinculado</span>' : ''}
+        </label>`
+      }
+
+      html += '</div>'
+      // Separador sutil entre categorias
+      html += '<div style="border-top:1px solid var(--borda);margin:2px 0;opacity:.4"></div>'
+    }
+    listEl.innerHTML = html || '<p class="text-terc" style="font-size:.85rem;padding:8px 0">Nenhum produto cadastrado.</p>'
+
+    // Aplica estado indeterminado (só via JS)
+    listEl.querySelectorAll('.vp-categoria').forEach(cb => {
+      const catId = cb.dataset.cat
+      const prods = listEl.querySelectorAll(`.vp-produto[data-cat="${catId}"]`)
+      const total   = prods.length
+      const marcados = Array.from(prods).filter(c => c.checked).length
+      cb.indeterminate = marcados > 0 && marcados < total
+    })
+  }
+
+  $('#modal-vincular').classList.remove('hidden')
+}
+
+/* Checkbox de categoria: marca/desmarca todos os filhos */
+function _vCatChange(catCb) {
+  const catId  = catCb.dataset.cat
+  const checked = catCb.checked
+  catCb.indeterminate = false
+  $('#v-lista-hierarquica').querySelectorAll(`.vp-produto[data-cat="${catId}"]`).forEach(cb => {
+    cb.checked = checked
+  })
+}
+
+/* Checkbox de produto: atualiza estado da categoria pai */
+function _vProdChange(prodCb) {
+  const catId  = prodCb.dataset.cat
+  const lista  = $('#v-lista-hierarquica')
+  const prods  = lista.querySelectorAll(`.vp-produto[data-cat="${catId}"]`)
+  const total   = prods.length
+  const marcados = Array.from(prods).filter(c => c.checked).length
+  const catCb  = lista.querySelector(`.vp-categoria[data-cat="${catId}"]`)
+  if (!catCb) return
+  catCb.checked      = marcados === total
+  catCb.indeterminate = marcados > 0 && marcados < total
+}
+
+function fecharModalVincular() {
+  $('#modal-vincular').classList.add('hidden')
+  grupoVincularId = null
+  vinculadosIniciais = new Set()
+}
+
+async function handleConfirmarVincular() {
+  // Coleta IDs marcados na lista hierárquica
+  const checks   = $('#v-lista-hierarquica').querySelectorAll('.vp-produto:checked')
+  const idsDepois = new Set(Array.from(checks).map(c => parseInt(c.value)))
+
+  const adicionar = [...idsDepois].filter(id => !vinculadosIniciais.has(id))
+  const remover   = [...vinculadosIniciais].filter(id => !idsDepois.has(id))
+
+  if (adicionar.length === 0 && remover.length === 0) {
+    toast.sucesso('Nenhuma alteração nos vínculos.')
+    fecharModalVincular()
+    return
+  }
+
+  const btn = $('#btn-confirmar-vincular')
+  btn.disabled = true
+  btn.textContent = 'Salvando…'
+
+  try {
+    let totalVinculados = 0
+    let totalDesvinculados = 0
+
+    // Vincula novos em batch
+    if (adicionar.length > 0) {
+      const res = await api.post(
+        `/api/admin/grupos-modificadores/${grupoVincularId}/vincular`,
+        { modo: 'produtos', produtos_ids: adicionar }
+      )
+      totalVinculados = res.vinculados
+    }
+
+    // Desvincula removidos (um por um — backend aceita individual)
+    for (const prodId of remover) {
+      await api.delete(`/api/admin/grupos-modificadores/${grupoVincularId}/vinculos/${prodId}`)
+      totalDesvinculados++
+    }
+
+    const partes = []
+    if (totalVinculados   > 0) partes.push(`${totalVinculados} vinculado${totalVinculados !== 1 ? 's' : ''}`)
+    if (totalDesvinculados > 0) partes.push(`${totalDesvinculados} desvinculado${totalDesvinculados !== 1 ? 's' : ''}`)
+    toast.sucesso(partes.length ? partes.join(', ') + '.' : 'Salvo!')
+
+    fecharModalVincular()
+    await carregarDados()
+  } catch (err) {
+    toast.erro(err.message)
+  } finally {
+    btn.disabled = false
+    btn.textContent = 'Salvar'
+  }
+}
+
+/* ── Dropdowns de ações ── */
+
+function abrirDropdownCategoria(catId, btnEl) {
+  if (dropdownCategoriaId === catId) { fecharDropdownCategoria(); return }
+  fecharDropdowns()
+  dropdownCategoriaId = catId
+  _posicionarDropdown($('#dropdown-acoes-categoria'), btnEl)
+}
+
+function fecharDropdownCategoria() {
+  $('#dropdown-acoes-categoria').classList.add('hidden')
+  dropdownCategoriaId = null
+}
+
+function abrirDropdownGrupo(grupoId, btnEl) {
+  if (dropdownGrupoId === grupoId) { fecharDropdownGrupo(); return }
+  fecharDropdowns()
+  dropdownGrupoId = grupoId
+  _posicionarDropdown($('#dropdown-acoes-grupo'), btnEl)
+}
+
+function fecharDropdownGrupo() {
+  $('#dropdown-acoes-grupo').classList.add('hidden')
+  dropdownGrupoId = null
+}
+
+function abrirDropdownProduto(produtoId, btnEl) {
+  if (dropdownProdutoId === produtoId) { fecharDropdownProduto(); return }
+  fecharDropdowns()
+  dropdownProdutoId = produtoId
+  _posicionarDropdown($('#dropdown-acoes-produto'), btnEl)
+}
+
+function fecharDropdownProduto() {
+  $('#dropdown-acoes-produto').classList.add('hidden')
+  dropdownProdutoId = null
+}
+
+function fecharDropdowns() {
+  fecharDropdownCategoria()
+  fecharDropdownGrupo()
+  fecharDropdownProduto()
+}
+
+function _posicionarDropdown(menu, btnEl) {
+  // Mostra off-screen para medir altura real antes de posicionar
+  menu.style.visibility = 'hidden'
+  menu.classList.remove('hidden')
+
+  const rect  = btnEl.getBoundingClientRect()
+  const menuH = menu.offsetHeight
+  const viewH = window.innerHeight
+  const GAP   = 4
+
+  // Vertical: abre para baixo se couber, senão flip para cima
+  const top = (viewH - rect.bottom - GAP) >= menuH
+    ? rect.bottom + GAP                     // padrão: abaixo do botão
+    : Math.max(GAP, rect.top - menuH - GAP) // flip: acima do botão
+
+  menu.style.top   = top + 'px'
+  menu.style.right = Math.max(GAP, window.innerWidth - rect.right) + 'px'
+  menu.style.left  = 'auto'
+  menu.style.visibility = ''
+}
+
+async function recarregarGruposGlobais() {
+  try {
+    gruposGlobais = await api.get('/api/admin/grupos-modificadores')
+    renderGruposGlobais()
+  } catch (err) {
+    toast.erro('Erro ao recarregar grupos: ' + err.message)
   }
 }
 
@@ -715,10 +1305,14 @@ function esc(str) {
 
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return
-  // Ordem decrescente de z-index: confirmação (330) → opção (320) → grupo (310)
-  // → modificadores → produto → categoria
+  // Fecha dropdowns antes de qualquer modal
+  if (dropdownCategoriaId !== null || dropdownGrupoId !== null || dropdownProdutoId !== null) { fecharDropdowns(); return }
+  // Ordem decrescente de z-index: 350 → 340 → 330 → 320 → 310 → ...
   if (!$('#modal-confirmar').classList.contains('hidden')) return fecharConfirmacao()
+  if (!$('#modal-vincular').classList.contains('hidden')) return fecharModalVincular()
   if (!$('#modal-opcao').classList.contains('hidden')) return fecharModalOpcao()
+  if (!$('#modal-opcoes-grupo').classList.contains('hidden')) return fecharModalOpcoesGrupo()
+  if (!$('#modal-grupo-global').classList.contains('hidden')) return fecharModalGrupoGlobal()
   if (!$('#modal-grupo').classList.contains('hidden')) return fecharModalGrupo()
   if (!$('#modal-modificadores').classList.contains('hidden')) return fecharModalModificadores()
   if (!$('#modal-produto').classList.contains('hidden')) return fecharModalProduto()
