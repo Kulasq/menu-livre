@@ -538,7 +538,12 @@ window.cardapio = (() => {
 
       const tipo = grupo.selecao_maxima === 1 ? 'radio' : 'checkbox';
 
-      grupo.modificadores.forEach(mod => {
+      // Filtra opções indisponíveis (esgotadas pelo admin) — não exibe ao cliente
+      const opcoesDisponiveis = grupo.modificadores.filter(m => m.disponivel !== false);
+      // Se todas as opções do grupo estiverem esgotadas, omite o grupo inteiro
+      if (opcoesDisponiveis.length === 0) return;
+
+      opcoesDisponiveis.forEach(mod => {
         const label = document.createElement('label');
         label.className = 'modificador-opcao';
 
@@ -588,16 +593,40 @@ window.cardapio = (() => {
       // radio — substitui
       _modificadoresSelecionados[grupo.id] = checked ? [mod.id] : [];
     } else {
-      // checkbox — adiciona ou remove
+      // checkbox — adiciona ou remove com limite de selecao_maxima
       if (checked) {
+        if (_modificadoresSelecionados[grupo.id].length >= grupo.selecao_maxima) {
+          // Atingiu o máximo — desfaz visualmente e ignora
+          const input = document.querySelector(`input[name="grupo-${grupo.id}"][value="${mod.id}"]`);
+          if (input) input.checked = false;
+          return;
+        }
         _modificadoresSelecionados[grupo.id].push(mod.id);
       } else {
         _modificadoresSelecionados[grupo.id] =
           _modificadoresSelecionados[grupo.id].filter(id => id !== mod.id);
       }
+      // Atualiza visual dos checkboxes restantes (desabilita quando no máximo)
+      _atualizarEstadoCheckboxesGrupo(grupo);
     }
 
     _atualizarBtnAdicionar();
+  }
+
+  // Desabilita checkboxes não marcados quando o grupo atingiu selecao_maxima
+  function _atualizarEstadoCheckboxesGrupo(grupo) {
+    const qtd     = _modificadoresSelecionados[grupo.id]?.length || 0;
+    const noMax   = qtd >= grupo.selecao_maxima;
+    document.querySelectorAll(`input[name="grupo-${grupo.id}"]`).forEach(input => {
+      const label = input.closest('label');
+      if (input.checked) {
+        input.disabled = false;
+        if (label) label.style.opacity = '';
+      } else {
+        input.disabled = noMax;
+        if (label) label.style.opacity = noMax ? '0.4' : '';
+      }
+    });
   }
 
   function _calcularPrecoAtual() {

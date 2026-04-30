@@ -55,12 +55,11 @@ class ModificadorResponse(BaseModel):
 
 
 class GrupoModificadorCreate(BaseModel):
-    produto_id: int | None = None
     nome: str = Field(min_length=2, max_length=100)
     obrigatorio: bool = False
     selecao_minima: int = 0
     selecao_maxima: int = 1
-    ordem: int = 0
+    ativo: bool = True
     modificadores: list[ModificadorCreate] = []
 
 
@@ -69,20 +68,32 @@ class GrupoModificadorUpdate(BaseModel):
     obrigatorio: bool | None = None
     selecao_minima: int | None = None
     selecao_maxima: int | None = None
-    ordem: int | None = None
+    ativo: bool | None = None
 
 
 class GrupoModificadorResponse(BaseModel):
     id: int
-    produto_id: int | None
     nome: str
     obrigatorio: bool
     selecao_minima: int
     selecao_maxima: int
-    ordem: int
+    ativo: bool = True
     modificadores: list[ModificadorResponse] = []
 
     model_config = {"from_attributes": True}
+
+
+class GrupoModificadorAdminResponse(GrupoModificadorResponse):
+    """Resposta usada na listagem da seção de grupos — inclui contagem de produtos."""
+    total_produtos: int = 0
+
+
+# ── Vincular grupo a produtos ─────────────────────────────────────────────────
+
+class VincularGrupoRequest(BaseModel):
+    modo: str = Field(pattern="^(todos|categoria|produtos)$")
+    categoria_id: int | None = None
+    produtos_ids: list[int] = []
 
 
 # ── Produtos ──────────────────────────────────────────────────────────────────
