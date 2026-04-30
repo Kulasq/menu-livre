@@ -43,7 +43,7 @@ class PedidoPagamentoUpdate(BaseModel):
 
 class PedidoItemModificadorResponse(BaseModel):
     id: int
-    modificador_id: int
+    modificador_id: int | None
     nome_snapshot: str
     preco_snapshot: float
 
