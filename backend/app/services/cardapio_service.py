@@ -1,11 +1,13 @@
 from __future__ import annotations
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import select, delete, func
+from sqlalchemy import select, delete, func, update
 from fastapi import HTTPException
 
 from app.models.categoria import Categoria
 from app.models.produto import Produto
 from app.models.modificador import GrupoModificador, Modificador, produto_grupo_modificador
+from app.models.pedido import PedidoItem
+from app.models.variante import Variante
 from app.schemas.cardapio import (
     CategoriaCreate, CategoriaUpdate,
     ProdutoCreate, ProdutoUpdate,
@@ -105,6 +107,24 @@ def deletar_produto(produto_id: int, db: Session) -> None:
     produto = db.get(Produto, produto_id)
     if not produto:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
+    # Anula referências históricas em pedido_itens antes de deletar.
+    # PRAGMA foreign_keys=ON bloqueia o DELETE se houver FKs apontando para o produto
+    # ou para suas variantes (variantes.produto_id tem ON DELETE CASCADE, então SQLite
+    # tenta deletar as variantes, e pedido_itens.variante_id causaria outro IntegrityError).
+    ids_variantes = db.execute(
+        select(Variante.id).where(Variante.produto_id == produto_id)
+    ).scalars().all()
+    if ids_variantes:
+        db.execute(
+            update(PedidoItem)
+            .where(PedidoItem.variante_id.in_(ids_variantes))
+            .values(variante_id=None)
+        )
+    db.execute(
+        update(PedidoItem)
+        .where(PedidoItem.produto_id == produto_id)
+        .values(produto_id=None)
+    )
     db.delete(produto)
     db.commit()
 
