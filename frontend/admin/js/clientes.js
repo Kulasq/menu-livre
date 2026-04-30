@@ -165,17 +165,13 @@
         }
       })
 
-      // Kebab: abre/fecha dropdown com posição calculada (evita corte por overflow)
+      // Kebab: abre/fecha dropdown com posição calculada + flip vertical
       kebabBtn.addEventListener('click', e => {
         e.stopPropagation()
         const estaAberto = !kebabDrop.hidden
         _fecharTodosDropdowns()
         if (!estaAberto) {
-          const rect = kebabBtn.getBoundingClientRect()
-          kebabDrop.style.top  = (rect.bottom + 4) + 'px'
-          kebabDrop.style.right = (window.innerWidth - rect.right) + 'px'
-          kebabDrop.style.left = 'auto'
-          kebabDrop.hidden = false
+          _abrirDropdown(kebabDrop, kebabBtn)
           kebabBtn.setAttribute('aria-expanded', 'true')
         }
       })
@@ -193,6 +189,27 @@
         abrirModalExcluir(id, nome)
       })
     })
+  }
+
+  function _abrirDropdown(menu, btnEl) {
+    // Mede altura real antes de posicionar
+    menu.style.visibility = 'hidden'
+    menu.hidden = false
+
+    const rect  = btnEl.getBoundingClientRect()
+    const menuH = menu.offsetHeight
+    const viewH = window.innerHeight
+    const GAP   = 4
+
+    // Flip vertical: abre para baixo se couber, senão abre para cima
+    const top = (viewH - rect.bottom - GAP) >= menuH
+      ? rect.bottom + GAP
+      : Math.max(GAP, rect.top - menuH - GAP)
+
+    menu.style.top   = top + 'px'
+    menu.style.right = Math.max(GAP, window.innerWidth - rect.right) + 'px'
+    menu.style.left  = 'auto'
+    menu.style.visibility = ''
   }
 
   function _fecharTodosDropdowns() {
@@ -676,8 +693,9 @@
     // Novo cliente — abre o drawer diretamente
     document.getElementById('btn-novo-cliente').addEventListener('click', abrirNovoCliente)
 
-    // Fechar dropdowns ao clicar fora
+    // Fechar dropdowns ao clicar fora ou ao rolar
     document.addEventListener('click', () => _fecharTodosDropdowns())
+    window.addEventListener('scroll', _fecharTodosDropdowns, { passive: true, capture: true })
 
     carregarLista()
   }
