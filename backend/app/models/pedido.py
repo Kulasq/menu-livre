@@ -72,7 +72,10 @@ class PedidoItemModificador(Base):
     pedido_item_id: Mapped[int] = mapped_column(
         ForeignKey("pedido_itens.id", ondelete="CASCADE"), index=True
     )
-    modificador_id: Mapped[int] = mapped_column(ForeignKey("modificadores.id"))
+    modificador_id: Mapped[int | None] = mapped_column(
+        ForeignKey("modificadores.id", ondelete="SET NULL", name="fk_pedido_item_mod_modificador"),
+        nullable=True,
+    )
     nome_snapshot: Mapped[str] = mapped_column(String(100), nullable=False)
     preco_snapshot: Mapped[float] = mapped_column(Float, nullable=False)
 

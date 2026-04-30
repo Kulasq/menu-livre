@@ -9,6 +9,8 @@ if TYPE_CHECKING:
     from app.models.categoria import Categoria
     from app.models.modificador import GrupoModificador
 
+from app.models.modificador import produto_grupo_modificador
+
 
 class Produto(Base):
     __tablename__ = "produtos"
@@ -37,7 +39,7 @@ class Produto(Base):
     categoria: Mapped["Categoria"] = relationship("Categoria", lazy="select")
     grupos_modificadores: Mapped[list["GrupoModificador"]] = relationship(
         "GrupoModificador",
-        back_populates="produto",
-        cascade="all, delete-orphan",
+        secondary=produto_grupo_modificador,
+        back_populates="produtos",
         lazy="select",
     )
