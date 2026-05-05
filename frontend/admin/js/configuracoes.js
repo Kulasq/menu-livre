@@ -264,6 +264,7 @@ function _preencherForm(c) {
   $('#inp-nome-loja').value              = c.nome_loja             ?? ''
   $('#inp-whatsapp').value               = c.whatsapp              ?? ''
   $('#inp-instagram').value              = c.instagram_url         ?? ''
+  $('#inp-endereco').value               = c.endereco              ?? ''
   $('#inp-chave-pix').value              = c.chave_pix             ?? ''
   $('#inp-tipo-pix').value               = c.tipo_chave_pix        ?? ''
   $('#inp-taxa').value                   = c.taxa_entrega          ?? 0
@@ -323,6 +324,7 @@ async function _salvarConfiguracoes(e) {
     nome_loja:            $('#inp-nome-loja').value.trim()              || null,
     whatsapp,
     instagram_url:        $('#inp-instagram').value.trim()              || null,
+    endereco:             $('#inp-endereco').value.trim()               || null,
     chave_pix:            $('#inp-chave-pix').value.trim()              || null,
     tipo_chave_pix:       $('#inp-tipo-pix').value                      || null,
     taxa_entrega:         parseFloat($('#inp-taxa').value)              || 0,
