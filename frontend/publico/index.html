@@ -17,8 +17,23 @@
     <div class="header-inner">
 
       <div class="header-esquerda">
-        <span id="status-badge" class="status-badge status-aberto">● Aberto</span>
-        <span id="header-entrega" class="header-entrega">🕐 30–50 min</span>
+        <div class="status-grupo">
+          <span id="status-badge" class="status-badge status-aberto">
+            <span class="status-bolinha" aria-hidden="true">●</span>
+            <span class="status-texto">Aberto</span>
+          </span>
+          <span id="header-entrega" class="header-entrega">🕐 30–50 min</span>
+        </div>
+        <button id="btn-info-loja" type="button"
+                class="icon-btn"
+                aria-label="Ver horários e endereço"
+                aria-haspopup="dialog"
+                aria-expanded="false"
+                aria-controls="modal-info-loja">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+        </button>
       </div>
 
       <div class="header-centro">
@@ -169,6 +184,34 @@
       </div>
       <p id="modal-aviso-msg" class="modal-aviso-msg"></p>
       <button id="modal-aviso-ok" class="btn-primario">OK, OBRIGAD@!</button>
+    </div>
+  </div>
+
+  <!-- MODAL info da loja (horários + endereço) -->
+  <div id="modal-info-loja" class="modal modal-centrado hidden" role="dialog" aria-modal="true" aria-labelledby="modal-info-loja-titulo">
+    <div class="modal-overlay" id="modal-info-loja-overlay"></div>
+    <div class="modal-box modal-box-aviso modal-box-info-loja">
+      <button class="modal-info-fechar" id="modal-info-fechar" aria-label="Fechar">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" aria-hidden="true">
+          <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/>
+        </svg>
+      </button>
+      <h3 id="modal-info-loja-titulo" class="modal-info-titulo">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" aria-hidden="true" style="flex-shrink:0">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clip-rule="evenodd"/>
+        </svg>
+        Horários
+      </h3>
+      <ul id="modal-info-horarios" class="modal-info-horarios" aria-label="Horários de funcionamento"></ul>
+      <div id="modal-info-endereco-wrap" class="modal-info-endereco-wrap hidden">
+        <h3 class="modal-info-titulo" style="margin-top:16px">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" aria-hidden="true" style="flex-shrink:0">
+            <path fill-rule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C14.895 15.051 16.5 12.957 16.5 10c0-3.584-2.916-6.5-6.5-6.5S3.5 6.416 3.5 10c0 2.957 1.605 5.051 3.854 7.105a18.207 18.207 0 0 0 3.032 2.198l.018.008.006.003ZM10 11.25a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z" clip-rule="evenodd"/>
+          </svg>
+          Endereço
+        </h3>
+        <p id="modal-info-endereco" class="modal-info-endereco-texto"></p>
+      </div>
     </div>
   </div>
 

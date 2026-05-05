@@ -33,6 +33,7 @@ class Configuracao(Base):
         Text, default="Estamos fechados no momento."
     )
     instagram_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    endereco: Mapped[str | None] = mapped_column(Text, nullable=True)
     horarios_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # ── Aparência do cardápio público ────────────────────────────────────────
