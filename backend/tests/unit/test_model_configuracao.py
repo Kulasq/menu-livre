@@ -70,3 +70,33 @@ def test_sempre_uma_linha():
     db.commit()
 
     assert config.id == 1
+
+
+def test_endereco_default_none():
+    """Campo endereco deve ser None por padrão."""
+    db = setup_db()
+
+    config = Configuracao(whatsapp="5500000000000")
+    db.add(config)
+    db.commit()
+    db.refresh(config)
+
+    assert config.endereco is None
+
+
+def test_endereco_salvo_e_recuperado():
+    """Campo endereco persiste e aceita zerar para None."""
+    db = setup_db()
+
+    config = Configuracao(whatsapp="5500000000000", endereco="Rua das Flores, 42 — Centro, Recife/PE")
+    db.add(config)
+    db.commit()
+    db.refresh(config)
+
+    assert config.endereco == "Rua das Flores, 42 — Centro, Recife/PE"
+
+    config.endereco = None
+    db.commit()
+    db.refresh(config)
+
+    assert config.endereco is None
