@@ -56,6 +56,7 @@ class ConfiguracaoUpdate(BaseModel):
     limite_agendamentos: Optional[int] = None
     mensagem_fechado: Optional[str] = None
     instagram_url: Optional[str] = None
+    endereco: Optional[str] = None
     horarios: Optional[HorariosSchema] = None
     # Aparência
     cor_primaria: Optional[str] = None
@@ -83,6 +84,7 @@ class ConfiguracaoResponse(BaseModel):
     limite_agendamentos: int
     mensagem_fechado: str
     instagram_url: Optional[str]
+    endereco: Optional[str]
     horarios: Optional[HorariosSchema]
     atualizado_em: datetime
     # Aparência
@@ -110,8 +112,9 @@ class ConfiguracaoPublicaResponse(BaseModel):
     tempo_entrega_max: int
     aceitar_agendamentos: bool
     mensagem_fechado: str
-    instagram_url: Optional[str]
-    horarios: Optional[HorariosSchema]
+    instagram_url: Optional[str] = None
+    endereco: Optional[str] = None
+    horarios: Optional[HorariosSchema] = None
     aberto: bool          # calculado em tempo real pelo service
     fechado_manualmente: bool  # para o frontend distinguir tipo de fechamento
     proxima_abertura: Optional[str]  # "HH:MM" do próximo horário de abertura, ou None

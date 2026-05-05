@@ -20,6 +20,7 @@ window.cardapio = (() => {
     headerNome:       () => document.getElementById('header-nome'),
     headerEntrega:    () => document.getElementById('header-entrega'),
     statusBadge:      () => document.getElementById('status-badge'),
+    btnInfoLoja:      () => document.getElementById('btn-info-loja'),
     headerWhatsapp:   () => document.getElementById('header-whatsapp'),
     headerInstagram:  () => document.getElementById('header-instagram'),
     modal:            () => document.getElementById('modal-produto'),
@@ -139,12 +140,134 @@ window.cardapio = (() => {
 
     const aberto = config.aberto;
     const badge = els.statusBadge();
-    badge.textContent = aberto ? '● Aberto' : '● Fechado';
+    const textoEl = badge.querySelector('.status-texto');
+    textoEl.textContent = aberto ? 'Aberto' : 'Fechado';
     badge.className = `status-badge ${aberto ? 'status-aberto' : 'status-fechado'}`;
+
+    // Listener no botão dedicado (registrado uma única vez via flag no elemento)
+    const btnInfo = els.btnInfoLoja();
+    if (btnInfo && !btnInfo.dataset.infoListenerAdded) {
+      btnInfo.addEventListener('click', _abrirModalInfoLoja);
+      btnInfo.dataset.infoListenerAdded = '1';
+    }
 
     if (!aberto && config.aceitar_agendamentos) {
       _mostrarAvisoAgendamento(config.mensagem_fechado);
     }
+  }
+
+  // ─── modal info da loja (horários + endereço) ─────────────
+
+  const _DIAS_NOMES = {
+    domingo: 'Domingo',
+    segunda: 'Segunda',
+    terca:   'Terça',
+    quarta:  'Quarta',
+    quinta:  'Quinta',
+    sexta:   'Sexta',
+    sabado:  'Sábado',
+  };
+
+  const _DIAS_ORDEM = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+
+  function _formatarHora(hhmm) {
+    const [h, m] = hhmm.split(':');
+    return m === '00' ? `${h}h` : `${h}h${m}`;
+  }
+
+  function _abrirModalInfoLoja() {
+    const modal    = document.getElementById('modal-info-loja');
+    const overlay  = document.getElementById('modal-info-loja-overlay');
+    const btnFechar = document.getElementById('modal-info-fechar');
+    const lista    = document.getElementById('modal-info-horarios');
+    const endWrap  = document.getElementById('modal-info-endereco-wrap');
+    const endTexto = document.getElementById('modal-info-endereco');
+    const btnInfo  = els.btnInfoLoja();
+
+    // Renderizar horários — começar pelo dia de hoje
+    lista.innerHTML = '';
+    const hojeIdx = new Date().getDay(); // 0=dom, 1=seg...
+    const ordemHoje = [
+      ..._DIAS_ORDEM.slice(hojeIdx),
+      ..._DIAS_ORDEM.slice(0, hojeIdx),
+    ];
+
+    const horarios = _config?.horarios ?? null;
+
+    ordemHoje.forEach((slug, i) => {
+      const diaConfig = horarios?.[slug];
+      const li = document.createElement('li');
+      li.className = `modal-info-dia${i === 0 ? ' hoje' : ''}`;
+
+      const nomeEl = document.createElement('span');
+      nomeEl.className = 'modal-info-dia-nome';
+      nomeEl.textContent = _DIAS_NOMES[slug];
+      if (i === 0) {
+        const hoje = document.createElement('span');
+        hoje.className = 'hoje-label';
+        hoje.textContent = 'Hoje';
+        nomeEl.appendChild(hoje);
+      }
+
+      const horasEl = document.createElement('span');
+      horasEl.className = 'modal-info-dia-horas';
+
+      if (!diaConfig || !diaConfig.aberto || !diaConfig.horarios?.length) {
+        horasEl.textContent = 'Fechado';
+      } else {
+        horasEl.textContent = diaConfig.horarios
+          .map(iv => `${_formatarHora(iv.inicio)} às ${_formatarHora(iv.fim)}`)
+          .join(' e ');
+      }
+
+      li.appendChild(nomeEl);
+      li.appendChild(horasEl);
+      lista.appendChild(li);
+    });
+
+    // Endereço
+    const endereco = _config?.endereco;
+    if (endereco) {
+      endTexto.textContent = endereco;
+      endWrap.classList.remove('hidden');
+    } else {
+      endWrap.classList.add('hidden');
+    }
+
+    // Abrir modal
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    if (btnInfo) btnInfo.setAttribute('aria-expanded', 'true');
+
+    // Foco no botão fechar (a11y)
+    btnFechar.focus();
+
+    const boxInfo = modal.querySelector('.modal-box-info-loja');
+
+    function fechar() {
+      // remove listeners imediatamente para não disparar duas vezes
+      overlay.removeEventListener('click', fechar);
+      btnFechar.removeEventListener('click', fechar);
+      document.removeEventListener('keydown', onEsc);
+
+      // animação de saída
+      boxInfo.classList.add('fechando');
+      boxInfo.addEventListener('animationend', () => {
+        boxInfo.classList.remove('fechando');
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+        if (btnInfo) btnInfo.setAttribute('aria-expanded', 'false');
+        if (btnInfo) btnInfo.focus();
+      }, { once: true });
+    }
+
+    function onEsc(e) {
+      if (e.key === 'Escape') fechar();
+    }
+
+    overlay.addEventListener('click', fechar);
+    btnFechar.addEventListener('click', fechar);
+    document.addEventListener('keydown', onEsc);
   }
 
   function _mostrarAvisoAgendamento(mensagem) {

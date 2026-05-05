@@ -273,3 +273,18 @@ def test_atualizar_horarios_none_limpa_horarios_json():
     # Depois, envia horarios=None para limpar
     config = atualizar_configuracoes(ConfiguracaoUpdate(horarios=None), db)
     assert config.horarios_json is None
+
+
+# ── endereco ─────────────────────────────────────────────────────────────────
+
+def test_atualizar_endereco():
+    db = setup_db()
+    config = atualizar_configuracoes(ConfiguracaoUpdate(endereco="Rua das Flores, 42 — Centro"), db)
+    assert config.endereco == "Rua das Flores, 42 — Centro"
+
+
+def test_atualizar_endereco_none_limpa():
+    db = setup_db()
+    atualizar_configuracoes(ConfiguracaoUpdate(endereco="Rua A, 1"), db)
+    config = atualizar_configuracoes(ConfiguracaoUpdate(endereco=None), db)
+    assert config.endereco is None
