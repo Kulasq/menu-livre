@@ -1734,6 +1734,9 @@ a {
   .modal-box.fechando,
   .drawer-box.fechando { animation: none; }
 
+  /* Exceção: modal info da loja é centrado e usa popOut mesmo no desktop */
+  .modal-box-info-loja.fechando { animation: popOut .2s ease-in forwards; }
+
   .btn-flutuante-carrinho {
     max-width: 560px;
   }
