@@ -1830,6 +1830,17 @@ a {
   color: #22c55e;
 }
 
+.erro-icone svg {
+  color: #ef4444;
+}
+
+.modal-aviso-titulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--texto);
+  margin-bottom: -4px;
+}
+
 /* =============================================
    PÁGINA MEUS PEDIDOS
    ============================================= */
