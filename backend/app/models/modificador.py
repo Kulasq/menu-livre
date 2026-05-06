@@ -50,6 +50,9 @@ class Modificador(Base):
     nome: Mapped[str] = mapped_column(String(100), nullable=False)
     preco_adicional: Mapped[float] = mapped_column(Float, default=0.0)
     disponivel: Mapped[bool] = mapped_column(Boolean, default=True)
+    controle_estoque: Mapped[bool] = mapped_column(Boolean, default=False)
+    estoque_atual: Mapped[int] = mapped_column(Integer, default=0)
+    estoque_minimo: Mapped[int] = mapped_column(Integer, default=0)
     ordem: Mapped[int] = mapped_column(Integer, default=0)
 
     grupo: Mapped["GrupoModificador"] = relationship(

@@ -258,6 +258,28 @@
               <input id="produto-destaque" type="checkbox" />
               Destaque
             </label>
+            <label class="form-label form-checkbox">
+              <input id="produto-controle-estoque" type="checkbox" />
+              Controlar estoque
+            </label>
+          </div>
+
+          <!-- Painel de estoque — exibido só quando controle-estoque está ligado -->
+          <div id="painel-estoque-produto" class="painel-estoque hidden">
+            <div class="painel-estoque-titulo">Estoque</div>
+            <div class="form-row" style="align-items:flex-end;gap:12px">
+              <div class="form-group form-flex">
+                <label class="form-label" for="produto-estoque-atual">Quantidade atual</label>
+                <input id="produto-estoque-atual" class="form-input" type="number" min="0" value="0" />
+              </div>
+            </div>
+            <div class="estoque-botoes-rapidos" id="estoque-botoes-produto">
+              <span class="estoque-label-rapido">Ajuste rápido:</span>
+              <button type="button" class="btn btn-xs btn-secondary" onclick="ajustarEstoqueProdutoRapido('decrementar',1)">−1</button>
+              <button type="button" class="btn btn-xs btn-secondary" onclick="ajustarEstoqueProdutoRapido('incrementar',1)">+1</button>
+              <button type="button" class="btn btn-xs btn-secondary" onclick="ajustarEstoqueProdutoRapido('incrementar',10)">+10</button>
+              <button type="button" class="btn btn-xs btn-danger"    onclick="ajustarEstoqueProdutoRapido('zerar',0)">Zerar</button>
+            </div>
           </div>
         </div>
         <div class="modal-admin-footer">
@@ -349,6 +371,28 @@
             <input id="opcao-disponivel" type="checkbox" checked />
             Disponível
           </label>
+          <label class="form-label form-checkbox" style="margin-top:8px">
+            <input id="opcao-controle-estoque" type="checkbox" />
+            Controlar estoque desta opção
+          </label>
+
+          <!-- Painel de estoque da opção — exibido só quando ligado -->
+          <div id="painel-estoque-opcao" class="painel-estoque hidden" style="margin-top:12px">
+            <div class="painel-estoque-titulo">Estoque da opção</div>
+            <div class="form-row" style="align-items:flex-end;gap:12px">
+              <div class="form-group form-flex">
+                <label class="form-label" for="opcao-estoque-atual">Quantidade atual</label>
+                <input id="opcao-estoque-atual" class="form-input" type="number" min="0" value="0" />
+              </div>
+            </div>
+            <div class="estoque-botoes-rapidos" id="estoque-botoes-opcao">
+              <span class="estoque-label-rapido">Ajuste rápido:</span>
+              <button type="button" class="btn btn-xs btn-secondary" onclick="ajustarEstoqueOpcaoRapido('decrementar',1)">−1</button>
+              <button type="button" class="btn btn-xs btn-secondary" onclick="ajustarEstoqueOpcaoRapido('incrementar',1)">+1</button>
+              <button type="button" class="btn btn-xs btn-secondary" onclick="ajustarEstoqueOpcaoRapido('incrementar',10)">+10</button>
+              <button type="button" class="btn btn-xs btn-danger"    onclick="ajustarEstoqueOpcaoRapido('zerar',0)">Zerar</button>
+            </div>
+          </div>
         </div>
         <div class="modal-admin-footer">
           <button type="button" class="btn btn-secondary" id="modal-opcao-cancelar">Cancelar</button>

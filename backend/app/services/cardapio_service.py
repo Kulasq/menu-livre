@@ -15,6 +15,10 @@ from app.schemas.cardapio import (
     ModificadorCreate, ModificadorUpdate,
     VincularGrupoRequest,
 )
+from app.services.estoque_service import (
+    produto_disponivel_efetivo,
+    modificador_disponivel_efetivo,
+)
 
 
 # ── Categorias ───────────────────────────────────────────────────────────────
@@ -133,6 +137,8 @@ def deletar_produto(produto_id: int, db: Session) -> None:
 
 def obter_cardapio_publico(db: Session) -> dict:
     categorias = listar_categorias(db, apenas_ativas=True)
+    # Carrega todos os produtos ativos (disponivel=True) — disponibilidade efetiva
+    # é calculada abaixo; listar_produtos(apenas_disponiveis=True) filtra só pelo flag.
     produtos = listar_produtos(db, apenas_disponiveis=True)
 
     produtos_por_categoria: dict[int, list] = {}
@@ -140,10 +146,33 @@ def obter_cardapio_publico(db: Session) -> dict:
 
     for produto in produtos:
         # Filtra grupos inativos — não expõe ao cliente grupos desativados pelo admin.
-        # Mutação em memória é segura: sem commit, sessão expira ao fim do request.
-        produto.grupos_modificadores = [
-            g for g in (produto.grupos_modificadores or []) if g.ativo
-        ]
+        # Muta em memória: sem commit, sessão expira ao fim do request.
+        grupos_ativos = [g for g in (produto.grupos_modificadores or []) if g.ativo]
+
+        # Calcula disponivel efetivo de cada opção (inclui estoque)
+        for grupo in grupos_ativos:
+            for opcao in grupo.modificadores:
+                opcao.disponivel = modificador_disponivel_efetivo(opcao)
+
+        produto.grupos_modificadores = grupos_ativos
+
+        # Produto indisponível se grupo obrigatório com todas as opções esgotadas
+        produto_ok = produto_disponivel_efetivo(produto)
+        if produto_ok:
+            for grupo in grupos_ativos:
+                if grupo.obrigatorio:
+                    opcoes_ok = [o for o in grupo.modificadores if o.disponivel]
+                    if not opcoes_ok:
+                        produto_ok = False
+                        break
+
+        produto.disponivel = produto_ok
+
+        if not produto_ok:
+            # Produto esgotado: inclui no resultado (para exibir badge "Esgotado"),
+            # mas com disponivel=False — cliente não consegue adicionar.
+            pass
+
         produtos_por_categoria.setdefault(produto.categoria_id, []).append(produto)
         if produto.destaque:
             destaques.append(produto)
@@ -364,13 +393,7 @@ def criar_modificador(grupo_id: int, dados: ModificadorCreate, db: Session) -> M
     if not grupo:
         raise HTTPException(status_code=404, detail="Grupo de modificador não encontrado")
 
-    mod = Modificador(
-        grupo_id=grupo_id,
-        nome=dados.nome,
-        preco_adicional=dados.preco_adicional,
-        disponivel=dados.disponivel,
-        ordem=dados.ordem,
-    )
+    mod = Modificador(grupo_id=grupo_id, **dados.model_dump())
     db.add(mod)
     db.commit()
     mod_id = mod.id
