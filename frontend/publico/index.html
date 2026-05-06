@@ -350,6 +350,21 @@
     </div>
   </div>
 
+  <!-- MODAL de erro ao enviar pedido -->
+  <div id="modal-erro-pedido" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="erro-pedido-titulo">
+    <div class="modal-overlay" id="modal-erro-pedido-overlay"></div>
+    <div class="modal-box modal-box-aviso">
+      <div class="modal-aviso-icone erro-icone">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>
+      </div>
+      <h3 id="erro-pedido-titulo" class="modal-aviso-titulo">Não foi possível enviar o pedido</h3>
+      <p id="modal-erro-pedido-msg" class="modal-aviso-msg"></p>
+      <button id="modal-erro-pedido-fechar" class="btn-primario btn-bloco">Entendido</button>
+    </div>
+  </div>
+
   <!-- BOTÃO FLUTUANTE do carrinho -->
   <div id="btn-flutuante-carrinho" class="btn-flutuante-carrinho hidden">
     <button id="btn-flutuante-inner" class="btn-flutuante-inner">

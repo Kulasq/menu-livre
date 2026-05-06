@@ -12,7 +12,9 @@ from app.schemas.cardapio import (
     ModificadorCreate, ModificadorUpdate, ModificadorResponse,
     VincularGrupoRequest,
 )
+from app.schemas.cardapio import EstoqueAjusteRequest
 from app.services import cardapio_service
+from app.services import estoque_service
 
 router = APIRouter(prefix="/api/admin", tags=["admin-cardapio"])
 
@@ -265,3 +267,35 @@ def criar_modificador_compat(
     _=Depends(get_current_admin),
 ):
     return cardapio_service.criar_modificador(grupo_id, dados, db)
+
+
+# ── Estoque — Produtos ────────────────────────────────────────────────────────
+
+@router.patch("/produtos/{produto_id}/estoque", response_model=ProdutoResponse)
+def ajustar_estoque_produto(
+    produto_id: int,
+    dados: EstoqueAjusteRequest,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    """Ajusta estoque_atual de um produto.
+
+    Operações: definir | incrementar | decrementar | zerar
+    """
+    return estoque_service.ajustar_estoque_produto(produto_id, dados, db)
+
+
+# ── Estoque — Opções de Modificador ──────────────────────────────────────────
+
+@router.patch("/modificadores/opcoes/{opcao_id}/estoque", response_model=ModificadorResponse)
+def ajustar_estoque_modificador(
+    opcao_id: int,
+    dados: EstoqueAjusteRequest,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    """Ajusta estoque_atual de uma opção de modificador.
+
+    Operações: definir | incrementar | decrementar | zerar
+    """
+    return estoque_service.ajustar_estoque_modificador(opcao_id, dados, db)
