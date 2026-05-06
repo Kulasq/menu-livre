@@ -13,6 +13,7 @@ from app.schemas.pedido import PedidoCreate, PedidoAdminCreate, PedidoStatusUpda
 from app.services.whatsapp_service import formatar_mensagem, gerar_url
 from app.services.configuracao_service import verificar_loja_aberta, calcular_proxima_abertura
 from app.services import cliente_service
+from app.services import estoque_service
 
 _TRANSICOES = {
     "pendente": {"confirmado", "cancelado"},
@@ -130,17 +131,6 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
         item_subtotal = preco_total * item_data.quantidade
         subtotal += item_subtotal
 
-        # Controle de estoque
-        if produto.controle_estoque:
-            if produto.estoque_atual < item_data.quantidade:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Estoque insuficiente para '{produto.nome}'",
-                )
-            produto.estoque_atual -= item_data.quantidade
-            if produto.estoque_atual == 0:
-                produto.disponivel = False
-
         nome_snapshot = produto.nome
         itens_db.append(PedidoItem(
             produto_id=produto.id,
@@ -168,6 +158,11 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
                 status_code=400,
                 detail=f"Troco inválido: valor deve ser maior ou igual ao total (R$ {total:.2f})",
             )
+
+    # ── Abater estoque (produto + modificadores) antes de commitar ───────────
+    # Passa itens_data (schemas) para obter produto_id, quantidade e modificadores.
+    # itens_db ainda não tem IDs; o abate opera direto nos objetos ORM consultados.
+    estoque_service.abater_estoque_pedido(dados.itens, itens_db, db)
 
     pedido = Pedido(
         numero=numero,
@@ -330,17 +325,6 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
         item_subtotal = preco_total * item_data.quantidade
         subtotal += item_subtotal
 
-        # Controle de estoque
-        if produto.controle_estoque:
-            if produto.estoque_atual < item_data.quantidade:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Estoque insuficiente para '{produto.nome}'",
-                )
-            produto.estoque_atual -= item_data.quantidade
-            if produto.estoque_atual == 0:
-                produto.disponivel = False
-
         itens_db.append(PedidoItem(
             produto_id=produto.id,
             variante_id=item_data.variante_id,
@@ -361,6 +345,9 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
                 status_code=400,
                 detail=f"Troco inválido: valor deve ser maior ou igual ao total (R$ {total:.2f})",
             )
+
+    # ── Abater estoque (produto + modificadores) antes de commitar ───────────
+    estoque_service.abater_estoque_pedido(dados.itens, itens_db, db)
 
     pedido = Pedido(
         numero=numero,
@@ -428,15 +415,18 @@ def listar_pedidos(
     page: int = 1,
     page_size: int = 20,
 ) -> list[Pedido]:
+    # criado_em é armazenado em UTC. O frontend envia datas no fuso local (BRT = UTC-3).
+    # "Meia-noite local" = 03:00 UTC, então deslocamos +3h para alinhar os limites.
+    _BRT = timedelta(hours=3)
     q = db.query(Pedido).options(joinedload(Pedido.cliente)).order_by(Pedido.criado_em.desc())
     if status:
         q = q.filter(Pedido.status == status)
     if tipo:
         q = q.filter(Pedido.tipo == tipo)
     if data_inicio:
-        q = q.filter(Pedido.criado_em >= datetime.combine(data_inicio, time.min))
+        q = q.filter(Pedido.criado_em >= datetime.combine(data_inicio, time.min) + _BRT)
     if data_fim:
-        q = q.filter(Pedido.criado_em < datetime.combine(data_fim + timedelta(days=1), time.min))
+        q = q.filter(Pedido.criado_em < datetime.combine(data_fim + timedelta(days=1), time.min) + _BRT)
     return q.offset((page - 1) * page_size).limit(page_size).all()
 
 
@@ -447,22 +437,27 @@ def contar_pedidos(
     data_inicio: date | None = None,
     data_fim: date | None = None,
 ) -> int:
+    _BRT = timedelta(hours=3)
     q = db.query(func.count(Pedido.id))
     if status:
         q = q.filter(Pedido.status == status)
     if tipo:
         q = q.filter(Pedido.tipo == tipo)
     if data_inicio:
-        q = q.filter(Pedido.criado_em >= datetime.combine(data_inicio, time.min))
+        q = q.filter(Pedido.criado_em >= datetime.combine(data_inicio, time.min) + _BRT)
     if data_fim:
-        q = q.filter(Pedido.criado_em < datetime.combine(data_fim + timedelta(days=1), time.min))
+        q = q.filter(Pedido.criado_em < datetime.combine(data_fim + timedelta(days=1), time.min) + _BRT)
     return q.scalar() or 0
 
 
 def deletar_pedido(pedido_id: int, db: Session) -> None:
-    pedido = db.get(Pedido, pedido_id)
-    if not pedido:
-        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    # Carregar com itens para restauro de estoque
+    pedido = _obter_pedido_completo(pedido_id, db)
+
+    # Restaurar estoque se pedido não foi entregue
+    if pedido.status != "entregue":
+        estoque_service.restaurar_estoque_pedido(pedido, db)
+
     db.delete(pedido)
     db.commit()
 
@@ -470,8 +465,10 @@ def deletar_pedido(pedido_id: int, db: Session) -> None:
 def deletar_pedidos_periodo(periodo: str, db: Session) -> int:
     """Remove pedidos de um período. periodo: 'hoje' | 'semana'.
     Retorna a quantidade deletada.
-    Usa data UTC para alinhar com os datetimes armazenados em UTC."""
-    hoje = datetime.now(timezone.utc).date()
+    Usa data BRT (UTC-3) para alinhar com o dia local do operador."""
+    _BRT = timedelta(hours=3)
+    # "hoje" no Brasil = UTC agora menos 3 horas
+    hoje = (datetime.now(timezone.utc) - _BRT).date()
     if periodo == "hoje":
         data_inicio = hoje
         data_fim = hoje
@@ -483,8 +480,8 @@ def deletar_pedidos_periodo(periodo: str, db: Session) -> int:
 
     pedidos = (
         db.query(Pedido)
-        .filter(Pedido.criado_em >= datetime.combine(data_inicio, time.min))
-        .filter(Pedido.criado_em < datetime.combine(data_fim + timedelta(days=1), time.min))
+        .filter(Pedido.criado_em >= datetime.combine(data_inicio, time.min) + _BRT)
+        .filter(Pedido.criado_em < datetime.combine(data_fim + timedelta(days=1), time.min) + _BRT)
         .all()
     )
     total = len(pedidos)
@@ -501,6 +498,11 @@ def atualizar_status(pedido_id: int, dados: PedidoStatusUpdate, db: Session) -> 
             status_code=400,
             detail=f"Transição inválida: {pedido.status} → {dados.status}",
         )
+
+    # Restaurar estoque ao cancelar — antes do commit
+    if dados.status == "cancelado" and pedido.status != "entregue":
+        estoque_service.restaurar_estoque_pedido(pedido, db)
+
     pedido.status = dados.status
     pedido.atualizado_em = datetime.now(timezone.utc)
     db.commit()
