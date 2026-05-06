@@ -82,6 +82,10 @@ function setupEventos() {
   $('#produto-foto-btn').addEventListener('click', () => $('#produto-foto-input').click())
   $('#produto-foto-remover').addEventListener('click', removerFoto)
 
+  /* Toggle de controle de estoque */
+  $('#produto-controle-estoque').addEventListener('change', e => _togglePainelEstoqueProduto(e.target.checked))
+  $('#opcao-controle-estoque').addEventListener('change', e => _togglePainelEstoqueOpcao(e.target.checked))
+
   /* Filtro */
   $('#filtro-categoria').addEventListener('change', (e) => {
     filtroCategoria = e.target.value
@@ -319,6 +323,13 @@ async function toggleAtivoCategoria(id) {
    PRODUTOS
    ══════════════════════════════════════════════════════════ */
 
+function _badgeEstoqueProduto(prod) {
+  if (!prod.controle_estoque) return ''
+  if (prod.estoque_atual === 0)
+    return `<span class="badge-estoque badge-estoque-zero">Esgotado</span>`
+  return `<span class="badge-estoque badge-estoque-ok">Estoque: ${prod.estoque_atual}</span>`
+}
+
 function renderProdutos() {
   const tbody = $('#produtos-tbody')
   const vazio = $('#produtos-vazio')
@@ -339,11 +350,13 @@ function renderProdutos() {
       ? `<img src="${CONFIG.API_URL}${prod.foto_url}" alt="${esc(prod.nome)}" style="width:48px;height:48px;object-fit:cover;border-radius:6px">`
       : `<div style="width:48px;height:48px;border-radius:6px;background:var(--borda);display:flex;align-items:center;justify-content:center;color:var(--texto-terc)"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:22px;height:22px"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" /></svg></div>`
 
+    const badgeEstoque = _badgeEstoqueProduto(prod)
+
     return `
       <tr style="${prod.disponivel ? '' : 'opacity:.55'}">
         <td>${fotoHtml}</td>
         <td>
-          <strong>${esc(prod.nome)}</strong>
+          <strong>${esc(prod.nome)}</strong>${badgeEstoque}
           ${prod.descricao ? `<br><span class="text-terc" style="font-size:.82rem">${esc(prod.descricao).substring(0, 60)}${prod.descricao.length > 60 ? '…' : ''}</span>` : ''}
         </td>
         <td>${formatarPreco(prod.preco)}</td>
@@ -393,11 +406,24 @@ function abrirModalProduto(id = null) {
   $('#produto-ordem').value = produtoEditando?.ordem ?? 0
   $('#produto-disponivel').checked = produtoEditando?.disponivel ?? true
   $('#produto-destaque').checked = produtoEditando?.destaque ?? false
+
+  // Estoque
+  const controleOn = produtoEditando?.controle_estoque ?? false
+  $('#produto-controle-estoque').checked = controleOn
+  $('#produto-estoque-atual').value = produtoEditando?.estoque_atual ?? 0
+  _togglePainelEstoqueProduto(controleOn)
+  // Os botões rápidos só funcionam ao editar (produto já tem ID)
+  $('#estoque-botoes-produto').style.display = produtoEditando ? '' : 'none'
+
   atualizarPreviewFoto(produtoEditando?.foto_url || null)
   $('#produto-foto-input').value = ''
 
   $('#modal-produto').classList.remove('hidden')
   $('#produto-nome').focus()
+}
+
+function _togglePainelEstoqueProduto(on) {
+  $('#painel-estoque-produto').classList.toggle('hidden', !on)
 }
 
 function fecharModalProduto() {
@@ -479,6 +505,8 @@ async function handleSubmitProduto(e) {
       preco: parseFloat($('#produto-preco').value),
       disponivel: $('#produto-disponivel').checked,
       destaque: $('#produto-destaque').checked,
+      controle_estoque: $('#produto-controle-estoque').checked,
+      estoque_atual: parseInt($('#produto-estoque-atual').value) || 0,
       ordem: parseInt($('#produto-ordem').value) || 0,
       foto_url: fotoUrl,
     }
@@ -521,6 +549,39 @@ async function toggleDestaque(id) {
     prod.destaque = !prod.destaque
     renderProdutos()
     toast.sucesso(prod.destaque ? 'Produto destacado!' : 'Destaque removido!')
+  } catch (err) { toast.erro(err.message) }
+}
+
+// ── Ajuste rápido de estoque ──────────────────────────────────────────────────
+
+async function ajustarEstoqueProdutoRapido(operacao, valor) {
+  if (!produtoEditando) return
+  try {
+    const atualizado = await api.patch(
+      `/api/admin/produtos/${produtoEditando.id}/estoque`,
+      { operacao, valor }
+    )
+    // Atualiza display e estado local sem recarregar tudo
+    $('#produto-estoque-atual').value = atualizado.estoque_atual
+    produtoEditando.estoque_atual = atualizado.estoque_atual
+    // Atualiza na lista em memória também
+    const idx = produtos.findIndex(p => p.id === produtoEditando.id)
+    if (idx !== -1) produtos[idx].estoque_atual = atualizado.estoque_atual
+    renderProdutos()
+    toast.sucesso(`Estoque: ${atualizado.estoque_atual}`)
+  } catch (err) { toast.erro(err.message) }
+}
+
+async function ajustarEstoqueOpcaoRapido(operacao, valor) {
+  if (!opcaoEditando) return
+  try {
+    const atualizado = await api.patch(
+      `/api/admin/modificadores/opcoes/${opcaoEditando.id}/estoque`,
+      { operacao, valor }
+    )
+    $('#opcao-estoque-atual').value = atualizado.estoque_atual
+    opcaoEditando.estoque_atual = atualizado.estoque_atual
+    toast.sucesso(`Estoque: ${atualizado.estoque_atual}`)
   } catch (err) { toast.erro(err.message) }
 }
 
@@ -708,6 +769,13 @@ function abrirModalOpcao(grupoId, opcaoId = null) {
   $('#opcao-preco').value = opcaoEditando?.preco_adicional ?? 0
   $('#opcao-disponivel').checked = opcaoEditando?.disponivel ?? true
 
+  // Estoque da opção
+  const controleOn = opcaoEditando?.controle_estoque ?? false
+  $('#opcao-controle-estoque').checked = controleOn
+  $('#opcao-estoque-atual').value = opcaoEditando?.estoque_atual ?? 0
+  _togglePainelEstoqueOpcao(controleOn)
+  $('#estoque-botoes-opcao').style.display = opcaoEditando ? '' : 'none'
+
   $('#modal-opcao').classList.remove('hidden')
   $('#opcao-nome').focus()
 }
@@ -716,6 +784,10 @@ function fecharModalOpcao() {
   $('#modal-opcao').classList.add('hidden')
   opcaoEditando = null
   opcaoGrupoId = null
+}
+
+function _togglePainelEstoqueOpcao(on) {
+  $('#painel-estoque-opcao').classList.toggle('hidden', !on)
 }
 
 async function handleSubmitOpcao(e) {
@@ -798,11 +870,23 @@ function renderGruposGlobais() {
       ? '<span class="badge badge-erro" style="font-size:.7rem">Sim</span>'
       : '<span class="badge badge-sucesso" style="font-size:.7rem">Não</span>'
 
+    // Mini-badges de estoque por opção — visíveis direto na linha sem abrir o modal
+    const opcoesComEstoque = (grupo.modificadores || []).filter(m => m.controle_estoque)
+    const badgesOpcoes = opcoesComEstoque.length > 0
+      ? `<br><span style="display:inline-flex;flex-wrap:wrap;gap:3px;margin-top:3px">${
+          opcoesComEstoque.map(m =>
+            m.estoque_atual <= 0
+              ? `<span class="badge-estoque badge-estoque-zero" style="font-size:.62rem;margin-left:0">${esc(m.nome)}: 0</span>`
+              : `<span class="badge-estoque badge-estoque-ok"  style="font-size:.62rem;margin-left:0">${esc(m.nome)}: ${m.estoque_atual}</span>`
+          ).join('')
+        }</span>`
+      : ''
+
     return `
       <tr style="${ativo ? '' : 'opacity:.55'}">
         <td>
           <strong>${esc(grupo.nome)}</strong>
-          <br><span class="text-terc" style="font-size:.78rem">Sel. ${grupo.selecao_minima}–${grupo.selecao_maxima}</span>
+          ${badgesOpcoes}
         </td>
         <td>
           <span class="badge badge-aviso">${totalOpcoes}</span>
@@ -922,6 +1006,7 @@ function fecharModalOpcoesGrupo() {
   $('#modal-opcoes-grupo').classList.add('hidden')
   grupoOpcoesSelecionado = null
   opcaoGlobalEditando = null
+  renderGruposGlobais()  // atualiza badges de estoque na tabela sem re-fetch
 }
 
 function renderOpcoesGrupoGlobal() {
@@ -939,12 +1024,22 @@ function renderOpcoesGrupoGlobal() {
   }
 
   vazio.classList.add('hidden')
-  lista.innerHTML = opcoes.map(mod => `
-    <div class="mod-opcao" style="will-change:opacity;${mod.disponivel ? '' : 'opacity:.5'}">
+  lista.innerHTML = opcoes.map(mod => {
+    const esgotadoPorEstoque = mod.controle_estoque && mod.estoque_atual <= 0
+    const esgotado = !mod.disponivel || esgotadoPorEstoque
+    let badgeOpcao = ''
+    if (!mod.disponivel || esgotadoPorEstoque) {
+      badgeOpcao = '<span class="badge badge-erro" style="font-size:.65rem">Esgotado</span>'
+    } else if (mod.controle_estoque) {
+      badgeOpcao = `<span class="badge-estoque badge-estoque-ok" style="font-size:.65rem">Est. ${mod.estoque_atual}</span>`
+    }
+
+    return `
+    <div class="mod-opcao" style="will-change:opacity;${esgotado ? 'opacity:.5' : ''}">
       <div class="mod-opcao-info">
         <span>${esc(mod.nome)}</span>
         ${mod.preco_adicional > 0 ? `<span class="mod-opcao-preco">+${formatarPreco(mod.preco_adicional)}</span>` : ''}
-        ${!mod.disponivel ? '<span class="badge badge-erro" style="font-size:.65rem">Esgotado</span>' : ''}
+        ${badgeOpcao}
       </div>
       <div class="mod-opcao-acoes">
         <button class="btn btn-sm ${mod.disponivel ? 'btn-secondary' : 'btn-danger'}"
@@ -956,7 +1051,7 @@ function renderOpcoesGrupoGlobal() {
         <button class="btn btn-danger btn-sm" onclick="confirmarExcluirOpcaoGlobal(${mod.id}, '${esc(mod.nome)}')" title="Excluir">${icons.excluir}</button>
       </div>
     </div>
-  `).join('')
+  `}).join('')
 }
 
 function abrirModalOpcaoGlobal(opcaoId = null) {
@@ -970,6 +1065,15 @@ function abrirModalOpcaoGlobal(opcaoId = null) {
   $('#opcao-nome').value = opcaoGlobalEditando?.nome || ''
   $('#opcao-preco').value = opcaoGlobalEditando?.preco_adicional ?? 0
   $('#opcao-disponivel').checked = opcaoGlobalEditando?.disponivel ?? true
+
+  // Estoque da opção global
+  const controleOnG = opcaoGlobalEditando?.controle_estoque ?? false
+  $('#opcao-controle-estoque').checked = controleOnG
+  $('#opcao-estoque-atual').value = opcaoGlobalEditando?.estoque_atual ?? 0
+  _togglePainelEstoqueOpcao(controleOnG)
+  $('#estoque-botoes-opcao').style.display = opcaoGlobalEditando ? '' : 'none'
+  // ajustarEstoqueOpcaoRapido usa opcaoEditando — aqui é o contexto global
+  opcaoEditando = opcaoGlobalEditando
 
   $('#modal-opcao').classList.remove('hidden')
   $('#opcao-nome').focus()
@@ -985,6 +1089,8 @@ async function handleSubmitOpcaoUnificado(e) {
     nome: $('#opcao-nome').value.trim(),
     preco_adicional: parseFloat($('#opcao-preco').value) || 0,
     disponivel: $('#opcao-disponivel').checked,
+    controle_estoque: $('#opcao-controle-estoque').checked,
+    estoque_atual: parseInt($('#opcao-estoque-atual').value) || 0,
   }
 
   // Contexto: modal de opções do grupo global está aberto

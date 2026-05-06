@@ -626,14 +626,32 @@ window.pedido = (() => {
       }
 
     } catch (err) {
-      const erroEnvio = document.getElementById('erro-envio-pedido');
-      if (erroEnvio) {
-        erroEnvio.textContent = `Erro: ${err.message}`;
-        erroEnvio.classList.remove('hidden');
-      }
+      _mostrarModalErroPedido(err.message);
       btn.disabled = false;
       btn.textContent = 'Confirmar pedido';
     }
+  }
+
+  function _mostrarModalErroPedido(mensagem) {
+    const modal = document.getElementById('modal-erro-pedido');
+    const msgEl = document.getElementById('modal-erro-pedido-msg');
+    const fecharBtn = document.getElementById('modal-erro-pedido-fechar');
+    const overlay = document.getElementById('modal-erro-pedido-overlay');
+    if (!modal) return;
+
+    msgEl.textContent = mensagem;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    function _fechar() {
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+      fecharBtn.removeEventListener('click', _fechar);
+      overlay.removeEventListener('click', _fechar);
+    }
+
+    fecharBtn.addEventListener('click', _fechar, { once: true });
+    overlay.addEventListener('click', _fechar, { once: true });
   }
 
   function _abrirModalPix(resultado) {

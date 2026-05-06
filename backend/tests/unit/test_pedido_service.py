@@ -384,7 +384,12 @@ def test_estoque_decrementado_ao_criar_pedido():
     assert produto.estoque_atual == 3
 
 
-def test_estoque_zero_torna_produto_indisponivel():
+def test_estoque_zero_mantem_disponivel_flag_true():
+    """Quando o estoque zera, disponivel NÃO é tocado automaticamente.
+    A disponibilidade efetiva é calculada pelo cardapio_service na leitura
+    pública (produto_disponivel_efetivo), não persistida como efeito colateral.
+    Isso evita o bug de "produto continua oculto mesmo após reposição de estoque".
+    """
     db = setup_db()
     cat = Categoria(nome="H")
     db.add(cat)
@@ -408,7 +413,8 @@ def test_estoque_zero_torna_produto_indisponivel():
     )
     db.refresh(produto)
     assert produto.estoque_atual == 0
-    assert produto.disponivel is False
+    # disponivel=True é mantido — a indisponibilidade efetiva é calculada no response público
+    assert produto.disponivel is True
 
 
 def test_estoque_insuficiente_rejeita_pedido():

@@ -1406,10 +1406,20 @@ body,
   color: var(--texto);
 }
 
+/* form é filho direto de .modal-admin-box em vários modais — precisa entrar
+   na cadeia flex para que .modal-admin-body possa limitar a altura e rolar */
+.modal-admin-box > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* permite que o filho encolha abaixo do conteúdo */
+}
+
 .modal-admin-body {
   padding: 20px 24px;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -4054,4 +4064,81 @@ textarea.form-input {
 
 @media print {
   body { display: none !important; }
+}
+
+/* ─────────────────────────────────────────────────────────
+   CONTROLE DE ESTOQUE — painel, badges e botões rápidos
+   ───────────────────────────────────────────────────────── */
+
+.painel-estoque {
+  background: var(--bg-sidebar-hover, rgba(0,0,0,.04));
+  border: 1px solid var(--borda, #e2e8f0);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-top: 12px;
+}
+[data-theme="dark"] .painel-estoque {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.08);
+}
+
+.painel-estoque-titulo {
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--texto-sec, #64748b);
+  margin-bottom: 10px;
+}
+
+.estoque-botoes-rapidos {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.estoque-label-rapido {
+  font-size: .8rem;
+  color: var(--texto-sec, #64748b);
+  margin-right: 2px;
+}
+
+.btn-xs {
+  padding: 3px 10px;
+  font-size: .78rem;
+  border-radius: 5px;
+  line-height: 1.4;
+}
+
+/* Badges de estoque na tabela de produtos */
+.badge-estoque {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 99px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+.badge-estoque-ok {
+  background: rgba(16,185,129,.12);
+  color: #059669;
+}
+[data-theme="dark"] .badge-estoque-ok {
+  background: rgba(16,185,129,.18);
+  color: #34d399;
+}
+
+.badge-estoque-zero {
+  background: rgba(239,68,68,.12);
+  color: #dc2626;
+}
+[data-theme="dark"] .badge-estoque-zero {
+  background: rgba(239,68,68,.18);
+  color: #f87171;
 }
