@@ -37,11 +37,23 @@ document.addEventListener('DOMContentLoaded', () => {
   _setupCores()
   _carregarConfiguracoes()
   _setupImpressao()
+  _setupVerificarEndereco()
 
   $('#form-config').addEventListener('submit', _salvarConfiguracoes)
   $('#btn-toggle-loja').addEventListener('click', _toggleStatusLoja)
   $('#btn-restaurar-cores').addEventListener('click', _restaurarCoresPadrao)
 })
+
+function _setupVerificarEndereco() {
+  $('#btn-verificar-endereco').addEventListener('click', () => {
+    const endereco = $('#inp-endereco').value.trim()
+    if (!endereco) {
+      toast.aviso('Preencha o endereço antes de verificar.')
+      return
+    }
+    window.open('https://maps.google.com/?q=' + encodeURIComponent(endereco), '_blank', 'noopener')
+  })
+}
 
 function _setupImpressao() {
   const salvo = localStorage.getItem('impressao_largura') || '80mm'
@@ -203,16 +215,46 @@ function _preencherCores(c) {
   })
 }
 
+function _confirmar(titulo, texto, onConfirmar) {
+  const modal      = document.getElementById('modal-confirmacao')
+  const overlay    = document.getElementById('modal-confirmacao-overlay')
+  const btnOk      = document.getElementById('btn-confirmacao-ok')
+  const btnCancelar = document.getElementById('btn-confirmacao-cancelar')
+
+  document.getElementById('confirmacao-titulo').textContent = titulo
+  document.getElementById('confirmacao-texto').textContent  = texto
+  modal.classList.remove('hidden')
+
+  function fechar() {
+    modal.classList.add('hidden')
+    btnOk.removeEventListener('click', handleOk)
+    btnCancelar.removeEventListener('click', fechar)
+    overlay.removeEventListener('click', fechar)
+  }
+
+  function handleOk() { fechar(); onConfirmar() }
+
+  btnOk.addEventListener('click', handleOk)
+  btnCancelar.addEventListener('click', fechar)
+  overlay.addEventListener('click', fechar)
+}
+
 /** Restaura todos os campos de cor para os padrões Menu Livre */
 function _restaurarCoresPadrao() {
-  Object.entries(CORES_PADRAO).forEach(([campo, hex]) => {
-    const swatch = $(`#swatch-${campo.replace(/_/g, '-')}`)
-    const texto  = $(`#inp-${campo.replace(/_/g, '-')}`)
-    swatch.value = hex
-    texto.value  = hex
-    _atualizarPreview(campo, hex)
-  })
-  toast.sucesso('Cores restauradas para o padrão. Salve para aplicar.')
+  _confirmar(
+    'Restaurar cores padrão',
+    'Isso vai sobrescrever todas as cores personalizadas. A mudança só é salva quando você clicar em "Salvar configurações".',
+    () => {
+      Object.entries(CORES_PADRAO).forEach(([campo, hex]) => {
+        const swatch = $(`#swatch-${campo.replace(/_/g, '-')}`)
+        const texto  = $(`#inp-${campo.replace(/_/g, '-')}`)
+        swatch.value = hex
+        texto.value  = hex
+        _atualizarPreview(campo, hex)
+      })
+      toast.sucesso('Cores restauradas para o padrão. Salve para aplicar.')
+    }
+  )
 }
 
 // ── Configurações ─────────────────────────────────────────────────────────────
@@ -265,6 +307,7 @@ function _preencherForm(c) {
   $('#inp-whatsapp').value               = c.whatsapp              ?? ''
   $('#inp-instagram').value              = c.instagram_url         ?? ''
   $('#inp-endereco').value               = c.endereco              ?? ''
+  $('#inp-maps-url').value               = c.maps_url              ?? ''
   $('#inp-chave-pix').value              = c.chave_pix             ?? ''
   $('#inp-tipo-pix').value               = c.tipo_chave_pix        ?? ''
   $('#inp-taxa').value                   = c.taxa_entrega          ?? 0
@@ -325,6 +368,7 @@ async function _salvarConfiguracoes(e) {
     whatsapp,
     instagram_url:        $('#inp-instagram').value.trim()              || null,
     endereco:             $('#inp-endereco').value.trim()               || null,
+    maps_url:             $('#inp-maps-url').value.trim()               || null,
     chave_pix:            $('#inp-chave-pix').value.trim()              || null,
     tipo_chave_pix:       $('#inp-tipo-pix').value                      || null,
     taxa_entrega:         parseFloat($('#inp-taxa').value)              || 0,
