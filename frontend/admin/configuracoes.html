@@ -87,8 +87,19 @@
             </div>
             <div class="form-group" style="margin-top:12px">
               <label class="form-label" for="inp-endereco">Endereço da loja</label>
-              <input id="inp-endereco" type="text" class="form-input" maxlength="200" placeholder="Rua X, 123 — Bairro, Cidade/UF" />
-              <p style="font-size:.78rem;color:var(--texto-sec);margin-top:6px">Exibido no cardápio público ao clicar no status Aberto/Fechado.</p>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input id="inp-endereco" type="text" class="form-input" maxlength="200" placeholder="Rua X, 123 — Bairro, Cidade/UF" style="flex:1" />
+                <button type="button" class="btn btn-sm btn-primary" id="btn-verificar-endereco" title="Abre o endereço no Google Maps para conferência visual">Verificar no Maps</button>
+              </div>
+              <p style="font-size:.78rem;color:var(--texto-sec);margin-top:6px">Exibido por escrito no cardápio público.</p>
+            </div>
+            <div class="form-group" style="margin-top:12px">
+              <label class="form-label" for="inp-maps-url">Link do Google Maps</label>
+              <input id="inp-maps-url" type="url" class="form-input" placeholder="https://maps.app.goo.gl/..." />
+              <p style="font-size:.78rem;color:var(--texto-sec);margin-top:6px">
+                No Google Maps, encontre sua loja → toque em <strong>Compartilhar</strong> → <strong>Copiar link</strong> e cole aqui.
+                Usado no botão "Como chegar" do cardápio público.
+              </p>
             </div>
           </div>
         </section>
@@ -308,7 +319,7 @@
             </div>
 
             <div style="margin-top:16px">
-              <button type="button" class="btn btn-sm" id="btn-restaurar-cores">Restaurar cores padrão</button>
+              <button type="button" class="btn btn-sm btn-danger" id="btn-restaurar-cores">Restaurar cores padrão</button>
             </div>
           </div>
         </section>
@@ -325,6 +336,23 @@
 
   <!-- Overlay sidebar mobile -->
   <div class="sidebar-overlay hidden" id="sidebar-overlay"></div>
+
+  <!-- Modal confirmação genérica -->
+  <div id="modal-confirmacao" class="modal-admin hidden">
+    <div class="modal-admin-overlay" id="modal-confirmacao-overlay"></div>
+    <div class="modal-admin-box" style="max-width:420px">
+      <div class="modal-admin-header">
+        <h3 id="confirmacao-titulo">Confirmar ação</h3>
+      </div>
+      <div class="modal-admin-body">
+        <p id="confirmacao-texto" style="color:var(--texto-sec);line-height:1.6"></p>
+      </div>
+      <div class="modal-admin-footer">
+        <button class="btn btn-secondary" id="btn-confirmacao-cancelar">Cancelar</button>
+        <button class="btn btn-danger" id="btn-confirmacao-ok">Confirmar</button>
+      </div>
+    </div>
+  </div>
 
   <script src="js/icons.js"></script>
   <script src="js/config.js"></script>
