@@ -239,7 +239,13 @@ async function carregarPedidosHoje(silencioso = false) {
 function calcularDatasHistorico() {
   const periodo = $('#hist-periodo').value
   const hoje = new Date()
-  const fmt = d => d.toISOString().slice(0, 10)
+  // Formato local — toISOString() é UTC e desloca a data depois das 21h BRT.
+  const fmt = d => {
+    const yyyy = d.getFullYear()
+    const mm   = String(d.getMonth() + 1).padStart(2, '0')
+    const dd   = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }
 
   if (periodo === 'hoje') {
     return { inicio: fmt(hoje), fim: fmt(hoje) }
@@ -264,10 +270,32 @@ function calcularDatasHistorico() {
 async function carregarHistorico() {
   const { inicio: dataInicio, fim: dataFim } = calcularDatasHistorico()
   const tipo = $('#hist-filtro-tipo').value
+  const periodo = $('#hist-periodo').value
 
   if (!dataInicio || !dataFim) {
     toast.aviso('Selecione as datas de início e fim.')
     return
+  }
+
+  // Validação extra para datas personalizadas: o input type="date" aceita
+  // valores fora do min/max (ex: ano "2006" digitado por engano), só marca
+  // borda vermelha. Sem isso, a request sai com data_fim < data_inicio e
+  // volta lista vazia sem explicação.
+  if (periodo === 'personalizado') {
+    const inputInicio = $('#hist-data-inicio')
+    const inputFim    = $('#hist-data-fim')
+    const hoje        = dataHoje()
+
+    if (dataInicio > hoje || dataFim > hoje) {
+      toast.aviso('As datas não podem ser futuras.')
+      if (dataInicio > hoje) inputInicio.value = hoje
+      if (dataFim    > hoje) inputFim.value    = hoje
+      return
+    }
+    if (dataInicio > dataFim) {
+      toast.aviso('A data de início não pode ser depois da data de fim.')
+      return
+    }
   }
 
   // Limpa seleção ao recarregar
