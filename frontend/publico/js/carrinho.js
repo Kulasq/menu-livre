@@ -151,10 +151,9 @@ window.carrinho = (() => {
   }
 
   function fecharDrawer(skipAnim = false, callback = null) {
-    const isMobile = window.matchMedia('(max-width: 599px)').matches;
     const drawer = document.getElementById('drawer-carrinho');
     const box = drawer.querySelector('.drawer-box');
-    if (!isMobile || skipAnim) {
+    if (skipAnim) {
       box.style.maxHeight = '';
       drawer.classList.add('hidden');
       document.body.style.overflow = '';
@@ -283,6 +282,7 @@ window.carrinho = (() => {
   // ─── eventos ──────────────────────────────────────────────
   function _initEventos() {
     document.getElementById('drawer-overlay').addEventListener('click', () => fecharDrawer());
+    document.getElementById('drawer-fechar').addEventListener('click', () => fecharDrawer());
     document.getElementById('btn-flutuante-inner').addEventListener('click', abrirDrawer);
 
     document.querySelectorAll('.btn-tipo-servico').forEach(btn => {
@@ -315,6 +315,7 @@ window.carrinho = (() => {
       produto_id:    item.produto_id,
       nome:          item.nome,
       preco:         item.preco,
+      foto_url:      item.foto_url || null,
       quantidade:    item.quantidade,
       observacao:    item.observacao || null,
       modificadores: item.modificadores || [],

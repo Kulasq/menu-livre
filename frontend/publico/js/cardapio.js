@@ -279,15 +279,25 @@ window.cardapio = (() => {
     const modal  = document.getElementById('modal-aviso-fechado');
     const msgEl  = document.getElementById('modal-aviso-msg');
     const btn    = document.getElementById('modal-aviso-ok');
+    const box    = modal.querySelector('.modal-box');
 
     msgEl.textContent = mensagem || 'Estamos fechados no momento.';
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 
-    btn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-      document.body.style.overflow = '';
-    }, { once: true });
+    function fechar() {
+      if (box.classList.contains('fechando')) return;
+      modal.classList.add('fechando');
+      box.classList.add('fechando');
+      box.addEventListener('animationend', () => {
+        box.classList.remove('fechando');
+        modal.classList.remove('fechando');
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+      }, { once: true });
+    }
+
+    btn.addEventListener('click', fechar, { once: true });
   }
 
   // ─── aplicar paleta de cores via CSS variables ───────────
@@ -617,10 +627,9 @@ window.cardapio = (() => {
   }
 
   function fecharModal(skipAnim = false) {
-    const isMobile = window.matchMedia('(max-width: 599px)').matches;
     const modal = els.modal();
     const box = modal.querySelector('.modal-box');
-    if (!isMobile || skipAnim) {
+    if (skipAnim) {
       box.style.maxHeight = '';
       modal.classList.add('hidden');
       document.body.style.overflow = '';
@@ -790,6 +799,7 @@ window.cardapio = (() => {
   // ─── eventos ──────────────────────────────────────────────
   function _initEventos() {
     els.modalOverlay().addEventListener('click', () => fecharModal());
+    document.getElementById('modal-produto-fechar').addEventListener('click', () => fecharModal());
     _initDragFechar(
       els.modalHandle(),
       document.querySelector('#modal-produto .modal-box'),

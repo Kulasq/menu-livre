@@ -301,10 +301,12 @@
     for (const item of pedido.itens) {
       if (!item.produto_id) { pulados++; continue; }
       if (cardapio && !disponiveis.has(item.produto_id)) { pulados++; continue; }
+      const produtoAtual = disponiveis.get(item.produto_id);
       itensParaCarrinho.push({
         produto_id:    item.produto_id,
         nome:          item.nome_snapshot,
         preco:         item.preco_snapshot,
+        foto_url:      produtoAtual?.foto_url || null,
         quantidade:    item.quantidade,
         observacao:    item.observacao || null,
         modificadores: item.modificadores.map(m => ({
