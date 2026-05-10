@@ -315,6 +315,7 @@ window.carrinho = (() => {
       produto_id:    item.produto_id,
       nome:          item.nome,
       preco:         item.preco,
+      foto_url:      item.foto_url || null,
       quantidade:    item.quantidade,
       observacao:    item.observacao || null,
       modificadores: item.modificadores || [],
