@@ -38,6 +38,7 @@ def obter_configuracao_publica(db: Session = Depends(get_db)):
         mensagem_fechado=config.mensagem_fechado,
         instagram_url=config.instagram_url,
         endereco=config.endereco,
+        maps_url=config.maps_url,
         horarios=horarios_para_schema(config),
         aberto=verificar_loja_aberta(config),
         fechado_manualmente=config.fechado_manualmente,
