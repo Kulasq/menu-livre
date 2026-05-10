@@ -225,13 +225,18 @@ window.cardapio = (() => {
       lista.appendChild(li);
     });
 
-    // Endereço
-    const endereco = _config?.endereco;
+    // Endereço + botão Como chegar
+    const endereco  = _config?.endereco;
+    const mapsUrl   = _config?.maps_url;
+    const btnChegar = document.getElementById('modal-info-como-chegar');
     if (endereco) {
       endTexto.textContent = endereco;
       endWrap.classList.remove('hidden');
+      btnChegar.href = mapsUrl || ('https://maps.google.com/?q=' + encodeURIComponent(endereco));
+      btnChegar.classList.remove('hidden');
     } else {
       endWrap.classList.add('hidden');
+      btnChegar.classList.add('hidden');
     }
 
     // Abrir modal
