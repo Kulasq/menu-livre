@@ -12,6 +12,9 @@ html {
   font-size: 16px;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  /* Reserva o espaço da scrollbar mesmo quando body fica overflow:hidden (modal aberto)
+     — evita que cardápio e modal "alternem" a scrollbar e o conteúdo desloque. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -619,6 +622,18 @@ a {
   overscroll-behavior: contain;
   min-width: 0;
   overflow-x: hidden;
+  /* Scrollbar oculta — não reserva espaço (foto vai edge-to-edge).
+     O scroll continua funcionando por roda do mouse / arrasto / teclado. */
+  scrollbar-width: none;
+}
+
+.modal-scroll::-webkit-scrollbar,
+.drawer-itens::-webkit-scrollbar {
+  display: none;
+}
+
+.drawer-itens {
+  scrollbar-width: none;
 }
 
 @keyframes slideUp {
@@ -643,6 +658,11 @@ a {
 
 @keyframes fadeOut {
   to { opacity: 0; }
+}
+
+@keyframes fadeScaleOut {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(.97); }
 }
 
 /* Animação de fechamento (só mobile — classe adicionada via JS) */
@@ -710,6 +730,42 @@ a {
 }
 
 .modal-fechar:hover { background: var(--borda-input); }
+
+/* Botão X — só aparece no desktop (mobile usa o traço/drag handle).
+   Mesmo padrão do .modal-info-fechar: transparente em repouso, destaque no hover.
+   Sobre fotos/banners ganha drop-shadow no SVG para legibilidade. */
+.modal-fechar-desktop {
+  display: none;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: none;
+  color: var(--texto-sec);
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+
+.modal-fechar-desktop svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
+}
+
+.modal-fechar-desktop:hover {
+  background: var(--borda);
+  color: var(--texto);
+}
+
+.modal-fechar-desktop:focus-visible {
+  outline: 2px solid var(--marrom-btn);
+  outline-offset: 2px;
+}
 
 /* =============================================
    MODAL PRODUTO
@@ -1745,16 +1801,20 @@ a {
 
   .modal-box,
   .drawer-box {
-    max-width: 480px;
+    max-width: 580px;
     margin: 0 auto;
     border-radius: var(--radius-lg);
     animation: fadeScale .2s ease-out;
   }
 
-  /* Sem barra de arrasto e sem animação de saída no desktop */
+  /* Sem barra de arrasto no desktop; saída com fadeScaleOut (espelhando fadeScale de entrada) */
   .modal-drag-handle { display: none; }
+  .modal-fechar-desktop { display: flex; }
   .modal-box.fechando,
-  .drawer-box.fechando { animation: none; }
+  .drawer-box.fechando { animation: fadeScaleOut .2s ease-in forwards; }
+
+  /* Evita sobreposição do X com o total no header do checkout */
+  #modal-pedido .modal-pedido-total-header { padding-right: 32px; }
 
   /* Exceção: modal info da loja é centrado e usa popOut mesmo no desktop */
   .modal-box-info-loja.fechando { animation: popOut .2s ease-in forwards; }

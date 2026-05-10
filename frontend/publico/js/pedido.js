@@ -331,10 +331,9 @@ window.pedido = (() => {
   }
 
   function fecharModal(skipAnim = false) {
-    const isMobile = window.matchMedia('(max-width: 599px)').matches;
     const modal = els.modal();
     const box = modal.querySelector('.modal-box');
-    if (!isMobile || skipAnim) {
+    if (skipAnim) {
       box.style.maxHeight = '';
       modal.classList.add('hidden');
       document.body.style.overflow = '';
@@ -667,6 +666,7 @@ window.pedido = (() => {
     document.body.style.overflow = 'hidden';
 
     document.getElementById('modal-pix-overlay').addEventListener('click', _fecharModalPix, { once: true });
+    document.getElementById('modal-pix-fechar').addEventListener('click', _fecharModalPix, { once: true });
 
     const btnCopiar = document.getElementById('btn-copiar-pix');
     btnCopiar.onclick = async () => {
@@ -747,6 +747,7 @@ window.pedido = (() => {
     });
 
     els.overlay().addEventListener('click', () => fecharModal());
+    document.getElementById('modal-pedido-fechar').addEventListener('click', () => fecharModal());
 
     // O drag handle do checkout é visual — eventos de toque ficam no cabeçalho
     // para não bloquear o botão ← (stacking context do header confina qualquer z-index filho)
