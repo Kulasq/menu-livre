@@ -57,6 +57,7 @@ class ConfiguracaoUpdate(BaseModel):
     mensagem_fechado: Optional[str] = None
     instagram_url: Optional[str] = None
     endereco: Optional[str] = None
+    maps_url: Optional[str] = None
     horarios: Optional[HorariosSchema] = None
     # Aparência
     cor_primaria: Optional[str] = None
@@ -85,6 +86,7 @@ class ConfiguracaoResponse(BaseModel):
     mensagem_fechado: str
     instagram_url: Optional[str]
     endereco: Optional[str]
+    maps_url: Optional[str]
     horarios: Optional[HorariosSchema]
     atualizado_em: datetime
     # Aparência
@@ -114,6 +116,7 @@ class ConfiguracaoPublicaResponse(BaseModel):
     mensagem_fechado: str
     instagram_url: Optional[str] = None
     endereco: Optional[str] = None
+    maps_url: Optional[str] = None
     horarios: Optional[HorariosSchema] = None
     aberto: bool          # calculado em tempo real pelo service
     fechado_manualmente: bool  # para o frontend distinguir tipo de fechamento
