@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cupons — Menu Livre</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>!function(){var t=localStorage.getItem('ml-tema')||'system';document.documentElement.dataset.theme=t==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):t}()</script>
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 1 0 20A10 10 0 0 1 12 2Zm0 2a8 8 0 1 0 0 16A8 8 0 0 0 12 4Zm-1 3h2v1.27a3 3 0 0 1 0 5.46V16h-2v-2.27a3 3 0 0 1 0-5.46V7Zm1 2.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg></div>
+        <div>
+          <h2 id="sidebar-nome-loja">Menu Livre</h2>
+          <small>Painel Admin</small>
+        </div>
+      </div>
+      <nav class="sidebar-nav" aria-label="Navegação do painel">
+        <a href="dashboard.html" class="sidebar-link">
+          <span class="sidebar-link-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" /></svg></span> Dashboard
+        </a>
+        <a href="cardapio.html" class="sidebar-link">
+          <span class="sidebar-link-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg></span> Cardápio
+        </a>
+        <a href="pedidos.html" class="sidebar-link">
+          <span class="sidebar-link-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg></span> Pedidos
+        </a>
+        <a href="clientes.html" class="sidebar-link">
+          <span class="sidebar-link-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg></span> Clientes
+        </a>
+        <a href="cupons.html" class="sidebar-link ativo">
+          <span class="sidebar-link-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0c1.1.128 1.907 1.077 1.907 2.185ZM9.75 9h.008v.008H9.75V9Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 4.5h.008v.008h-.008V13.5Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg></span> Cupons
+        </a>
+        <a href="configuracoes.html" class="sidebar-link">
+          <span class="sidebar-link-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg></span> Configurações
+        </a>
+      </nav>
+    </aside>
+
+    <!-- HEADER -->
+    <header class="admin-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn-menu-mobile" id="btn-menu" type="button" aria-label="Abrir menu"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
+        <h1 class="admin-header-titulo">Cupons</h1>
+      </div>
+      <div class="admin-header-usuario">
+        <span class="admin-header-nome" id="header-usuario-nome"></span>
+        <div class="admin-header-avatar" id="header-usuario-avatar"></div>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO -->
+    <main class="admin-conteudo">
+
+      <!-- TOOLBAR -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap">
+        <p style="color:var(--texto-secundario);font-size:.875rem;margin:0">
+          Gerencie códigos de desconto para divulgar nas redes sociais.
+        </p>
+        <button class="btn btn-primary" id="btn-novo-cupom" type="button">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="16" height="16" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+          Novo cupom
+        </button>
+      </div>
+
+      <!-- TABELA -->
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table class="tabela" id="tabela-cupons">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Tipo</th>
+                <th>Desconto</th>
+                <th>Usos</th>
+                <th>Faturamento gerado</th>
+                <th>Válido até</th>
+                <th>Status</th>
+                <th style="width:100px">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="cupons-tbody">
+              <tr id="cupons-loading">
+                <td colspan="8" style="text-align:center;padding:40px;color:var(--texto-secundario)">
+                  Carregando cupons…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ── MODAL CRIAR / EDITAR CUPOM ── -->
+  <div class="modal-admin hidden" id="modal-cupom" aria-modal="true" role="dialog" aria-labelledby="modal-cupom-titulo">
+    <div class="modal-admin-overlay" id="modal-cupom-overlay"></div>
+    <div class="modal-admin-box modal-admin-lg">
+      <div class="modal-admin-header">
+        <h3 id="modal-cupom-titulo">Novo Cupom</h3>
+        <button class="modal-admin-fechar" id="modal-cupom-fechar" type="button" aria-label="Fechar">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <form id="form-cupom" novalidate>
+        <input type="hidden" id="cupom-id" />
+        <div class="modal-admin-body">
+
+          <div class="form-group">
+            <label class="form-label" for="cupom-codigo">Código <span style="color:var(--erro)">*</span></label>
+            <input type="text" id="cupom-codigo" class="form-input" placeholder="Ex: BEMVINDO10" maxlength="50" required autocomplete="off" style="text-transform:uppercase" />
+            <small class="form-hint">Letras maiúsculas e números, sem espaços. Ex: PROMO20</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cupom-tipo">Tipo de desconto <span style="color:var(--erro)">*</span></label>
+            <select id="cupom-tipo" class="form-input" required>
+              <option value="percentual">Percentual (%)</option>
+              <option value="valor_fixo">Valor fixo (R$)</option>
+              <option value="frete_gratis">Frete grátis</option>
+              <option value="brinde">Brinde (produto grátis)</option>
+            </select>
+          </div>
+
+          <!-- Valor (oculto para frete_gratis e brinde) -->
+          <div class="form-group" id="grupo-valor">
+            <label class="form-label" for="cupom-valor" id="label-valor">Valor do desconto <span style="color:var(--erro)">*</span></label>
+            <input type="number" id="cupom-valor" class="form-input" min="0" step="0.01" placeholder="0" />
+          </div>
+
+          <!-- Desconto máximo (só percentual) -->
+          <div class="form-group" id="grupo-desconto-maximo" hidden>
+            <label class="form-label" for="cupom-desconto-maximo">Desconto máximo em R$ (opcional)</label>
+            <input type="number" id="cupom-desconto-maximo" class="form-input" min="0.01" step="0.01" placeholder="Ex: 20 → desconto teto de R$ 20" />
+            <small class="form-hint">Limita cupons percentuais. Vazio = sem teto.</small>
+          </div>
+
+          <!-- Produto brinde (só brinde) -->
+          <div class="form-group" id="grupo-brinde" hidden>
+            <label class="form-label" for="cupom-produto-brinde">Produto brinde <span style="color:var(--erro)">*</span></label>
+            <select id="cupom-produto-brinde" class="form-input">
+              <option value="">Selecione o produto...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="cupom-valor-minimo">Valor mínimo do pedido (R$)</label>
+            <input type="number" id="cupom-valor-minimo" class="form-input" min="0" step="0.01" value="0" placeholder="0 = sem mínimo" />
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group">
+              <label class="form-label" for="cupom-data-inicio">Válido a partir de</label>
+              <input type="datetime-local" id="cupom-data-inicio" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="cupom-data-fim">Válido até</label>
+              <input type="datetime-local" id="cupom-data-fim" class="form-input" />
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group">
+              <label class="form-label" for="cupom-limite-total">Qtd. disponível</label>
+              <input type="number" id="cupom-limite-total" class="form-input" min="1" step="1" placeholder="∞ = ilimitado" />
+              <small class="form-hint">Vazio = ilimitado</small>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="cupom-limite-cliente">Limite por cliente</label>
+              <input type="number" id="cupom-limite-cliente" class="form-input" min="0" step="1" value="0" placeholder="0 = sem limite" />
+              <small class="form-hint">1 = uma vez por telefone</small>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-check">
+              <input type="checkbox" id="cupom-primeira-compra" />
+              <span>Somente para primeira compra do cliente</span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-check">
+              <input type="checkbox" id="cupom-ativo" checked />
+              <span>Cupom ativo</span>
+            </label>
+          </div>
+
+        </div>
+        <div class="modal-admin-footer">
+          <button type="button" class="btn btn-secondary" id="modal-cupom-cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-salvar-cupom">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── MODAL USOS DO CUPOM ── -->
+  <div class="modal-admin hidden" id="modal-usos" aria-modal="true" role="dialog" aria-labelledby="modal-usos-titulo">
+    <div class="modal-admin-overlay" id="modal-usos-overlay"></div>
+    <div class="modal-admin-box modal-admin-lg" style="max-width:600px">
+      <div class="modal-admin-header">
+        <h3 id="modal-usos-titulo">Usos do cupom</h3>
+        <button class="modal-admin-fechar" id="modal-usos-fechar" type="button" aria-label="Fechar">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <div class="modal-admin-body">
+        <div id="usos-lista">
+          <p style="color:var(--texto-secundario);text-align:center;padding:24px">Carregando…</p>
+        </div>
+      </div>
+      <div class="modal-admin-footer">
+        <button type="button" class="btn btn-secondary" id="modal-usos-fechar-btn">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmação -->
+  <div id="modal-confirmar" class="modal-admin hidden" style="z-index:350">
+    <div class="modal-admin-overlay" id="modal-confirmar-overlay"></div>
+    <div class="modal-admin-box modal-admin-sm">
+      <div class="modal-admin-header">
+        <h3>Confirmar exclusão</h3>
+      </div>
+      <div class="modal-admin-body">
+        <p id="modal-confirmar-msg" style="font-size:.95rem"></p>
+      </div>
+      <div class="modal-admin-footer">
+        <button class="btn btn-secondary" id="modal-confirmar-nao">Cancelar</button>
+        <button class="btn btn-danger" id="modal-confirmar-sim">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kebab dropdown de ações dos cupons (position:fixed, fora da tabela) -->
+  <div id="dropdown-acoes-cupom" class="kebab-dropdown hidden" role="menu">
+    <button class="kebab-item" id="dd-cupom-editar" type="button" role="menuitem">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:15px;height:15px;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" /></svg>
+      Editar
+    </button>
+    <button class="kebab-item kebab-item-perigo" id="dd-cupom-deletar" type="button" role="menuitem">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:15px;height:15px;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+      Remover
+    </button>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/tema.js"></script>
+  <script src="js/conta.js"></script>
+  <script src="js/notificacao-pedidos.js"></script>
+  <script src="js/cupons.js"></script>
+</body>
+</html>

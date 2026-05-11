@@ -2256,3 +2256,67 @@ a {
   background: var(--marrom-hover);
   color: #fff;
 }
+
+/* ── Cupom de desconto (checkout público) ──────────────────────────────── */
+.bloco-cupom {
+  padding-bottom: 16px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.bloco-cupom label {
+  display: block;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--texto-sec);
+  margin-bottom: 8px;
+}
+
+.cupom-row {
+  display: flex;
+  gap: 8px;
+}
+
+.cupom-row input {
+  flex: 1;
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+
+.btn-cupom-aplicar {
+  flex-shrink: 0;
+  padding: 0 18px;
+  background: var(--marrom-btn);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+.btn-cupom-aplicar:hover { background: var(--marrom-hover); }
+.btn-cupom-aplicar:disabled { opacity: .5; cursor: not-allowed; }
+
+.cupom-feedback {
+  margin-top: 8px;
+  font-size: .85rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.cupom-valido {
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+}
+
+.cupom-invalido {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+}

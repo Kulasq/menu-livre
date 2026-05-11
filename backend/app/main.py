@@ -18,9 +18,11 @@ from app.routers.admin import pedidos as admin_pedidos
 from app.routers.admin import clientes as admin_clientes
 from app.routers.admin import dashboard as admin_dashboard
 from app.routers.admin import configuracoes as admin_configuracoes
+from app.routers.admin import cupons as admin_cupons
 from app.routers.publico import cardapio as publico_cardapio
 from app.routers.publico import cliente as publico_clientes
 from app.routers.publico import pedidos as publico_pedidos
+from app.routers.publico import cupons as publico_cupons
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -79,9 +81,11 @@ app.include_router(admin_clientes.router)
 app.include_router(admin_upload.router)
 app.include_router(admin_dashboard.router)
 app.include_router(admin_configuracoes.router)
+app.include_router(admin_cupons.router)
 app.include_router(publico_cardapio.router)
 app.include_router(publico_clientes.router)
 app.include_router(publico_pedidos.router)
+app.include_router(publico_cupons.router)
 
 
 @app.get("/health")

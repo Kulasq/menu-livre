@@ -22,6 +22,7 @@ class PedidoCreate(BaseModel):
     troco_para: float | None = Field(default=None, gt=0)
     observacao: str | None = None
     agendado_para: datetime | None = None
+    cupom_codigo: str | None = None
     itens: list[PedidoItemCreate] = Field(min_length=1)
 
     @model_validator(mode='after')
@@ -81,6 +82,8 @@ class PedidoResponse(BaseModel):
     endereco_entrega: str | None
     subtotal: float
     taxa_entrega: float
+    desconto_cupom: float = 0.0
+    cupom_codigo: str | None = None
     total: float
     metodo_pagamento: str | None
     troco_para: float | None
@@ -124,6 +127,7 @@ class PedidoAdminCreate(BaseModel):
     metodo_pagamento: str | None = None
     troco_para: float | None = Field(default=None, gt=0)
     observacao: str | None = None
+    cupom_codigo: str | None = None
     itens: list[PedidoItemCreate] = Field(min_length=1)
     cliente_id: int | None = None
     cliente_telefone: str | None = None

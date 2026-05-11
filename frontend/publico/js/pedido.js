@@ -5,6 +5,11 @@ window.pedido = (() => {
   let _pixBrCode = null;    // payload Pix Copia e Cola do pedido confirmado
   let _pixWhatsappUrl = null;
 
+  // ─── estado do cupom ──────────────────────────────────────
+  let _cupomCodigo = null;      // código validado e aceito
+  let _descontoCupom = 0;       // valor em R$ a descontar do subtotal
+  let _freteGratisCupom = false; // se cupom zera taxa de entrega
+
   // ─── elementos ────────────────────────────────────────────
   const els = {
     modal:              () => document.getElementById('modal-pedido'),
@@ -65,8 +70,88 @@ window.pedido = (() => {
 
   function _totalFinal() {
     const subtotal = window.carrinho.total();
-    const taxa = (_tipo === 'delivery' && _config?.taxa_entrega) ? _config.taxa_entrega : 0;
-    return subtotal + taxa;
+    const taxa = (_freteGratisCupom || _tipo !== 'delivery') ? 0 : (_config?.taxa_entrega || 0);
+    return Math.max(0, subtotal - _descontoCupom) + taxa;
+  }
+
+  // ─── cupom ────────────────────────────────────────────────
+  function _resetarCupom() {
+    _cupomCodigo = null;
+    _descontoCupom = 0;
+    _freteGratisCupom = false;
+    const inputCupom = document.getElementById('input-cupom');
+    if (inputCupom) inputCupom.value = '';
+    _atualizarFeedbackCupom(null);
+    _atualizarTotalHeader();
+  }
+
+  function _atualizarFeedbackCupom(validacao) {
+    const fb = document.getElementById('cupom-feedback');
+    if (!fb) return;
+    if (!validacao) { fb.className = 'cupom-feedback hidden'; fb.textContent = ''; return; }
+    fb.classList.remove('hidden');
+    if (validacao.valido) {
+      fb.className = 'cupom-feedback cupom-valido';
+      const descTxt = validacao.frete_gratis
+        ? 'Frete grátis aplicado!'
+        : validacao.produto_brinde_nome
+          ? `🎁 Brinde: ${validacao.produto_brinde_nome}`
+          : `✅ Desconto de ${brl(validacao.desconto)} aplicado!`
+      fb.textContent = descTxt;
+    } else {
+      fb.className = 'cupom-feedback cupom-invalido';
+      fb.textContent = `❌ ${validacao.motivo || 'Cupom inválido'}`;
+    }
+  }
+
+  function _atualizarTotalHeader() {
+    const el = els.totalHeader();
+    if (el) el.textContent = brl(_totalFinal());
+  }
+
+  async function _aplicarCupom() {
+    const inputEl = document.getElementById('input-cupom');
+    const codigo = (inputEl?.value || '').trim().toUpperCase();
+    if (!codigo) return;
+
+    const btn = document.getElementById('btn-aplicar-cupom');
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+    // Se o mesmo código já está aplicado, apenas feedback
+    if (_cupomCodigo === codigo) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Aplicar'; }
+      return;
+    }
+
+    // Resetar desconto anterior antes de validar o novo
+    _descontoCupom = 0;
+    _freteGratisCupom = false;
+    _cupomCodigo = null;
+
+    const subtotal = window.carrinho.total();
+    const telefone = _limparTelefone(els.inputTelefone().value) || null;
+
+    try {
+      const res = await fetch(`${CONFIG.API_URL}/api/cupons/validar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codigo, subtotal, telefone: telefone || undefined }),
+      });
+      const validacao = await res.json();
+
+      if (validacao.valido) {
+        _cupomCodigo = codigo;
+        _descontoCupom = validacao.desconto || 0;
+        _freteGratisCupom = validacao.frete_gratis || false;
+      }
+
+      _atualizarFeedbackCupom(validacao);
+      _atualizarTotalHeader();
+    } catch {
+      _atualizarFeedbackCupom({ valido: false, motivo: 'Erro ao validar cupom. Tente novamente.' });
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Aplicar'; }
+    }
   }
 
   // ─── máscara de telefone BR ───────────────────────────────
@@ -274,6 +359,9 @@ window.pedido = (() => {
       els.rowTipoPedido().classList.remove('hidden');
       els.campoAgendamento().classList.add('hidden');
     }
+
+    // Reseta cupom
+    _resetarCupom();
 
     // Reseta pagamento e troco
     els.inputPagamento().value = '';
@@ -563,6 +651,7 @@ window.pedido = (() => {
       troco_para:        precisaTroco ? _parseMoeda(els.inputTrocoPara().value) : null,
       observacao:        els.inputObs().value.trim() || null,
       agendado_para:     _montarAgendadoPara(),
+      cupom_codigo:      _cupomCodigo || null,
       itens,
     };
 
@@ -820,6 +909,27 @@ window.pedido = (() => {
     });
 
     els.btnConfirmar().addEventListener('click', _confirmar);
+
+    // Cupom — aplicar via botão ou Enter no input
+    const btnCupom = document.getElementById('btn-aplicar-cupom');
+    if (btnCupom) btnCupom.addEventListener('click', _aplicarCupom);
+
+    const inputCupom = document.getElementById('input-cupom');
+    if (inputCupom) {
+      inputCupom.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); _aplicarCupom(); }
+      });
+      // Normalizar para maiúsculas durante digitação
+      inputCupom.addEventListener('input', e => {
+        const sel = e.target.selectionStart;
+        e.target.value = e.target.value.toUpperCase().replace(/\s/g, '');
+        e.target.setSelectionRange(sel, sel);
+      });
+      // Limpar feedback se o campo for apagado manualmente
+      inputCupom.addEventListener('input', () => {
+        if (!inputCupom.value) _resetarCupom();
+      });
+    }
   }
 
   // ─── init ─────────────────────────────────────────────────
