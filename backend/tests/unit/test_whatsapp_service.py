@@ -116,6 +116,8 @@ def _mock_pedido(tipo="delivery", metodo="pix", com_modificador=False, com_obs=T
         item.modificadores = [mod]
 
     pedido.itens = [item]
+    pedido.desconto_cupom = 0.0
+    pedido.cupom_codigo = None
     return pedido
 
 

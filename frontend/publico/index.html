@@ -290,6 +290,24 @@
 
         <!-- PASSO 4: pagamento -->
         <div id="passo-pagamento" class="passo">
+
+          <!-- Campo de cupom de desconto -->
+          <div id="bloco-cupom" class="bloco-cupom">
+            <label for="input-cupom">Cupom de desconto</label>
+            <div class="cupom-row">
+              <input
+                type="text"
+                id="input-cupom"
+                placeholder="Ex: BEMVINDO10"
+                autocomplete="off"
+                maxlength="50"
+                style="text-transform:uppercase"
+              />
+              <button type="button" id="btn-aplicar-cupom" class="btn-cupom-aplicar">Aplicar</button>
+            </div>
+            <div id="cupom-feedback" class="cupom-feedback hidden"></div>
+          </div>
+
           <label for="input-pagamento">Forma de pagamento</label>
           <select id="input-pagamento">
             <option value="">Selecione…</option>

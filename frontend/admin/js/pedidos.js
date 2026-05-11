@@ -592,13 +592,36 @@ function abrirDetalhe(id, isHistorico = false) {
   }).join('')
 
   $('#detalhe-subtotal').textContent = formatarPreco(pedido.subtotal)
+
+  // Desconto de cupom
+  const descontoRow = $('#detalhe-desconto-row')
+  const desconto = pedido.desconto_cupom || 0
+  const cupomCod = pedido.cupom_codigo || null
+  if (desconto > 0) {
+    $('#detalhe-desconto-label').textContent = cupomCod ? `Desconto (${cupomCod})` : 'Desconto (cupom)'
+    $('#detalhe-desconto').textContent = `−${formatarPreco(desconto)}`
+    descontoRow.classList.remove('hidden')
+  } else {
+    descontoRow.classList.add('hidden')
+  }
+
+  // Taxa de entrega — ou frete grátis via cupom
   const taxaRow = $('#detalhe-taxa-row')
   if (pedido.taxa_entrega > 0) {
+    $('#detalhe-taxa-label').textContent = 'Taxa de entrega'
     $('#detalhe-taxa').textContent = formatarPreco(pedido.taxa_entrega)
+    $('#detalhe-taxa').style.color = ''
+    taxaRow.classList.remove('hidden')
+  } else if (cupomCod && desconto === 0 && pedido.tipo === 'delivery') {
+    // Frete grátis pelo cupom
+    $('#detalhe-taxa-label').textContent = 'Taxa de entrega'
+    $('#detalhe-taxa').textContent = `GRÁTIS (${cupomCod})`
+    $('#detalhe-taxa').style.color = 'var(--sucesso)'
     taxaRow.classList.remove('hidden')
   } else {
     taxaRow.classList.add('hidden')
   }
+
   $('#detalhe-total').textContent = formatarPreco(pedido.total)
 
   $('#modal-pedido').classList.remove('hidden')
@@ -746,8 +769,23 @@ function imprimirPedido() {
       </div>`
   }).join('')
 
-  const taxaHtml = p.taxa_entrega > 0
-    ? `<div class="subtotal-row"><span>Taxa de entrega</span><span>${formatarPreco(p.taxa_entrega)}</span></div>`
+  // Desconto de cupom (impressão)
+  const descontoImpressao = p.desconto_cupom || 0
+  const cupomImpressao = p.cupom_codigo || null
+  const descontoHtml = descontoImpressao > 0
+    ? `<div class="subtotal-row"><span>Desconto ${cupomImpressao ? `(${cupomImpressao})` : '(cupom)'}</span><span>-${formatarPreco(descontoImpressao)}</span></div>`
+    : ''
+
+  // Taxa de entrega — ou frete grátis via cupom (impressão)
+  let taxaHtml = ''
+  if (p.taxa_entrega > 0) {
+    taxaHtml = `<div class="subtotal-row"><span>Taxa de entrega</span><span>${formatarPreco(p.taxa_entrega)}</span></div>`
+  } else if (cupomImpressao && descontoImpressao === 0 && p.tipo === 'delivery') {
+    taxaHtml = `<div class="subtotal-row"><span>Taxa de entrega</span><span>GRATIS</span></div>`
+  }
+  // Linha de cupom no cabeçalho (exibida sempre que há cupom, independente do tipo)
+  const cupomHtml = cupomImpressao
+    ? `<div class="campo"><span class="rotulo">CUPOM</span><span>${cupomImpressao}</span></div>`
     : ''
   const enderecoHtml = p.endereco_entrega
     ? `<div class="campo"><span class="rotulo">ENDERECO</span><span>${p.endereco_entrega}</span></div>`
@@ -828,12 +866,13 @@ function imprimirPedido() {
   ${foneHtml}
   <div class="campo"><span class="rotulo">TIPO</span><span>${TIPO_TEXTO[p.tipo] || p.tipo}</span></div>
   <div class="campo"><span class="rotulo">PGTO</span><span>${PGTO_TEXTO[p.metodo_pagamento] || '—'}</span></div>
-  ${enderecoHtml}${agendadoHtml}${obsHtml}
+  ${cupomHtml}${enderecoHtml}${agendadoHtml}${obsHtml}
   <div class="sep"></div>
   <div style="font-weight:bold;font-size:10pt;margin-bottom:4px;">ITENS:</div>
   ${itensHtml}
   <div class="sep"></div>
   <div class="subtotal-row"><span>Subtotal</span><span>${formatarPreco(p.subtotal)}</span></div>
+  ${descontoHtml}
   ${taxaHtml}
   <div class="total-row"><span>TOTAL</span><span>${formatarPreco(p.total)}</span></div>
   ${trocoHtml}

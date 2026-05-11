@@ -68,8 +68,17 @@ def formatar_mensagem(pedido, nome_loja: str = "Menu Livre", chave_pix: str | No
         f"Subtotal: {brl(pedido.subtotal)}",
     ]
 
+    desconto = getattr(pedido, 'desconto_cupom', 0.0) or 0.0
+    cupom_cod = getattr(pedido, 'cupom_codigo', None)
+    if desconto > 0:
+        label = f"Desconto ({cupom_cod})" if cupom_cod else "Desconto"
+        lines.append(f"{label}: -{brl(desconto)}")
+
     if pedido.taxa_entrega > 0:
         lines.append(f"Entrega: {brl(pedido.taxa_entrega)}")
+    elif cupom_cod and desconto == 0:
+        # frete grátis via cupom — taxa_entrega foi zerada mas queremos deixar claro
+        lines.append("Entrega: GRÁTIS 🎉 (cupom)")
 
     lines.append(f"*Total: {brl(pedido.total)}*")
 
