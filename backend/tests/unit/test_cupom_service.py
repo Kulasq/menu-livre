@@ -234,10 +234,9 @@ class TestCrudCupom:
         cupom_service.deletar_cupom(cupom_id, db_teste)
         assert db_teste.get(Cupom, cupom_id) is None
 
-    def test_deletar_com_usos_desativa(self, db_teste):
+    def test_deletar_com_usos_remove_fisicamente(self, db_teste):
         c = _cupom(db_teste, codigo="COMUSO", tipo="valor_fixo", valor=5.0, usos_atuais=1)
-        cupom_service.deletar_cupom(c.id, db_teste)
-        db_teste.refresh(c)
-        assert c.ativo is False
-        # Ainda existe no banco
-        assert db_teste.get(Cupom, c.id) is not None
+        cupom_id = c.id
+        cupom_service.deletar_cupom(cupom_id, db_teste)
+        # Hard delete sempre — independente de ter usos
+        assert db_teste.get(Cupom, cupom_id) is None
