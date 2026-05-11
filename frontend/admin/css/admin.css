@@ -711,6 +711,14 @@ body,
   color: var(--aviso);
 }
 
+/* Badge como botão — feedback de hover para badges clicáveis (toggle ativo/inativo) */
+button.badge {
+  transition: filter .15s ease;
+}
+button.badge:hover {
+  filter: brightness(.88);
+}
+
 /* ── Toast / notificação ── */
 .toast-container {
   position: fixed;

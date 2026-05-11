@@ -18,5 +18,6 @@ const CONFIG = {
     CARDAPIO: 'cardapio.html',
     PEDIDOS: 'pedidos.html',
     CLIENTES: 'clientes.html',
+    CUPONS: 'cupons.html',
   },
 }
