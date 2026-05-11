@@ -9,11 +9,13 @@ from app.models.produto import Produto
 from app.models.cliente import Cliente
 from app.models.modificador import Modificador
 from app.models.configuracao import Configuracao
+from app.models.cupom import Cupom
 from app.schemas.pedido import PedidoCreate, PedidoAdminCreate, PedidoStatusUpdate, PedidoPagamentoUpdate
 from app.services.whatsapp_service import formatar_mensagem, gerar_url
 from app.services.configuracao_service import verificar_loja_aberta, calcular_proxima_abertura
 from app.services import cliente_service
 from app.services import estoque_service
+from app.services import cupom_service
 
 _TRANSICOES = {
     "pendente": {"confirmado", "cancelado"},
@@ -149,7 +151,40 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
             detail=f"Pedido mínimo é R$ {config.pedido_minimo:.2f}",
         )
 
-    total = subtotal + taxa_entrega
+    # ── Cupom de desconto ────────────────────────────────────────────────────
+    desconto_cupom = 0.0
+    cupom_codigo_snapshot: str | None = None
+    cupom_id_aplicado: int | None = None
+
+    if dados.cupom_codigo:
+        codigo_normalizado = dados.cupom_codigo.strip().upper()
+        desconto_cupom, frete_gratis_cupom, produto_brinde_id = cupom_service.aplicar_cupom_no_pedido(
+            codigo=codigo_normalizado,
+            subtotal=subtotal,
+            telefone=cliente.telefone,
+            db=db,
+        )
+        if frete_gratis_cupom:
+            taxa_entrega = 0.0
+        cupom_codigo_snapshot = codigo_normalizado
+        # Buscar id do cupom para registrar uso depois
+        cupom_obj = db.query(Cupom).filter_by(codigo=codigo_normalizado).first()
+        if cupom_obj:
+            cupom_id_aplicado = cupom_obj.id
+        # Adicionar brinde como item do pedido (preço zero, sem afetar subtotal)
+        if produto_brinde_id:
+            produto_brinde = db.query(Produto).filter_by(id=produto_brinde_id).first()
+            if produto_brinde:
+                itens_db.append(PedidoItem(
+                    produto_id=produto_brinde.id,
+                    variante_id=None,
+                    nome_snapshot=f"{produto_brinde.nome} ({codigo_normalizado})",
+                    preco_snapshot=0.0,
+                    quantidade=1,
+                    subtotal=0.0,
+                ))
+
+    total = max(0.0, subtotal - desconto_cupom) + taxa_entrega
     numero = _numero_pedido(db)
 
     if dados.metodo_pagamento == "dinheiro" and dados.troco_para is not None:
@@ -172,6 +207,9 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
         endereco_entrega=dados.endereco_entrega,
         subtotal=subtotal,
         taxa_entrega=taxa_entrega,
+        desconto_cupom=desconto_cupom,
+        cupom_codigo=cupom_codigo_snapshot,
+        cupom_id=cupom_id_aplicado,
         total=total,
         metodo_pagamento=dados.metodo_pagamento,
         troco_para=dados.troco_para,
@@ -183,6 +221,18 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
 
     db.add(pedido)
     db.commit()
+
+    # Registrar auditoria de uso do cupom
+    if cupom_id_aplicado:
+        cupom_service.registrar_uso_cupom(
+            cupom_id=cupom_id_aplicado,
+            pedido_id=pedido.id,
+            telefone=cliente.telefone,
+            desconto_aplicado=desconto_cupom,
+            subtotal_pedido=subtotal,
+            db=db,
+        )
+        db.commit()
 
     # Recarregar com todos os relacionamentos para a mensagem WhatsApp
     pedido_completo = _obter_pedido_completo(pedido.id, db)
@@ -336,7 +386,40 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
             modificadores=mods_db,
         ))
 
-    total = subtotal + taxa_entrega
+    # ── Cupom de desconto (admin também pode aplicar cupom) ──────────────────
+    desconto_cupom = 0.0
+    cupom_codigo_snapshot: str | None = None
+    cupom_id_aplicado: int | None = None
+
+    if dados.cupom_codigo:
+        codigo_normalizado = dados.cupom_codigo.strip().upper()
+        telefone_cliente = cliente.telefone if cliente else None
+        desconto_cupom, frete_gratis_cupom, produto_brinde_id = cupom_service.aplicar_cupom_no_pedido(
+            codigo=codigo_normalizado,
+            subtotal=subtotal,
+            telefone=telefone_cliente,
+            db=db,
+        )
+        if frete_gratis_cupom:
+            taxa_entrega = 0.0
+        cupom_codigo_snapshot = codigo_normalizado
+        cupom_obj = db.query(Cupom).filter_by(codigo=codigo_normalizado).first()
+        if cupom_obj:
+            cupom_id_aplicado = cupom_obj.id
+        # Adicionar brinde como item do pedido (preço zero, sem afetar subtotal)
+        if produto_brinde_id:
+            produto_brinde = db.query(Produto).filter_by(id=produto_brinde_id).first()
+            if produto_brinde:
+                itens_db.append(PedidoItem(
+                    produto_id=produto_brinde.id,
+                    variante_id=None,
+                    nome_snapshot=f"{produto_brinde.nome} ({codigo_normalizado})",
+                    preco_snapshot=0.0,
+                    quantidade=1,
+                    subtotal=0.0,
+                ))
+
+    total = max(0.0, subtotal - desconto_cupom) + taxa_entrega
     numero = _numero_pedido(db)
 
     if dados.metodo_pagamento == "dinheiro" and dados.troco_para is not None:
@@ -357,6 +440,9 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
         endereco_entrega=dados.endereco_entrega,
         subtotal=subtotal,
         taxa_entrega=taxa_entrega,
+        desconto_cupom=desconto_cupom,
+        cupom_codigo=cupom_codigo_snapshot,
+        cupom_id=cupom_id_aplicado,
         total=total,
         metodo_pagamento=dados.metodo_pagamento,
         troco_para=dados.troco_para,
@@ -369,6 +455,17 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
 
     db.add(pedido)
     db.commit()
+
+    if cupom_id_aplicado:
+        cupom_service.registrar_uso_cupom(
+            cupom_id=cupom_id_aplicado,
+            pedido_id=pedido.id,
+            telefone=cliente.telefone if cliente else None,
+            desconto_aplicado=desconto_cupom,
+            subtotal_pedido=subtotal,
+            db=db,
+        )
+        db.commit()
 
     pedido_completo = _obter_pedido_completo(pedido.id, db)
 
