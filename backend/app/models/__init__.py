@@ -7,3 +7,4 @@ from app.models.modificador import GrupoModificador, Modificador
 from app.models.pedido import Pedido, PedidoItem, PedidoItemModificador
 from app.models.mesa import Mesa
 from app.models.configuracao import Configuracao
+from app.models.cupom import Cupom, CupomUso
