@@ -175,6 +175,15 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
         if produto_brinde_id:
             produto_brinde = db.query(Produto).filter_by(id=produto_brinde_id).first()
             if produto_brinde:
+                # Abater estoque do brinde (não passa por abater_estoque_pedido
+                # porque não tem PedidoItemCreate correspondente)
+                if produto_brinde.controle_estoque:
+                    if produto_brinde.estoque_atual < 1:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Brinde '{produto_brinde.nome}' sem estoque disponível",
+                        )
+                    produto_brinde.estoque_atual -= 1
                 itens_db.append(PedidoItem(
                     produto_id=produto_brinde.id,
                     variante_id=None,
@@ -410,6 +419,15 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
         if produto_brinde_id:
             produto_brinde = db.query(Produto).filter_by(id=produto_brinde_id).first()
             if produto_brinde:
+                # Abater estoque do brinde (não passa por abater_estoque_pedido
+                # porque não tem PedidoItemCreate correspondente)
+                if produto_brinde.controle_estoque:
+                    if produto_brinde.estoque_atual < 1:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Brinde '{produto_brinde.nome}' sem estoque disponível",
+                        )
+                    produto_brinde.estoque_atual -= 1
                 itens_db.append(PedidoItem(
                     produto_id=produto_brinde.id,
                     variante_id=None,
