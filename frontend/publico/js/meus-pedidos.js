@@ -281,6 +281,17 @@
   }
 
   // ─── pedir igual ─────────────────────────────────────────
+
+  // Brinde do cupom: gravado pelo backend com preco_snapshot=0 e
+  // nome no formato "Produto (CODIGO)". Não deve voltar no "pedir igual"
+  // porque o preço seria recalculado pelo backend a partir do produto real
+  // e o cliente precisaria aplicar o cupom novamente para realmente ganhar.
+  function _ehBrindeCupom(item, cupomCodigo) {
+    if (!cupomCodigo) return false;
+    if (item.preco_snapshot !== 0) return false;
+    return item.nome_snapshot.endsWith(`(${cupomCodigo})`);
+  }
+
   async function _pedirIgual(pedido) {
     let cardapio = null;
     try {
@@ -299,6 +310,7 @@
     let pulados = 0;
 
     for (const item of pedido.itens) {
+      if (_ehBrindeCupom(item, pedido.cupom_codigo)) continue;
       if (!item.produto_id) { pulados++; continue; }
       if (cardapio && !disponiveis.has(item.produto_id)) { pulados++; continue; }
       const produtoAtual = disponiveis.get(item.produto_id);
