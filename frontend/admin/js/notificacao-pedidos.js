@@ -1,50 +1,343 @@
 /* frontend/admin/js/notificacao-pedidos.js
  *
- * Notificação global de novos pedidos pendentes — funciona em qualquer tela do admin.
- * Injeta um modal central chamativo, toca beep-beep por 30s e navega para pedidos.html
- * com highlight do pedido novo.
+ * Sistema de notificação de novos pedidos.
+ * Combina HTML5 Audio loop (alarme persistente em background) com
+ * Server-Sent Events (push em tempo real, zero latência, zero polling throttle).
  *
- * Depende de: config.js, auth.js (api, auth)
- * Adicionar em todas as páginas admin autenticadas.
+ * Por que HTML5 Audio e não Web Audio API:
+ *   Web Audio API → AudioContext é suspenso pelo Chrome quando a aba perde foco.
+ *   HTML5 <audio> com loop=true → tratado como mídia (igual ao YouTube/Spotify),
+ *   NÃO é throttled em background. Funciona com browser minimizado ou em outra aba.
+ *
+ * Por que SSE e não setInterval:
+ *   setInterval é throttled para ~1/min em abas background (Chrome 86+).
+ *   EventSource é uma conexão TCP persistente — o callback dispara imediatamente
+ *   ao receber o evento, independente do estado de visibilidade da aba.
+ *
+ * Autoplay policy (browsers modernos):
+ *   Browsers bloqueiam audio.play() sem gesto do usuário. Solução em 2 camadas:
+ *   1. Pre-warm no login (form submit é gesto válido) → aumenta MEI do Chrome.
+ *   2. Unlock no primeiro click/keydown de qualquer página admin → silencioso.
+ *   Uma vez destravado, permanece destravado pela vida inteira da página.
+ *
+ * Depende de: config.js (CONFIG), auth.js (api, auth)
+ * Incluir em todas as páginas admin autenticadas.
  */
 
 (function () {
   'use strict'
 
-  const POLL_MS = 5000
-  const STORAGE_KEY = 'notif_ids_pendentes_vistos'
-  const BEEP_DURACAO_MS = 30000
-  const BEEP_INTERVALO_MS = 3000
+  /* ── Constantes ─────────────────────────────────────────────── */
+  const STORAGE_KEY    = 'notif_ids_pendentes_vistos'
+  const ALARME_MAX_MS  = 30_000   // para automaticamente após 30s sem ação
+  const SSE_POLL_MS    = 60_000   // polling de backup (caso SSE falhe silenciosamente)
 
-  let _idsVistos = new Set()
-  let _primeiroPoll = true
-  let _novos = []
-  let _audioCtx = null
-  let _beepTimer = null
-  let _beepStop = null
-  let _modalEl = null
-  let _timer = null
+  /* ── Estado ─────────────────────────────────────────────────── */
+  let _idsVistos      = new Set()
+  let _primeiroPoll   = true
+  let _audio          = null        // HTMLAudioElement
+  let _audioBlobUrl   = null        // URL do WAV procedural
+  let _audioUnlocked  = false       // autoplay policy desbloqueada
+  let _alarmeTimer    = null        // setTimeout para parar alarme em 30s
+  let _eventSource    = null        // EventSource SSE
+  let _backupTimer    = null        // setInterval de polling de backup
+  let _modalInjected  = false       // modal já injetado no DOM
 
-  document.addEventListener('DOMContentLoaded', () => {
-    if (typeof auth === 'undefined' || !auth.isAutenticado()) return
+  /* ══════════════════════════════════════════════════════════════
+     GERAÇÃO DE ÁUDIO PROCEDURAL (WAV sintetizado em memória)
+     Padrão: bip (150ms) + silêncio (100ms) + bip (150ms) + silêncio (600ms)
+     = 1 segundo de loop. Frequência 880Hz (Lá5), fade-in/out anti-click.
+  ══════════════════════════════════════════════════════════════ */
 
-    _carregarVistos()
-    _injetarModal()
-    _destravarAudioNaPrimeiraInteracao()
-    _poll()
-    _timer = setInterval(_poll, POLL_MS)
-    _consumirHighlightUrl()
-  })
+  function _gerarWavBlob() {
+    const sampleRate  = 22050
+    const numSamples  = sampleRate    // 1 segundo exato
+    const freq        = 880           // Hz
+    const volume      = 0.6
 
-  /* ── Persistência dos IDs vistos (sessionStorage) ───────── */
+    // Padrão dos bips: [inicio, fim] em amostras
+    const bips = [
+      [0,           Math.floor(0.15 * sampleRate)],   // bip 0.00–0.15s
+      [Math.floor(0.25 * sampleRate), Math.floor(0.40 * sampleRate)],  // bip 0.25–0.40s
+    ]
 
+    // PCM 16-bit mono
+    const pcm = new Int16Array(numSamples)
+    const fadeMs = 5  // ms de fade-in/out para evitar clique
+    const fadeSamples = Math.floor((fadeMs / 1000) * sampleRate)
+
+    for (const [inicio, fim] of bips) {
+      for (let i = inicio; i < fim; i++) {
+        const t = i / sampleRate
+        let amp = Math.sin(2 * Math.PI * freq * t) * volume
+
+        // Fade-in
+        const distInicio = i - inicio
+        if (distInicio < fadeSamples) {
+          amp *= distInicio / fadeSamples
+        }
+        // Fade-out
+        const distFim = fim - i
+        if (distFim < fadeSamples) {
+          amp *= distFim / fadeSamples
+        }
+
+        pcm[i] = Math.round(amp * 32767)
+      }
+    }
+    // Silêncio no restante (Int16Array inicia zerado)
+
+    // Montar arquivo WAV (header RIFF + PCM)
+    const dataSize   = pcm.byteLength
+    const fileSize   = 44 + dataSize
+    const buffer     = new ArrayBuffer(fileSize)
+    const view       = new DataView(buffer)
+
+    function _str(off, s) {
+      for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i))
+    }
+    function _u16(off, v) { view.setUint16(off, v, true) }
+    function _u32(off, v) { view.setUint32(off, v, true) }
+
+    _str(0,  'RIFF')
+    _u32(4,  fileSize - 8)
+    _str(8,  'WAVE')
+    _str(12, 'fmt ')
+    _u32(16, 16)              // tamanho do chunk fmt
+    _u16(20, 1)               // PCM
+    _u16(22, 1)               // mono
+    _u32(24, sampleRate)
+    _u32(28, sampleRate * 2)  // byte rate (1 canal × 2 bytes)
+    _u16(32, 2)               // block align
+    _u16(34, 16)              // bits por amostra
+    _str(36, 'data')
+    _u32(40, dataSize)
+
+    // Copiar PCM para o buffer
+    new Int16Array(buffer, 44).set(pcm)
+
+    return new Blob([buffer], { type: 'audio/wav' })
+  }
+
+  /* ── Inicializar o elemento de áudio (uma vez) ──────────────── */
+  function _inicializarAudio() {
+    if (_audio) return
+
+    const blob    = _gerarWavBlob()
+    _audioBlobUrl = URL.createObjectURL(blob)
+
+    _audio        = new Audio(_audioBlobUrl)
+    _audio.loop   = true
+    _audio.volume = 0.6
+    _audio.preload = 'auto'
+
+    // Crítica: createObjectURL() cria uma referência que precisa ser revogada
+    // para liberar memória. Como o script vive pela vida da página e o áudio
+    // é usado repetidamente, NÃO revogar aqui é correto — mas ao destruir
+    // a página, o browser limpa automaticamente. Não há leak.
+  }
+
+  /* ── Unlock de autoplay (transparente, sem UI) ──────────────── */
+  function _tentarUnlock() {
+    if (_audioUnlocked || !_audio) return
+
+    _audio.muted = true
+    _audio.play()
+      .then(() => {
+        _audio.pause()
+        _audio.currentTime = 0
+        _audio.muted = false
+        _audioUnlocked = true
+        // Remove listeners — não precisa mais tentar
+        document.removeEventListener('click',   _tentarUnlock)
+        document.removeEventListener('keydown', _tentarUnlock)
+      })
+      .catch(() => {
+        // Ainda não autorizado — tenta no próximo gesto
+        _audio.muted = false
+      })
+  }
+
+  /* ── Alarme ──────────────────────────────────────────────────── */
+  function _iniciarAlarme() {
+    if (!_audio) return
+
+    // Para alarme anterior se ainda estava tocando
+    _pararAlarme()
+
+    _audio.currentTime = 0
+    _audio.play().catch(() => {
+      // Autoplay não destravado ainda — silencioso. Modal continua visível.
+    })
+
+    // Para automaticamente após 30s
+    _alarmeTimer = setTimeout(_pararAlarme, ALARME_MAX_MS)
+  }
+
+  function _pararAlarme() {
+    if (_alarmeTimer) { clearTimeout(_alarmeTimer); _alarmeTimer = null }
+    if (_audio && !_audio.paused) {
+      _audio.pause()
+      _audio.currentTime = 0
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     MODAL POPUP
+  ══════════════════════════════════════════════════════════════ */
+
+  function _injetarModal() {
+    if (_modalInjected) return
+    _modalInjected = true
+
+    const overlay = document.createElement('div')
+    overlay.id        = 'notif-pedido-overlay'
+    overlay.className = 'notif-pedido-overlay hidden'
+    overlay.setAttribute('role', 'alertdialog')
+    overlay.setAttribute('aria-modal', 'true')
+    overlay.setAttribute('aria-labelledby', 'notif-titulo')
+    overlay.innerHTML = `
+      <div class="notif-pedido-box">
+        <div class="notif-pedido-icone" aria-hidden="true">🛎️</div>
+        <h2 id="notif-titulo" class="notif-pedido-titulo">Novo pedido!</h2>
+        <p  id="notif-subtitulo" class="notif-pedido-subtitulo"></p>
+        <div class="notif-pedido-acoes">
+          <button type="button" class="btn btn-primary"   id="notif-btn-ver">Ver pedido</button>
+          <button type="button" class="btn btn-secondary" id="notif-btn-dispensar">Dispensar</button>
+        </div>
+      </div>
+    `
+    document.body.appendChild(overlay)
+
+    document.getElementById('notif-btn-dispensar').addEventListener('click', _dispensarModal)
+    document.getElementById('notif-btn-ver').addEventListener('click', () => {
+      _dispensarModal()
+      _irParaPedido(_ultimoPedidoId)
+    })
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
+        _dispensarModal()
+      }
+    })
+  }
+
+  let _ultimoPedidoId = null
+
+  function _exibirModal(count, pedidoId) {
+    _ultimoPedidoId = pedidoId
+    const overlay   = document.getElementById('notif-pedido-overlay')
+    if (!overlay) return
+
+    document.getElementById('notif-titulo').textContent =
+      count === 1 ? 'Novo pedido!' : `${count} novos pedidos!`
+    document.getElementById('notif-subtitulo').textContent =
+      count === 1
+        ? 'Um pedido está aguardando sua atenção.'
+        : `${count} pedidos estão aguardando sua atenção.`
+
+    overlay.classList.remove('hidden')
+  }
+
+  function _dispensarModal() {
+    _pararAlarme()
+    const overlay = document.getElementById('notif-pedido-overlay')
+    overlay?.classList.add('hidden')
+  }
+
+  function _irParaPedido(id) {
+    if (_naTelaDePedidos()) {
+      window.dispatchEvent(new CustomEvent('pedido:highlight', { detail: { id } }))
+    } else {
+      window.location.href = `pedidos.html?highlight=${id}`
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     SSE — EventSource em tempo real
+  ══════════════════════════════════════════════════════════════ */
+
+  function _conectarSSE() {
+    if (!auth.isAutenticado()) return
+
+    // Precisa de access token em memória para a query string.
+    // Se ainda não há token (page reload antes do refresh terminar),
+    // aguarda 500ms e tenta novamente — o _tryRefresh() terá concluído.
+    const token = auth.getToken()
+    if (!token) {
+      setTimeout(_conectarSSE, 500)
+      return
+    }
+
+    // Fecha conexão anterior se houver (ex: token renovado)
+    _eventSource?.close()
+
+    _eventSource = new EventSource(
+      `${CONFIG.API_URL}/api/admin/pedidos/stream?token=${encodeURIComponent(token)}`
+    )
+
+    _eventSource.addEventListener('connected', () => {
+      // Ao (re)conectar, faz um poll para buscar pedidos que chegaram
+      // durante o período de desconexão (catch-up).
+      _poll()
+    })
+
+    _eventSource.addEventListener('novo-pedido', (e) => {
+      try {
+        const pedido = JSON.parse(e.data)
+        if (_idsVistos.has(pedido.id)) return   // deduplicação
+        _idsVistos.add(pedido.id)
+        _salvarVistos()
+        _exibirModal(1, pedido.id)
+        _iniciarAlarme()
+      } catch (_) { /* parse error — descarta */ }
+    })
+
+    _eventSource.onerror = () => {
+      // EventSource reconecta automaticamente com backoff exponencial (RFC 6202).
+      // Não fazemos nada aqui — apenas deixamos o browser gerenciar.
+      // O polling de backup garante que pedidos não sejam perdidos durante
+      // o período de reconexão.
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     POLLING DE BACKUP
+     Cobre: falha silenciosa do SSE, período entre desconexão e reconnect,
+     abas que ficaram abertas com token expirado e ainda não recarregaram.
+  ══════════════════════════════════════════════════════════════ */
+
+  async function _poll() {
+    try {
+      const pendentes = await api.get('/api/admin/pedidos?status=pendente')
+      if (!Array.isArray(pendentes)) return
+
+      if (_primeiroPoll) {
+        // Primeiro poll: registra IDs existentes como "vistos" para não disparar
+        // notificação de pedidos antigos ao abrir o painel.
+        pendentes.forEach(p => _idsVistos.add(p.id))
+        _primeiroPoll = false
+        _salvarVistos()
+        return
+      }
+
+      const novos = pendentes.filter(p => !_idsVistos.has(p.id))
+      if (novos.length > 0) {
+        novos.forEach(p => _idsVistos.add(p.id))
+        _salvarVistos()
+        _exibirModal(novos.length, novos[0].id)
+        _iniciarAlarme()
+      }
+    } catch (_) { /* falha silenciosa — não interrompe o ciclo */ }
+  }
+
+  /* ── Persistência dos IDs vistos (sessionStorage por aba) ──── */
   function _carregarVistos() {
     try {
       const raw = sessionStorage.getItem(STORAGE_KEY)
       if (raw) {
         const arr = JSON.parse(raw)
         if (Array.isArray(arr)) {
-          _idsVistos = new Set(arr)
+          _idsVistos    = new Set(arr)
           _primeiroPoll = false
         }
       }
@@ -57,157 +350,7 @@
     } catch (_) { /* silencioso */ }
   }
 
-  /* ── Polling ────────────────────────────────────────────── */
-
-  async function _poll() {
-    try {
-      const pendentes = await api.get('/api/admin/pedidos?status=pendente')
-      if (!Array.isArray(pendentes)) return
-
-      if (_primeiroPoll) {
-        pendentes.forEach(p => _idsVistos.add(p.id))
-        _primeiroPoll = false
-        _salvarVistos()
-        return
-      }
-
-      const novos = pendentes.filter(p => !_idsVistos.has(p.id))
-      if (novos.length > 0) {
-        novos.forEach(p => _idsVistos.add(p.id))
-        _novos = novos
-        _salvarVistos()
-        _exibirModal(novos.length, novos[0].id)
-        _iniciarBeep()
-      }
-    } catch (_) { /* falha silenciosa */ }
-  }
-
-  /* ── Áudio ──────────────────────────────────────────────── */
-
-  function _getAudioContext() {
-    if (!_audioCtx) {
-      const AC = window.AudioContext || window.webkitAudioContext
-      if (!AC) return null
-      _audioCtx = new AC()
-    }
-    return _audioCtx
-  }
-
-  function _destravarAudioNaPrimeiraInteracao() {
-    const destravar = () => {
-      const ctx = _getAudioContext()
-      if (ctx && ctx.state === 'suspended') ctx.resume()
-    }
-    // Sem { once: true } — o navegador pode re-suspender o AudioContext após
-    // inatividade prolongada; precisamos destravá-lo em qualquer interação futura.
-    document.addEventListener('click', destravar)
-    document.addEventListener('keydown', destravar)
-  }
-
-  async function _tocarBeepUnico() {
-    try {
-      const ctx = _getAudioContext()
-      if (!ctx) return
-      if (ctx.state === 'suspended') await ctx.resume()
-
-      const tocar = (startTime) => {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.frequency.value = 880
-        osc.type = 'sine'
-        gain.gain.setValueAtTime(0.3, startTime)
-        gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.15)
-        osc.start(startTime)
-        osc.stop(startTime + 0.15)
-      }
-      const now = ctx.currentTime
-      tocar(now)
-      tocar(now + 0.2)
-    } catch (_) { /* navegador bloqueou */ }
-  }
-
-  function _iniciarBeep() {
-    _pararBeep()
-    _tocarBeepUnico()
-    _beepTimer = setInterval(_tocarBeepUnico, BEEP_INTERVALO_MS)
-    _beepStop = setTimeout(_pararBeep, BEEP_DURACAO_MS)
-  }
-
-  function _pararBeep() {
-    if (_beepTimer) { clearInterval(_beepTimer); _beepTimer = null }
-    if (_beepStop)  { clearTimeout(_beepStop);  _beepStop  = null }
-  }
-
-  /* ── Modal central de notificação ───────────────────────── */
-
-  function _injetarModal() {
-    const overlay = document.createElement('div')
-    overlay.id = 'notif-pedido-overlay'
-    overlay.className = 'notif-pedido-overlay hidden'
-    overlay.innerHTML = `
-      <div class="notif-pedido-box" role="alertdialog" aria-modal="true" aria-labelledby="notif-titulo">
-        <div class="notif-pedido-icone">🛎️</div>
-        <h2 class="notif-pedido-titulo" id="notif-titulo">Novo pedido!</h2>
-        <p class="notif-pedido-subtitulo" id="notif-subtitulo">1 pedido pendente</p>
-        <div class="notif-pedido-acoes">
-          <button class="btn btn-primary notif-btn-ver" id="notif-btn-ver" type="button">
-            Ver pedido
-          </button>
-          <button class="btn btn-secondary notif-btn-dispensar" id="notif-btn-dispensar" type="button">
-            Dispensar
-          </button>
-        </div>
-      </div>
-    `
-    overlay.querySelector('#notif-btn-ver').addEventListener('click', _aoClicarVer)
-    overlay.querySelector('#notif-btn-dispensar').addEventListener('click', _dispensarModal)
-    document.body.appendChild(overlay)
-    _modalEl = overlay
-  }
-
-  function _exibirModal(count, primeiroId) {
-    if (!_modalEl) return
-    const subtitulo = _modalEl.querySelector('#notif-subtitulo')
-    const titulo = _modalEl.querySelector('#notif-titulo')
-    if (titulo) titulo.textContent = count === 1 ? 'Novo pedido!' : `${count} novos pedidos!`
-    if (subtitulo) subtitulo.textContent = count === 1 ? '1 pedido pendente' : `${count} pedidos pendentes`
-    _modalEl.dataset.primeiroId = String(primeiroId)
-    _modalEl.classList.remove('hidden')
-    document.body.style.overflow = 'hidden'
-  }
-
-  function _dispensarModal() {
-    if (!_modalEl) return
-    _modalEl.classList.add('hidden')
-    document.body.style.overflow = ''
-    _pararBeep()
-    _novos = []
-    delete _modalEl.dataset.primeiroId
-  }
-
-  /* ── ESC dispensa o modal de notificação ─────────────── */
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && _modalEl && !_modalEl.classList.contains('hidden')) {
-      _dispensarModal()
-    }
-  })
-
-  function _aoClicarVer() {
-    const id = _modalEl?.dataset?.primeiroId
-    _dispensarModal()
-    if (!id) return
-    if (_naTelaDePedidos()) {
-      window.dispatchEvent(new CustomEvent('pedido:highlight', { detail: { id: Number(id) } }))
-    } else {
-      window.location.href = `pedidos.html?highlight=${id}`
-    }
-  }
-
-  /* ── Navegação com highlight ────────────────────────────── */
-
+  /* ── Helpers de navegação ────────────────────────────────────── */
   function _naTelaDePedidos() {
     return /pedidos\.html?$/i.test(window.location.pathname) ||
            window.location.pathname.endsWith('/pedidos')
@@ -221,4 +364,34 @@
       window.dispatchEvent(new CustomEvent('pedido:highlight', { detail: { id: Number(id) } }))
     }, { once: true })
   }
+
+  /* ── Inicialização ───────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof auth === 'undefined' || !auth.isAutenticado()) return
+
+    _inicializarAudio()
+    _injetarModal()
+    _carregarVistos()
+    _consumirHighlightUrl()
+
+    // Unlock de autoplay no primeiro gesto (click ou tecla)
+    document.addEventListener('click',   _tentarUnlock)
+    document.addEventListener('keydown', _tentarUnlock)
+
+    // Conexão SSE principal
+    _conectarSSE()
+
+    // Polling de backup: a cada 60s + ao voltar para a aba
+    _backupTimer = setInterval(_poll, SSE_POLL_MS)
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) _poll()
+    })
+
+    // Renovação de token (access token dura 15min) — SSE precisa reconectar
+    // com o novo token. Observa o evento de refresh disparado por auth.js.
+    // Crítica: auth.js não emite evento de refresh hoje — quando a feature de
+    // auto-refresh for adicionada, conectar aqui. Por ora, o EventSource
+    // reconecta automaticamente e o servidor revalida o token na query string.
+  })
+
 })()
