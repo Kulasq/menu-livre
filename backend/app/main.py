@@ -1,3 +1,4 @@
+import asyncio
 import os
 from fastapi.staticfiles import StaticFiles
 from app.routers.admin import upload as admin_upload
@@ -47,6 +48,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Anexa o event loop ao pubsub para que notify() (código sync) possa
+    # enfileirar eventos na thread assíncrona do uvicorn.
+    from app.services import pedido_pubsub
+    pedido_pubsub.attach_loop(asyncio.get_running_loop())
     yield
 
 
