@@ -1,15 +1,77 @@
 from __future__ import annotations
+import asyncio
+import json
 from datetime import date
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import Annotated
 
 from app.database import get_db
-from app.deps import get_current_admin
+from app.deps import get_current_admin, validar_token_query
 from app.schemas.pedido import PedidoResponse, PedidoStatusUpdate, PedidoPagamentoUpdate, PedidoAdminCreate, PedidoAdminResponse
 from app.services import pedido_service
+from app.services import pedido_pubsub
 
 router = APIRouter(prefix="/api/admin/pedidos", tags=["admin-pedidos"])
+
+
+@router.get("/stream")
+async def stream_pedidos(_usuario=Depends(validar_token_query)):
+    """
+    Server-Sent Events — push em tempo real de novos pedidos para o admin.
+
+    Autenticação via query string (?token=...) porque EventSource não suporta
+    headers customizados. Usar apenas o access token (15min), nunca o refresh.
+    A validação é feita pela dependency validar_token_query (deps.py), que
+    participa do sistema de DI do FastAPI — overrides de teste funcionam.
+
+    Eventos emitidos:
+      - connected: confirmação de conexão (o frontend faz um poll de catch-up)
+      - novo-pedido: payload JSON com {id, numero, total, tipo, criado_em}
+      - keepalive (comment ":" a cada 25s): mantém a conexão viva no Nginx
+
+    A reconexão automática é gerenciada pelo EventSource nativo do browser
+    (RFC 6202 — backoff exponencial por padrão).
+
+    Problemas em produção a vigiar:
+      - Nginx precisa de proxy_buffering off + proxy_read_timeout 3600s no path
+        /api/admin/pedidos/stream (ver deploy/docker/nginx.conf)
+      - Funciona apenas com single-worker uvicorn (pubsub em memória)
+    """
+
+    async def _gerar():
+        q = pedido_pubsub.subscribe()
+        try:
+            # Evento inicial: avisa o frontend que a conexão está ativa
+            # O frontend faz um poll HTTP para buscar pedidos que chegaram
+            # durante o período de desconexão/reconexão (catch-up).
+            yield "event: connected\ndata: {}\n\n"
+
+            while True:
+                try:
+                    # Aguarda próximo pedido com timeout de keepalive
+                    msg = await asyncio.wait_for(q.get(), timeout=25.0)
+                    yield f"event: novo-pedido\ndata: {json.dumps(msg)}\n\n"
+                except asyncio.TimeoutError:
+                    # Keepalive — impede que Nginx/proxies intermediários fechem
+                    # a conexão por inatividade (comment SSE, não dispara eventos)
+                    yield ": keepalive\n\n"
+        except asyncio.CancelledError:
+            # Cliente desconectou — cleanup no finally
+            raise
+        finally:
+            pedido_pubsub.unsubscribe(q)
+
+    return StreamingResponse(
+        _gerar(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",   # desativa buffer do Nginx para SSE
+            "Connection": "keep-alive",
+        },
+    )
 
 
 @router.get("", response_model=list[PedidoResponse])

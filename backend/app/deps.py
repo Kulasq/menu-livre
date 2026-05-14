@@ -41,6 +41,51 @@ def get_current_admin(
     return usuario
 
 
+def validar_token_query(
+    token: str = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Dependency FastAPI para validar JWT de admin passado via query string (?token=...).
+    Usado pelo endpoint SSE — EventSource não suporta headers customizados,
+    então o access token (vida curta, 15min) é passado na URL.
+
+    Por ser uma Dependency FastAPI legítima (usa Depends(get_db)), o override
+    de get_db nos testes funciona corretamente.
+
+    Risco aceito: token visível em access logs do Nginx.
+    Mitigação: usar apenas o access token (15min), nunca o refresh token.
+    """
+    from app.models.usuario import Usuario
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Query param 'token' é obrigatório",
+        )
+
+    erro = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token inválido ou expirado",
+    )
+
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "access":
+            raise erro
+        user_id = int(payload["sub"])
+    except (JWTError, ValueError):
+        raise erro
+
+    usuario = db.query(Usuario).filter(Usuario.id == user_id).first()
+    if not usuario or not usuario.ativo:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Usuário não encontrado ou inativo",
+        )
+    return usuario
+
+
 def get_current_cliente(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),

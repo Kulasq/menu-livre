@@ -231,6 +231,19 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
     db.add(pedido)
     db.commit()
 
+    # Notifica admins conectados via SSE — falha silenciosa para não derrubar o pedido
+    try:
+        from app.services import pedido_pubsub
+        pedido_pubsub.notify({
+            "id":        pedido.id,
+            "numero":    pedido.numero,
+            "total":     float(pedido.total),
+            "tipo":      pedido.tipo,
+            "criado_em": pedido.criado_em.isoformat() if pedido.criado_em else None,
+        })
+    except Exception:
+        pass
+
     # Registrar auditoria de uso do cupom
     if cupom_id_aplicado:
         cupom_service.registrar_uso_cupom(
@@ -473,6 +486,19 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
 
     db.add(pedido)
     db.commit()
+
+    # Notifica admins conectados via SSE — falha silenciosa para não derrubar o pedido
+    try:
+        from app.services import pedido_pubsub
+        pedido_pubsub.notify({
+            "id":        pedido.id,
+            "numero":    pedido.numero,
+            "total":     float(pedido.total),
+            "tipo":      pedido.tipo,
+            "criado_em": pedido.criado_em.isoformat() if pedido.criado_em else None,
+        })
+    except Exception:
+        pass
 
     if cupom_id_aplicado:
         cupom_service.registrar_uso_cupom(
