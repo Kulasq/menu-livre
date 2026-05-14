@@ -196,6 +196,16 @@ const auth = {
   },
 
   /**
+   * Retorna o access token em memória.
+   * Usado pelo sistema de notificações SSE (EventSource não suporta headers
+   * customizados, então o token vai como query param ?token=...).
+   * Nunca expor o refresh token desta forma.
+   */
+  getToken() {
+    return api._accessToken
+  },
+
+  /**
    * Proteção de rota — chamar no topo de cada página protegida.
    * Se não autenticado, redireciona para login.
    */
