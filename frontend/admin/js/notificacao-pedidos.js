@@ -36,7 +36,6 @@
   let _idsVistos      = new Set()
   let _primeiroPoll   = true
   let _audio          = null        // HTMLAudioElement
-  let _audioBlobUrl   = null        // URL do WAV procedural
   let _audioUnlocked  = false       // autoplay policy desbloqueada
   let _alarmeTimer    = null        // setTimeout para parar alarme em 30s
   let _eventSource    = null        // EventSource SSE
@@ -44,97 +43,22 @@
   let _modalInjected  = false       // modal já injetado no DOM
 
   /* ══════════════════════════════════════════════════════════════
-     GERAÇÃO DE ÁUDIO PROCEDURAL (WAV sintetizado em memória)
-     Padrão: bip (150ms) + silêncio (100ms) + bip (150ms) + silêncio (600ms)
-     = 1 segundo de loop. Frequência 880Hz (Lá5), fade-in/out anti-click.
+     ÁUDIO — MP3 externo
+     frontend/admin/audio/notificacao-pedido.mp3  (~2s por loop)
+     Toca em loop por ALARME_MAX_MS (30s ≈ 15 repetições).
   ══════════════════════════════════════════════════════════════ */
-
-  function _gerarWavBlob() {
-    const sampleRate  = 22050
-    const numSamples  = sampleRate    // 1 segundo exato
-    const freq        = 880           // Hz
-    const volume      = 0.6
-
-    // Padrão dos bips: [inicio, fim] em amostras
-    const bips = [
-      [0,           Math.floor(0.15 * sampleRate)],   // bip 0.00–0.15s
-      [Math.floor(0.25 * sampleRate), Math.floor(0.40 * sampleRate)],  // bip 0.25–0.40s
-    ]
-
-    // PCM 16-bit mono
-    const pcm = new Int16Array(numSamples)
-    const fadeMs = 5  // ms de fade-in/out para evitar clique
-    const fadeSamples = Math.floor((fadeMs / 1000) * sampleRate)
-
-    for (const [inicio, fim] of bips) {
-      for (let i = inicio; i < fim; i++) {
-        const t = i / sampleRate
-        let amp = Math.sin(2 * Math.PI * freq * t) * volume
-
-        // Fade-in
-        const distInicio = i - inicio
-        if (distInicio < fadeSamples) {
-          amp *= distInicio / fadeSamples
-        }
-        // Fade-out
-        const distFim = fim - i
-        if (distFim < fadeSamples) {
-          amp *= distFim / fadeSamples
-        }
-
-        pcm[i] = Math.round(amp * 32767)
-      }
-    }
-    // Silêncio no restante (Int16Array inicia zerado)
-
-    // Montar arquivo WAV (header RIFF + PCM)
-    const dataSize   = pcm.byteLength
-    const fileSize   = 44 + dataSize
-    const buffer     = new ArrayBuffer(fileSize)
-    const view       = new DataView(buffer)
-
-    function _str(off, s) {
-      for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i))
-    }
-    function _u16(off, v) { view.setUint16(off, v, true) }
-    function _u32(off, v) { view.setUint32(off, v, true) }
-
-    _str(0,  'RIFF')
-    _u32(4,  fileSize - 8)
-    _str(8,  'WAVE')
-    _str(12, 'fmt ')
-    _u32(16, 16)              // tamanho do chunk fmt
-    _u16(20, 1)               // PCM
-    _u16(22, 1)               // mono
-    _u32(24, sampleRate)
-    _u32(28, sampleRate * 2)  // byte rate (1 canal × 2 bytes)
-    _u16(32, 2)               // block align
-    _u16(34, 16)              // bits por amostra
-    _str(36, 'data')
-    _u32(40, dataSize)
-
-    // Copiar PCM para o buffer
-    new Int16Array(buffer, 44).set(pcm)
-
-    return new Blob([buffer], { type: 'audio/wav' })
-  }
 
   /* ── Inicializar o elemento de áudio (uma vez) ──────────────── */
   function _inicializarAudio() {
     if (_audio) return
 
-    const blob    = _gerarWavBlob()
-    _audioBlobUrl = URL.createObjectURL(blob)
-
-    _audio        = new Audio(_audioBlobUrl)
-    _audio.loop   = true
-    _audio.volume = 0.6
+    // Resolve o caminho relativo à página atual, não ao script.
+    // Funciona tanto em desenvolvimento (python -m http.server) quanto em
+    // produção (Nginx serve /admin/ com try_files).
+    _audio         = new Audio(new URL('audio/notificacao-pedido.mp3', location.href).href)
+    _audio.loop    = true
+    _audio.volume  = 0.6
     _audio.preload = 'auto'
-
-    // Crítica: createObjectURL() cria uma referência que precisa ser revogada
-    // para liberar memória. Como o script vive pela vida da página e o áudio
-    // é usado repetidamente, NÃO revogar aqui é correto — mas ao destruir
-    // a página, o browser limpa automaticamente. Não há leak.
   }
 
   /* ── Unlock de autoplay (transparente, sem UI) ──────────────── */
