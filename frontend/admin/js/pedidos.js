@@ -756,13 +756,13 @@ function imprimirPedido() {
 
   const itensHtml = p.itens.map(item => {
     const mods = item.modificadores.length
-      ? item.modificadores.map(m => `<div class="mod">+ ${m.nome_snapshot}</div>`).join('')
+      ? item.modificadores.map(m => `<div class="mod">+ ${esc(m.nome_snapshot)}</div>`).join('')
       : ''
-    const obs = item.observacao ? `<div class="obs">Obs: ${item.observacao}</div>` : ''
+    const obs = item.observacao ? `<div class="obs">Obs: ${esc(item.observacao)}</div>` : ''
     return `
       <div class="item">
         <div class="item-row">
-          <span class="item-nome">${item.quantidade}x ${item.nome_snapshot}</span>
+          <span class="item-nome">${item.quantidade}x ${esc(item.nome_snapshot)}</span>
           <span class="item-preco">${formatarPreco(item.subtotal)}</span>
         </div>
         ${mods}${obs}
@@ -788,13 +788,13 @@ function imprimirPedido() {
     ? `<div class="campo"><span class="rotulo">CUPOM</span><span>${cupomImpressao}</span></div>`
     : ''
   const enderecoHtml = p.endereco_entrega
-    ? `<div class="campo"><span class="rotulo">ENDERECO</span><span>${p.endereco_entrega}</span></div>`
+    ? `<div class="campo"><span class="rotulo">ENDERECO</span><span>${esc(p.endereco_entrega)}</span></div>`
     : ''
   const agendadoHtml = p.agendado_para
     ? `<div class="campo"><span class="rotulo">AGENDADO</span><span>${formatarDataHora(p.agendado_para)}</span></div>`
     : ''
   const obsHtml = p.observacao
-    ? `<div class="campo"><span class="rotulo">OBS</span><span>${p.observacao}</span></div>`
+    ? `<div class="campo"><span class="rotulo">OBS</span><span>${esc(p.observacao)}</span></div>`
     : ''
   const trocoHtml = p.metodo_pagamento === 'dinheiro' && p.troco_para
     ? `<div class="subtotal-row"><span>Troco para</span><span>${formatarPreco(p.troco_para)}</span></div>
@@ -806,7 +806,7 @@ function imprimirPedido() {
     ?? (p.tipo === 'balcao' ? (p.nome_cliente_balcao || 'Balcão') : '—')
   const foneImpressao = p.cliente?.telefone ?? null
   const foneHtml = foneImpressao
-    ? `<div class="campo"><span class="rotulo">FONE</span><span>${foneImpressao}</span></div>`
+    ? `<div class="campo"><span class="rotulo">FONE</span><span>${esc(foneImpressao)}</span></div>`
     : ''
 
   const html = `<!DOCTYPE html>
@@ -862,7 +862,7 @@ function imprimirPedido() {
   <div class="pedido-num">Pedido ${p.numero}</div>
   <div class="data">${formatarDataHora(p.criado_em)}</div>
   <div class="sep"></div>
-  <div class="campo"><span class="rotulo">CLIENTE</span><span>${nomeImpressao}</span></div>
+  <div class="campo"><span class="rotulo">CLIENTE</span><span>${esc(nomeImpressao)}</span></div>
   ${foneHtml}
   <div class="campo"><span class="rotulo">TIPO</span><span>${TIPO_TEXTO[p.tipo] || p.tipo}</span></div>
   <div class="campo"><span class="rotulo">PGTO</span><span>${PGTO_TEXTO[p.metodo_pagamento] || '—'}</span></div>
