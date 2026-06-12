@@ -1,9 +1,9 @@
-from __future__ import annotations
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_cliente
+from app.limiter import limiter
 from app.schemas.cliente import (
     ClienteIdentificar,
     ClienteUpdate,
@@ -17,7 +17,10 @@ router = APIRouter(prefix="/api", tags=["clientes-publico"])
 
 
 @router.post("/clientes/identificar", response_model=ClienteSessionResponse)
-def identificar(dados: ClienteIdentificar, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def identificar(request: Request, dados: ClienteIdentificar, db: Session = Depends(get_db)):
+    # Rate limited: endpoint público sem auth que retorna dados do cliente por
+    # telefone — limite por IP evita enumeração em massa da base de clientes (LGPD).
     return cliente_service.identificar_cliente(dados, db)
 
 
