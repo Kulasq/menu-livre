@@ -3,6 +3,8 @@ from __future__ import annotations
 import io
 import os
 
+from PIL import Image
+
 from app.services.auth_service import hash_senha
 
 
@@ -14,6 +16,13 @@ def obter_token(client, usuario_admin) -> str:
     return response.json()["access_token"]
 
 
+def _img_bytes(fmt: str = "JPEG") -> bytes:
+    """Gera uma imagem real mínima — necessária porque o upload valida com Pillow."""
+    buf = io.BytesIO()
+    Image.new("RGB", (10, 10), "white").save(buf, format=fmt)
+    return buf.getvalue()
+
+
 # ── Upload ───────────────────────────────────────────────────────────────────
 
 def test_upload_imagem_jpeg(client, usuario_admin, tmp_path, monkeypatch):
@@ -22,11 +31,10 @@ def test_upload_imagem_jpeg(client, usuario_admin, tmp_path, monkeypatch):
 
     token = obter_token(client, usuario_admin)
 
-    # Criar um JPEG mínimo válido (header JFIF)
-    jpeg_header = b'\xff\xd8\xff\xe0' + b'\x00' * 100
+    jpeg = _img_bytes("JPEG")
     response = client.post(
         "/api/admin/upload",
-        files={"file": ("foto.jpg", io.BytesIO(jpeg_header), "image/jpeg")},
+        files={"file": ("foto.jpg", io.BytesIO(jpeg), "image/jpeg")},
         headers={"Authorization": f"Bearer {token}"},
     )
 
@@ -47,7 +55,7 @@ def test_upload_imagem_png(client, usuario_admin, tmp_path, monkeypatch):
 
     token = obter_token(client, usuario_admin)
 
-    png_bytes = b'\x89PNG\r\n\x1a\n' + b'\x00' * 100
+    png_bytes = _img_bytes("PNG")
     response = client.post(
         "/api/admin/upload",
         files={"file": ("foto.png", io.BytesIO(png_bytes), "image/png")},
@@ -72,6 +80,24 @@ def test_upload_tipo_invalido(client, usuario_admin, tmp_path, monkeypatch):
 
     assert response.status_code == 400
     assert "não permitido" in response.json()["detail"].lower()
+
+
+def test_upload_conteudo_nao_e_imagem(client, usuario_admin, tmp_path, monkeypatch):
+    """Content-type de imagem mas conteúdo não é imagem real → 400 (Pillow rejeita)."""
+    monkeypatch.setattr("app.config.settings.UPLOAD_DIR", str(tmp_path))
+
+    token = obter_token(client, usuario_admin)
+
+    # Header forjado: diz ser PNG, mas o corpo não é uma imagem decodificável
+    response = client.post(
+        "/api/admin/upload",
+        files={"file": ("fake.png", io.BytesIO(b"isso definitivamente nao e uma imagem"), "image/png")},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert response.status_code == 400
+    detail = response.json()["detail"].lower()
+    assert "inválido" in detail or "corrompido" in detail
 
 
 def test_upload_arquivo_grande(client, usuario_admin, tmp_path, monkeypatch):
@@ -113,10 +139,10 @@ def test_upload_e_associar_produto(client, usuario_admin, tmp_path, monkeypatch)
     headers = {"Authorization": f"Bearer {token}"}
 
     # Upload da foto
-    jpeg_header = b'\xff\xd8\xff\xe0' + b'\x00' * 100
+    jpeg = _img_bytes("JPEG")
     upload_res = client.post(
         "/api/admin/upload",
-        files={"file": ("burger.jpg", io.BytesIO(jpeg_header), "image/jpeg")},
+        files={"file": ("burger.jpg", io.BytesIO(jpeg), "image/jpeg")},
         headers=headers,
     )
     assert upload_res.status_code == 200
