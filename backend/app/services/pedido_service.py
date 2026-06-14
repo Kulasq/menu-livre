@@ -173,7 +173,13 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
             cupom_id_aplicado = cupom_obj.id
         # Adicionar brinde como item do pedido (preço zero, sem afetar subtotal)
         if produto_brinde_id:
-            produto_brinde = db.query(Produto).filter_by(id=produto_brinde_id).first()
+            produto_brinde = (
+                db.query(Produto)
+                .filter(Produto.id == produto_brinde_id)
+                .with_for_update()
+                .populate_existing()
+                .first()
+            )
             if produto_brinde:
                 # Abater estoque do brinde (não passa por abater_estoque_pedido
                 # porque não tem PedidoItemCreate correspondente)
@@ -227,51 +233,62 @@ def criar_pedido(dados: PedidoCreate, cliente_id: int, db: Session) -> dict:
         agendado_para=agendado_para,
         itens=itens_db,
     )
-
     db.add(pedido)
-    db.commit()
 
-    # Notifica admins conectados via SSE — falha silenciosa para não derrubar o pedido
+    # ── Transação única: pedido + estoque + uso de cupom + stats do cliente ──
+    # Tudo foi construído na sessão (abate de estoque, incremento de cupom).
+    # Um único commit garante atomicidade: qualquer falha desfaz o pedido
+    # inteiro via rollback — nada de pedido órfão ou cupom incrementado sem
+    # pedido. O flush obtém o pedido.id sem fechar a transação.
+    try:
+        db.flush()
+        pedido_id = pedido.id
+
+        # Auditoria de uso do cupom (mesma transação)
+        if cupom_id_aplicado:
+            cupom_service.registrar_uso_cupom(
+                cupom_id=cupom_id_aplicado,
+                pedido_id=pedido_id,
+                telefone=cliente.telefone,
+                desconto_aplicado=desconto_cupom,
+                subtotal_pedido=subtotal,
+                db=db,
+            )
+
+        # Stats e segmento do cliente (mesma transação)
+        cliente.total_pedidos += 1
+        cliente.total_gasto += total
+        cliente.ultimo_pedido = datetime.now(timezone.utc)
+        cliente.segmento = cliente_service.calcular_segmento_rfm(cliente)
+
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    # ── Efeitos colaterais pós-commit (falha NÃO derruba o pedido) ───────────
+    # Recarregar com todos os relacionamentos para a resposta/mensagem WhatsApp
+    pedido_completo = _obter_pedido_completo(pedido_id, db)
+
+    # Notifica admins conectados via SSE — falha silenciosa
     try:
         from app.services import pedido_pubsub
         pedido_pubsub.notify({
-            "id":        pedido.id,
-            "numero":    pedido.numero,
-            "total":     float(pedido.total),
-            "tipo":      pedido.tipo,
-            "criado_em": pedido.criado_em.isoformat() if pedido.criado_em else None,
+            "id":        pedido_completo.id,
+            "numero":    pedido_completo.numero,
+            "total":     float(pedido_completo.total),
+            "tipo":      pedido_completo.tipo,
+            "criado_em": pedido_completo.criado_em.isoformat() if pedido_completo.criado_em else None,
         })
     except Exception:
         pass
 
-    # Registrar auditoria de uso do cupom
-    if cupom_id_aplicado:
-        cupom_service.registrar_uso_cupom(
-            cupom_id=cupom_id_aplicado,
-            pedido_id=pedido.id,
-            telefone=cliente.telefone,
-            desconto_aplicado=desconto_cupom,
-            subtotal_pedido=subtotal,
-            db=db,
-        )
-        db.commit()
-
-    # Recarregar com todos os relacionamentos para a mensagem WhatsApp
-    pedido_completo = _obter_pedido_completo(pedido.id, db)
-
-    # Auto-salvar endereço de delivery — falha silenciosa para não derrubar o pedido
+    # Auto-salvar endereço de delivery — falha silenciosa (commita por conta própria)
     if dados.tipo == "delivery" and dados.endereco_entrega:
         try:
             cliente_service.salvar_endereco_se_novo(db, cliente_id, dados.endereco_entrega)
         except Exception:
             pass
-
-    # Atualizar stats e segmento do cliente
-    cliente.total_pedidos += 1
-    cliente.total_gasto += total
-    cliente.ultimo_pedido = datetime.now(timezone.utc)
-    cliente.segmento = cliente_service.calcular_segmento_rfm(cliente)
-    db.commit()
 
     nome_loja = config.nome_loja if config else "Menu Livre"
     chave_pix = config.chave_pix if config else None
@@ -430,7 +447,13 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
             cupom_id_aplicado = cupom_obj.id
         # Adicionar brinde como item do pedido (preço zero, sem afetar subtotal)
         if produto_brinde_id:
-            produto_brinde = db.query(Produto).filter_by(id=produto_brinde_id).first()
+            produto_brinde = (
+                db.query(Produto)
+                .filter(Produto.id == produto_brinde_id)
+                .with_for_update()
+                .populate_existing()
+                .first()
+            )
             if produto_brinde:
                 # Abater estoque do brinde (não passa por abater_estoque_pedido
                 # porque não tem PedidoItemCreate correspondente)
@@ -483,42 +506,49 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
         agendado_para=agendado_para,
         itens=itens_db,
     )
-
     db.add(pedido)
-    db.commit()
 
-    # Notifica admins conectados via SSE — falha silenciosa para não derrubar o pedido
+    # ── Transação única: pedido + estoque + uso de cupom + stats do cliente ──
+    # (mesmo racional de criar_pedido: atomicidade via commit único + rollback)
+    try:
+        db.flush()
+        pedido_id = pedido.id
+
+        if cupom_id_aplicado:
+            cupom_service.registrar_uso_cupom(
+                cupom_id=cupom_id_aplicado,
+                pedido_id=pedido_id,
+                telefone=cliente.telefone if cliente else None,
+                desconto_aplicado=desconto_cupom,
+                subtotal_pedido=subtotal,
+                db=db,
+            )
+
+        cliente.total_pedidos += 1
+        cliente.total_gasto += total
+        cliente.ultimo_pedido = datetime.now(timezone.utc)
+        cliente.segmento = cliente_service.calcular_segmento_rfm(cliente)
+
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    # ── Efeitos colaterais pós-commit (falha NÃO derruba o pedido) ───────────
+    pedido_completo = _obter_pedido_completo(pedido_id, db)
+
+    # Notifica admins conectados via SSE — falha silenciosa
     try:
         from app.services import pedido_pubsub
         pedido_pubsub.notify({
-            "id":        pedido.id,
-            "numero":    pedido.numero,
-            "total":     float(pedido.total),
-            "tipo":      pedido.tipo,
-            "criado_em": pedido.criado_em.isoformat() if pedido.criado_em else None,
+            "id":        pedido_completo.id,
+            "numero":    pedido_completo.numero,
+            "total":     float(pedido_completo.total),
+            "tipo":      pedido_completo.tipo,
+            "criado_em": pedido_completo.criado_em.isoformat() if pedido_completo.criado_em else None,
         })
     except Exception:
         pass
-
-    if cupom_id_aplicado:
-        cupom_service.registrar_uso_cupom(
-            cupom_id=cupom_id_aplicado,
-            pedido_id=pedido.id,
-            telefone=cliente.telefone if cliente else None,
-            desconto_aplicado=desconto_cupom,
-            subtotal_pedido=subtotal,
-            db=db,
-        )
-        db.commit()
-
-    pedido_completo = _obter_pedido_completo(pedido.id, db)
-
-    # Atualizar stats e segmento do cliente
-    cliente.total_pedidos += 1
-    cliente.total_gasto += total
-    cliente.ultimo_pedido = datetime.now(timezone.utc)
-    cliente.segmento = cliente_service.calcular_segmento_rfm(cliente)
-    db.commit()
 
     return {"pedido": pedido_completo}
 
