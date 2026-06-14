@@ -77,7 +77,17 @@ def abater_estoque_pedido(itens_data: list, itens_orm: list[PedidoItem], db: Ses
         if not item_data.produto_id:
             continue
 
-        produto = db.get(Produto, item_data.produto_id)
+        # Lock da linha do produto: fecha o TOCTOU entre validar e decrementar.
+        # populate_existing refresca estoque_atual com o valor atual do banco
+        # (mesmo que o objeto já esteja na sessão por leituras anteriores).
+        # Em SQLite, with_for_update serializa via lock de escrita do WAL.
+        produto = (
+            db.query(Produto)
+            .filter(Produto.id == item_data.produto_id)
+            .with_for_update()
+            .populate_existing()
+            .first()
+        )
         if not produto:
             continue
 
@@ -103,7 +113,14 @@ def abater_estoque_pedido(itens_data: list, itens_orm: list[PedidoItem], db: Ses
         for mod_data in item_data.modificadores:
             if not mod_data.modificador_id:
                 continue
-            mod = db.get(Modificador, mod_data.modificador_id)
+            # Mesmo lock por linha do modificador (ver comentário do produto acima)
+            mod = (
+                db.query(Modificador)
+                .filter(Modificador.id == mod_data.modificador_id)
+                .with_for_update()
+                .populate_existing()
+                .first()
+            )
             if not mod or not mod.controle_estoque:
                 continue
 
