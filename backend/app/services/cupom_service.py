@@ -236,8 +236,24 @@ def aplicar_cupom_no_pedido(
     if not validacao.valido:
         raise HTTPException(status_code=400, detail=validacao.motivo or "Cupom inválido")
 
-    cupom = db.query(Cupom).filter(Cupom.codigo == codigo).first()
-    # Incrementar contador atomicamente
+    # Lock da linha do cupom: serializa o incremento e fecha a janela de race
+    # entre dois pedidos que aplicam o mesmo cupom ao mesmo tempo. populate_existing
+    # garante que usos_atuais reflita o valor atual no banco (não o cacheado da
+    # validação). Em SQLite, with_for_update serializa via lock de escrita do WAL.
+    cupom = (
+        db.query(Cupom)
+        .filter(Cupom.codigo == codigo)
+        .with_for_update()
+        .populate_existing()
+        .first()
+    )
+    if cupom is None:
+        raise HTTPException(status_code=400, detail="Cupom inválido ou expirado")
+
+    # Re-checar o limite DENTRO do lock antes de incrementar
+    if cupom.limite_total_usos is not None and cupom.usos_atuais >= cupom.limite_total_usos:
+        raise HTTPException(status_code=400, detail="Cupom esgotado")
+
     cupom.usos_atuais += 1
 
     return validacao.desconto, validacao.frete_gratis, validacao.produto_brinde_id
