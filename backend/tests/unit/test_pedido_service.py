@@ -728,3 +728,50 @@ def test_criar_pedido_admin_sem_cliente_usa_balcao():
     )
     assert resultado["pedido"] is not None
     assert resultado["pedido"].cliente.nome == "Balcão"
+
+
+# ══════════════════════════════════════════════════════════
+# NOTIFICAÇÃO SSE — pedido do admin não toca o alarme
+# ══════════════════════════════════════════════════════════
+
+def test_criar_pedido_admin_nao_dispara_notificacao_sse(monkeypatch):
+    """Pedido do PDV não dispara o alarme de novo pedido — quem criou foi o admin."""
+    import app.services.pedido_pubsub as pubsub
+    chamadas = []
+    monkeypatch.setattr(pubsub, "notify", lambda payload: chamadas.append(payload))
+
+    db = setup_db()
+    produto, cliente = criar_base(db)
+
+    criar_pedido_admin(
+        PedidoAdminCreate(
+            tipo="balcao",
+            metodo_pagamento="pix",
+            itens=[PedidoItemCreate(produto_id=produto.id, quantidade=1)],
+            cliente_id=cliente.id,
+        ),
+        db,
+    )
+    assert chamadas == []
+
+
+def test_criar_pedido_publico_dispara_notificacao_sse(monkeypatch):
+    """Pedido do cliente público continua notificando via SSE (não houve regressão)."""
+    import app.services.pedido_pubsub as pubsub
+    chamadas = []
+    monkeypatch.setattr(pubsub, "notify", lambda payload: chamadas.append(payload))
+
+    db = setup_db()
+    produto, cliente = criar_base(db)
+
+    criar_pedido(
+        PedidoCreate(
+            tipo="retirada",
+            metodo_pagamento="pix",
+            itens=[PedidoItemCreate(produto_id=produto.id, quantidade=1)],
+        ),
+        cliente.id,
+        db,
+    )
+    assert len(chamadas) == 1
+    assert chamadas[0]["numero"].startswith("ML-")

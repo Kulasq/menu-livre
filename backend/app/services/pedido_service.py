@@ -537,18 +537,9 @@ def criar_pedido_admin(dados: PedidoAdminCreate, db: Session) -> dict:
     # ── Efeitos colaterais pós-commit (falha NÃO derruba o pedido) ───────────
     pedido_completo = _obter_pedido_completo(pedido_id, db)
 
-    # Notifica admins conectados via SSE — falha silenciosa
-    try:
-        from app.services import pedido_pubsub
-        pedido_pubsub.notify({
-            "id":        pedido_completo.id,
-            "numero":    pedido_completo.numero,
-            "total":     float(pedido_completo.total),
-            "tipo":      pedido_completo.tipo,
-            "criado_em": pedido_completo.criado_em.isoformat() if pedido_completo.criado_em else None,
-        })
-    except Exception:
-        pass
+    # NÃO notifica via SSE: o pedido foi criado pelo próprio admin (PDV), então
+    # disparar o alarme de "novo pedido" para quem acabou de criá-lo é ruído.
+    # A notificação SSE fica restrita aos pedidos do cliente público (criar_pedido).
 
     return {"pedido": pedido_completo}
 
