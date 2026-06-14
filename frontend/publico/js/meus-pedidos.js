@@ -228,9 +228,9 @@
       </div>
       <div class="mp-card-corpo">
         <div class="mp-detalhe-linha"><span>Tipo</span><span>${tipoLabel}</span></div>
-        ${pedido.endereco_entrega ? `<div class="mp-detalhe-linha"><span>Endereço</span><span>${pedido.endereco_entrega}</span></div>` : ''}
+        ${pedido.endereco_entrega ? `<div class="mp-detalhe-linha"><span>Endereço</span><span>${esc(pedido.endereco_entrega)}</span></div>` : ''}
         <div class="mp-detalhe-linha"><span>Pagamento</span><span>${pgto}</span></div>
-        ${pedido.observacao ? `<div class="mp-detalhe-obs">Obs: ${pedido.observacao}</div>` : ''}
+        ${pedido.observacao ? `<div class="mp-detalhe-obs">Obs: ${esc(pedido.observacao)}</div>` : ''}
         <div class="mp-itens">${_renderItens(pedido.itens)}</div>
         <div class="mp-acoes"></div>
       </div>
@@ -270,10 +270,10 @@
   function _renderItens(itens) {
     return itens.map(item => {
       const mods = item.modificadores.length
-        ? `<ul class="mp-mods">${item.modificadores.map(m => `<li>${m.nome_snapshot}</li>`).join('')}</ul>`
+        ? `<ul class="mp-mods">${item.modificadores.map(m => `<li>${esc(m.nome_snapshot)}</li>`).join('')}</ul>`
         : '';
       return `<div class="mp-item">
-        <span class="mp-item-nome">${item.quantidade}× ${item.nome_snapshot}</span>
+        <span class="mp-item-nome">${item.quantidade}× ${esc(item.nome_snapshot)}</span>
         <span class="mp-item-preco">${brl(item.subtotal)}</span>
         ${mods}
       </div>`;

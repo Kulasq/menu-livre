@@ -19,6 +19,14 @@
   // id do cliente aguardando confirmação de exclusão
   let _excluirClienteId = null
 
+  // Escapa HTML para inserção segura via innerHTML (evita XSS de dados da API)
+  function esc(str) {
+    if (!str) return ''
+    const el = document.createElement('span')
+    el.textContent = str
+    return el.innerHTML
+  }
+
   // ── Segmentos: labels e cores ─────────────────────────────────────────────
 
   const SEGMENTOS = {
@@ -410,7 +418,7 @@
             <span class="drawer-pedido-data">${formatarDataHora(p.criado_em)}</span>
           </div>
           <div class="drawer-pedido-itens">
-            ${(p.itens || []).map(i => `<span class="drawer-pedido-item">${i.quantidade}× ${i.nome_snapshot}</span>`).join('')}
+            ${(p.itens || []).map(i => `<span class="drawer-pedido-item">${i.quantidade}× ${esc(i.nome_snapshot)}</span>`).join('')}
           </div>
           <div class="drawer-pedido-rodape">
             <span class="drawer-pedido-tipo">${p.tipo === 'delivery' ? '🛵 Delivery' : p.tipo === 'retirada' ? '🏪 Retirada' : '🧾 Balcão'}</span>
@@ -425,7 +433,7 @@
         return
       }
       conteudo.innerHTML = `<div class="drawer-enderecos">${
-        lista.map(e => `<div class="drawer-endereco-chip">${e.endereco}</div>`).join('')
+        lista.map(e => `<div class="drawer-endereco-chip">${esc(e.endereco)}</div>`).join('')
       }</div>`
     }
   }
@@ -440,7 +448,7 @@
     }
     lista.innerHTML = enderecos.map(e => `
       <div class="edit-endereco-row">
-        <span class="edit-endereco-texto">${e.endereco}</span>
+        <span class="edit-endereco-texto">${esc(e.endereco)}</span>
         <button class="btn-icone-remover" type="button" data-endereco-id="${e.id}" aria-label="Remover endereço">
           ${SVG_X_MINI}
         </button>
