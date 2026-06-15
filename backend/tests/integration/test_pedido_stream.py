@@ -17,7 +17,6 @@ Por que os testes de stream body (event: connected, novo-pedido) não ficam aqui
 """
 from __future__ import annotations
 
-import pytest
 from datetime import datetime, timezone, timedelta
 from jose import jwt
 
@@ -78,26 +77,3 @@ class TestStreamAutenticacao:
         token = _token_refresh(usuario_admin.id)
         res = client.get(f"/api/admin/pedidos/stream?token={token}")
         assert res.status_code == 401
-
-
-# ── Testes de stream body — SKIPPED (limitação do TestClient) ────────────────
-
-class TestStreamEventos:
-    @pytest.mark.skip(
-        reason=(
-            "TestClient coleta response body de forma síncrona — SSE infinita bloqueia. "
-            "Comportamento coberto por tests/unit/test_pedido_pubsub.py. "
-            "Para testar body SSE, usar servidor uvicorn real: chore/test-sse-live-server."
-        )
-    )
-    def test_content_type_e_evento_connected(self, client, usuario_admin):
-        pass  # placeholder — lógica real no backlog
-
-    @pytest.mark.skip(
-        reason=(
-            "Mesma limitação: TestClient + SSE infinita = hang. "
-            "Ver test_content_type_e_evento_connected."
-        )
-    )
-    def test_evento_novo_pedido_via_queue_direta(self, client, usuario_admin):
-        pass
