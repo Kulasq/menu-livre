@@ -17,14 +17,14 @@ class Pedido(Base):
     cliente_id: Mapped[int | None] = mapped_column(ForeignKey("clientes.id", ondelete="SET NULL"), nullable=True, index=True)
     mesa_id: Mapped[int | None] = mapped_column(ForeignKey("mesas.id"), nullable=True)
     tipo: Mapped[str] = mapped_column(String(20), nullable=False)
-    status: Mapped[str] = mapped_column(String(20), default="pendente")
+    status: Mapped[str] = mapped_column(String(20), default="pendente", index=True)
     endereco_entrega: Mapped[str | None] = mapped_column(Text, nullable=True)
     subtotal: Mapped[float] = mapped_column(Float, nullable=False)
     taxa_entrega: Mapped[float] = mapped_column(Float, default=0.0)
     total: Mapped[float] = mapped_column(Float, nullable=False)
     metodo_pagamento: Mapped[str | None] = mapped_column(String(20), nullable=True)
     troco_para: Mapped[float | None] = mapped_column(Float, nullable=True)
-    status_pagamento: Mapped[str] = mapped_column(String(20), default="pendente")
+    status_pagamento: Mapped[str] = mapped_column(String(20), default="pendente", index=True)
     observacao: Mapped[str | None] = mapped_column(Text, nullable=True)
     nome_cliente_balcao: Mapped[str | None] = mapped_column(String(100), nullable=True)
     agendado_para: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
@@ -37,7 +37,7 @@ class Pedido(Base):
     cupom_codigo: Mapped[str | None] = mapped_column(String(50), nullable=True)
     desconto_cupom: Mapped[float] = mapped_column(Float, default=0.0)
     criado_em: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
     )
     atualizado_em: Mapped[datetime] = mapped_column(
         DateTime,

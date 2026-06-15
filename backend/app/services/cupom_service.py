@@ -15,16 +15,25 @@ from app.schemas.cupom import CupomCreate, CupomUpdate, CupomValidarRequest, Cup
 def listar_cupons(db: Session) -> list[dict]:
     """Lista cupons com agregados: faturamento_gerado e ultimo_uso."""
     cupons = db.query(Cupom).order_by(Cupom.criado_em.desc()).all()
+
+    # Agrega os usos de TODOS os cupons em uma única query (em vez de 1 por cupom).
+    # cupom_usos.cupom_id é indexado. Cupons sem uso simplesmente não aparecem no dict.
+    agregados = {
+        cupom_id: (faturamento, ultimo_uso)
+        for cupom_id, faturamento, ultimo_uso in (
+            db.query(
+                CupomUso.cupom_id,
+                func.sum(CupomUso.subtotal_pedido),
+                func.max(CupomUso.criado_em),
+            )
+            .group_by(CupomUso.cupom_id)
+            .all()
+        )
+    }
+
     resultado = []
     for cupom in cupons:
-        agg = (
-            db.query(
-                func.sum(CupomUso.subtotal_pedido).label("faturamento"),
-                func.max(CupomUso.criado_em).label("ultimo_uso"),
-            )
-            .filter(CupomUso.cupom_id == cupom.id)
-            .first()
-        )
+        faturamento, ultimo_uso = agregados.get(cupom.id, (None, None))
         resultado.append({
             "id": cupom.id,
             "codigo": cupom.codigo,
@@ -43,8 +52,8 @@ def listar_cupons(db: Session) -> list[dict]:
             "ativo": cupom.ativo,
             "criado_em": cupom.criado_em,
             "atualizado_em": cupom.atualizado_em,
-            "faturamento_gerado": float(agg.faturamento or 0),
-            "ultimo_uso": agg.ultimo_uso,
+            "faturamento_gerado": float(faturamento or 0),
+            "ultimo_uso": ultimo_uso,
         })
     return resultado
 

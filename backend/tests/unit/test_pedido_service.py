@@ -608,6 +608,28 @@ def test_deletar_pedidos_periodo_hoje():
     assert restantes == 0
 
 
+def test_deletar_pedidos_periodo_rowcount_e_cascade():
+    """O delete em lote retorna o rowcount correto e cascateia os filhos
+    (pedido_itens) via ON DELETE CASCADE — sem deixar órfãos."""
+    db = setup_db()
+
+    _criar_pedido_com_cliente_unico(db)
+    _criar_pedido_com_cliente_unico(db)
+    _criar_pedido_com_cliente_unico(db)
+
+    from app.models.pedido import Pedido as PedidoModel, PedidoItem
+
+    assert db.query(PedidoModel).count() == 3
+    assert db.query(PedidoItem).count() == 3  # 1 item por pedido
+
+    total = deletar_pedidos_periodo("hoje", db)
+
+    assert total == 3
+    assert db.query(PedidoModel).count() == 0
+    # filhos caíram por cascade — nenhum item órfão
+    assert db.query(PedidoItem).count() == 0
+
+
 def test_deletar_pedidos_periodo_invalido():
     db = setup_db()
     with pytest.raises(HTTPException) as exc:
