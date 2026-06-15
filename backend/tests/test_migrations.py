@@ -1,4 +1,5 @@
 import subprocess
+import sys
 import os
 import tempfile
 import pytest
@@ -6,11 +7,16 @@ from sqlalchemy import create_engine, inspect, text
 
 
 def rodar_alembic(comando: list[str], db_url: str) -> subprocess.CompletedProcess:
-    """Roda comando alembic com URL do banco sobrescrita via variável de ambiente."""
+    """Roda comando alembic com URL do banco sobrescrita via variável de ambiente.
+
+    Invoca via `python -m alembic` (mesmo interpretador do teste) para não depender
+    do executável `alembic` estar no PATH — no Windows ele fica em .venv\\Scripts."""
     env = os.environ.copy()
     env["DATABASE_URL"] = db_url
+    # comando vem como ["alembic", "upgrade", "head"] → troca por [python, -m, alembic, ...]
+    args = [sys.executable, "-m", *comando]
     return subprocess.run(
-        comando,
+        args,
         capture_output=True,
         text=True,
         env=env,
