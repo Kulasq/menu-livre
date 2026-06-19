@@ -75,10 +75,17 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(() => {})
 
-  // Polling a cada 5 segundos (apenas na aba Hoje)
+  // Pedidos novos chegam em tempo real via SSE (notificacao-pedidos.js emite
+  // 'pedido:novo'); aqui só recarregamos a lista visível ao receber o aviso.
+  window.addEventListener('pedido:novo', () => {
+    if (abaAtiva === 'hoje') carregarPedidosHoje(true)
+  })
+
+  // Poll de reconciliação (60s, apenas na aba Hoje): cobre mudanças de status
+  // feitas em outro dispositivo e eventuais eventos SSE perdidos.
   autoRefreshTimer = setInterval(() => {
     if (abaAtiva === 'hoje') carregarPedidosHoje(true)
-  }, 5000)
+  }, 60000)
 })
 
 function setupUsuario() {
@@ -191,10 +198,17 @@ function mudarAba(aba) {
   }
 }
 
-function destacarCard(id) {
+async function destacarCard(id, jaRecarregou = false) {
   if (!id) return
   const card = document.querySelector(`.pedido-card[data-id="${id}"]`)
-  if (!card) return
+  if (!card) {
+    // Pedido recém-chegado pode ainda não estar na lista: recarrega uma vez.
+    if (!jaRecarregou && abaAtiva === 'hoje') {
+      await carregarPedidosHoje(true)
+      return destacarCard(id, true)
+    }
+    return
+  }
   card.scrollIntoView({ behavior: 'smooth', block: 'center' })
   card.classList.remove('highlight')
   void card.offsetWidth
