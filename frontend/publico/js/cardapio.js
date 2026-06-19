@@ -40,21 +40,7 @@ window.cardapio = (() => {
   };
 
   // ─── utilitários ──────────────────────────────────────────
-  function brl(valor) {
-    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
-
-  /**
-   * Escapa caracteres HTML especiais para evitar XSS ao usar innerHTML.
-   * Usar sempre que inserir strings vindas da API dentro de innerHTML.
-   * Para texto puro, prefira textContent — mais seguro e sem necessidade de escape.
-   */
-  function esc(str) {
-    if (!str) return '';
-    const el = document.createElement('span');
-    el.textContent = str;
-    return el.innerHTML;
-  }
+  // brl(), esc() e _initDragFechar() são globais, definidos em utils.js.
 
   function fotoUrl(url) {
     if (!url) return null;
@@ -584,46 +570,6 @@ window.cardapio = (() => {
     box.style.maxHeight = `${Math.round(window.innerHeight * 0.92)}px`;
     els.modal().classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-  }
-
-  // ─── drag-to-close ───────────────────────────────────────
-  function _initDragFechar(handleEl, boxEl, fecharFn) {
-    let startY = 0, deltaY = 0;
-
-    handleEl.addEventListener('touchstart', e => {
-      if (boxEl.classList.contains('fechando')) return;
-      startY = e.touches[0].clientY;
-      deltaY = 0;
-      boxEl.style.transition = 'none';
-    }, { passive: true });
-
-    handleEl.addEventListener('touchmove', e => {
-      const d = e.touches[0].clientY - startY;
-      if (d > 0) {
-        deltaY = d;
-        boxEl.style.transform = `translateY(${d}px)`;
-      }
-    }, { passive: true });
-
-    handleEl.addEventListener('touchend', () => {
-      if (deltaY > 100) {
-        // continua o movimento e fecha sem re-animar
-        boxEl.style.transition = 'transform .2s ease-in';
-        boxEl.style.transform  = 'translateY(110%)';
-        boxEl.addEventListener('transitionend', () => {
-          boxEl.style.transition = '';
-          boxEl.style.transform  = '';
-          fecharFn(true); // skipAnim = true
-        }, { once: true });
-      } else {
-        // snap back
-        boxEl.addEventListener('transitionend', () => {
-          boxEl.style.transition = '';
-        }, { once: true });
-        boxEl.style.transition = 'transform .25s cubic-bezier(.2,.8,.3,1)';
-        boxEl.style.transform  = '';
-      }
-    });
   }
 
   function fecharModal(skipAnim = false) {
