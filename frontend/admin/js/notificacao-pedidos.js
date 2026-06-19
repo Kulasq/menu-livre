@@ -213,6 +213,7 @@
         _salvarVistos()
         _exibirModal(1, pedido.id)
         _iniciarAlarme()
+        _avisarNovoPedido(pedido.id)
       } catch (_) { /* parse error — descarta */ }
     })
 
@@ -250,6 +251,7 @@
         _salvarVistos()
         _exibirModal(novos.length, novos[0].id)
         _iniciarAlarme()
+        _avisarNovoPedido(novos[0].id)
       }
     } catch (_) { /* falha silenciosa — não interrompe o ciclo */ }
   }
@@ -272,6 +274,13 @@
     try {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify([..._idsVistos]))
     } catch (_) { /* silencioso */ }
+  }
+
+  /* ── Sinaliza a chegada de um pedido para quem estiver ouvindo ──
+     A tela de pedidos (pedidos.js) escuta este evento para recarregar a
+     lista em tempo real, sem depender do poll de reconciliação. */
+  function _avisarNovoPedido(id) {
+    window.dispatchEvent(new CustomEvent('pedido:novo', { detail: { id } }))
   }
 
   /* ── Helpers de navegação ────────────────────────────────────── */
