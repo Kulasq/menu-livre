@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.models.pedido import Pedido
+from app.tempo import hoje_brt, inicio_dia_utc
 
 
 def obter_resumo(db: Session) -> dict:
@@ -14,7 +14,10 @@ def obter_resumo(db: Session) -> dict:
     os pedidos do dia e somar em Python — apoiado nos índices de
     pedidos.status / status_pagamento / criado_em.
     """
-    hoje = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    # "Hoje" = dia civil de Brasília (BRT, UTC-3), não meia-noite UTC. Antes,
+    # entre 00:00 e 03:00 BRT o resumo contava pedidos do dia errado. criado_em
+    # é UTC naive; inicio_dia_utc alinha o corte ao dia local (ver app/tempo.py).
+    hoje = inicio_dia_utc(hoje_brt())
     do_dia = Pedido.criado_em >= hoje
     ativo = Pedido.status != "cancelado"
 
