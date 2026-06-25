@@ -6,8 +6,6 @@ from app.deps import get_current_cliente
 from app.limiter import limiter
 from app.schemas.cliente import (
     ClienteIdentificar,
-    ClienteLookup,
-    ClienteLookupResponse,
     ClienteUpdate,
     ClienteSessionResponse,
     ClienteResponse,
@@ -24,16 +22,6 @@ def identificar(request: Request, dados: ClienteIdentificar, db: Session = Depen
     # Rate limited: endpoint público sem auth que retorna dados do cliente por
     # telefone — limite por IP evita enumeração em massa da base de clientes (LGPD).
     return cliente_service.identificar_cliente(dados, db)
-
-
-@router.post("/clientes/lookup", response_model=ClienteLookupResponse)
-@limiter.limit("10/minute")
-def lookup(request: Request, dados: ClienteLookup, db: Session = Depends(get_db)):
-    # Consulta silenciosa por telefone (blur do checkout / "meus pedidos"). Sempre
-    # 200: telefone novo devolve cliente=null, sem o 400 que o Chrome logava em
-    # vermelho. NUNCA cria cliente. Telefone no body (não na query) p/ não vazar
-    # PII nos logs. Rate limit por IP evita enumeração da base (LGPD).
-    return cliente_service.consultar_cliente(dados.telefone, db)
 
 
 @router.put("/clientes/{cliente_id}", response_model=ClienteResponse)
