@@ -528,18 +528,16 @@ window.pedido = (() => {
     if (tel.length !== 10 && tel.length !== 11) return;
 
     try {
-      const nome = els.inputNome().value.trim() || undefined;
-      const body = { telefone: tel };
-      if (nome) body.nome = nome;
-
-      const res = await fetch(`${CONFIG.API_URL}/api/clientes/identificar`, {
+      // Consulta read-only: telefone novo volta 200 com cliente=null (sem 400 no
+      // console). Não envia nome — lookup não cria nem altera nada.
+      const res = await fetch(`${CONFIG.API_URL}/api/clientes/lookup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ telefone: tel }),
       });
-      // 400 = novo cliente sem nome — silencioso (sem chips para mostrar)
-      if (!res.ok) return;
+      if (!res.ok) return; // só falhas reais (rede/429)
       const { cliente, access_token } = await res.json();
+      if (!cliente) return; // telefone ainda não cadastrado — nada a preencher
 
       // Preenche nome apenas se o campo estiver vazio (cliente retornou da API)
       if (!els.inputNome().value.trim()) {
