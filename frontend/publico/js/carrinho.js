@@ -16,9 +16,7 @@ window.carrinho = (() => {
   }
 
   // ─── utilitários ──────────────────────────────────────────
-  function brl(valor) {
-    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
+  // brl() e _initDragFechar() são globais, definidos em utils.js.
 
   function fotoUrl(url) {
     if (!url) return null;
@@ -110,44 +108,6 @@ window.carrinho = (() => {
     box.style.maxHeight = `${Math.round(window.innerHeight * 0.90)}px`;
     drawer.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-  }
-
-  // ─── drag-to-close ───────────────────────────────────────
-  function _initDragFechar(handleEl, boxEl, fecharFn) {
-    let startY = 0, deltaY = 0;
-
-    handleEl.addEventListener('touchstart', e => {
-      if (boxEl.classList.contains('fechando')) return;
-      startY = e.touches[0].clientY;
-      deltaY = 0;
-      boxEl.style.transition = 'none';
-    }, { passive: true });
-
-    handleEl.addEventListener('touchmove', e => {
-      const d = e.touches[0].clientY - startY;
-      if (d > 0) {
-        deltaY = d;
-        boxEl.style.transform = `translateY(${d}px)`;
-      }
-    }, { passive: true });
-
-    handleEl.addEventListener('touchend', () => {
-      if (deltaY > 100) {
-        boxEl.style.transition = 'transform .2s ease-in';
-        boxEl.style.transform  = 'translateY(110%)';
-        boxEl.addEventListener('transitionend', () => {
-          boxEl.style.transition = '';
-          boxEl.style.transform  = '';
-          fecharFn(true);
-        }, { once: true });
-      } else {
-        boxEl.addEventListener('transitionend', () => {
-          boxEl.style.transition = '';
-        }, { once: true });
-        boxEl.style.transition = 'transform .25s cubic-bezier(.2,.8,.3,1)';
-        boxEl.style.transform  = '';
-      }
-    });
   }
 
   function fecharDrawer(skipAnim = false, callback = null) {

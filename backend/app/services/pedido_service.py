@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime, date, time, timedelta, timezone
-from sqlalchemy import func
+from sqlalchemy import func, delete
 from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 
@@ -640,17 +640,17 @@ def deletar_pedidos_periodo(periodo: str, db: Session) -> int:
     else:
         raise HTTPException(status_code=400, detail="Período inválido. Use 'hoje' ou 'semana'.")
 
-    pedidos = (
-        db.query(Pedido)
-        .filter(Pedido.criado_em >= datetime.combine(data_inicio, time.min) + _BRT)
-        .filter(Pedido.criado_em < datetime.combine(data_fim + timedelta(days=1), time.min) + _BRT)
-        .all()
+    # Delete em lote (uma instrução SQL) em vez de carregar tudo + loop de db.delete.
+    # Os filhos (pedido_itens → pedido_item_modificadores, cupom_usos) caem por
+    # ON DELETE CASCADE do FK — o PRAGMA foreign_keys=ON está ativo (database.py).
+    resultado = db.execute(
+        delete(Pedido)
+        .where(Pedido.criado_em >= datetime.combine(data_inicio, time.min) + _BRT)
+        .where(Pedido.criado_em < datetime.combine(data_fim + timedelta(days=1), time.min) + _BRT)
+        .execution_options(synchronize_session=False)
     )
-    total = len(pedidos)
-    for p in pedidos:
-        db.delete(p)
     db.commit()
-    return total
+    return resultado.rowcount
 
 
 def atualizar_status(pedido_id: int, dados: PedidoStatusUpdate, db: Session) -> Pedido:

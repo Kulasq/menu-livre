@@ -20,30 +20,8 @@
   let _whatsapp  = null; // número da loja, carregado da config
 
   // ─── utilitários ──────────────────────────────────────────
-  function brl(v) {
-    return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
-
-  function _formatarData(iso) {
-    return new Date(iso).toLocaleString('pt-BR', {
-      timeZone: 'America/Recife',
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
-  }
-
+  // brl(), _formatarData() e _aplicarMascaraTelefone() são globais (utils.js).
   function _limparTel(v) { return v.replace(/\D/g, ''); }
-
-  function _aplicarMascara(input) {
-    input.addEventListener('input', () => {
-      let d = _limparTel(input.value).slice(0, 11);
-      if (!d) { input.value = ''; return; }
-      if (d.length <= 2)       input.value = `(${d}`;
-      else if (d.length <= 6)  input.value = `(${d.slice(0,2)}) ${d.slice(2)}`;
-      else if (d.length <= 10) input.value = `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
-      else                     input.value = `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
-    });
-  }
 
   // ─── banner inline de mensagens ──────────────────────────
 
@@ -356,7 +334,7 @@
     await _carregarConfig();
 
     const inputTel = document.getElementById('mp-input-telefone');
-    _aplicarMascara(inputTel);
+    _aplicarMascaraTelefone(inputTel);
 
     document.getElementById('mp-btn-identificar').addEventListener('click', async () => {
       const tel   = _limparTel(inputTel.value);

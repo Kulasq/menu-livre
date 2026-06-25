@@ -40,9 +40,7 @@ window.pedido = (() => {
   let _enderecoSalvoSelecionado = null; // endereço escolhido via radio salvo
 
   // ─── utilitários ──────────────────────────────────────────
-  function brl(valor) {
-    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
+  // brl(), _aplicarMascaraTelefone() e _initDragFechar() são globais (utils.js).
 
   function _limparTelefone(tel) {
     return tel.replace(/\D/g, '');
@@ -152,25 +150,6 @@ window.pedido = (() => {
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = 'Aplicar'; }
     }
-  }
-
-  // ─── máscara de telefone BR ───────────────────────────────
-  function _aplicarMascaraTelefone(input) {
-    input.addEventListener('input', () => {
-      let digits = _limparTelefone(input.value).slice(0, 11);
-      if (digits.length === 0) { input.value = ''; return; }
-      if (digits.length <= 2) {
-        input.value = `(${digits}`;
-      } else if (digits.length <= 6) {
-        input.value = `(${digits.slice(0,2)}) ${digits.slice(2)}`;
-      } else if (digits.length <= 10) {
-        input.value = `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;
-      } else {
-        // 11 dígitos — celular
-        input.value = `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;
-      }
-      _validarTelefoneInput(input);
-    });
   }
 
   function _validarTelefoneInput(input) {
@@ -378,44 +357,6 @@ window.pedido = (() => {
     box.style.maxHeight = `${Math.round(window.innerHeight * 0.92)}px`;
     els.modal().classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-  }
-
-  // ─── drag-to-close ───────────────────────────────────────
-  function _initDragFechar(handleEl, boxEl, fecharFn) {
-    let startY = 0, deltaY = 0;
-
-    handleEl.addEventListener('touchstart', e => {
-      if (boxEl.classList.contains('fechando')) return;
-      startY = e.touches[0].clientY;
-      deltaY = 0;
-      boxEl.style.transition = 'none';
-    }, { passive: true });
-
-    handleEl.addEventListener('touchmove', e => {
-      const d = e.touches[0].clientY - startY;
-      if (d > 0) {
-        deltaY = d;
-        boxEl.style.transform = `translateY(${d}px)`;
-      }
-    }, { passive: true });
-
-    handleEl.addEventListener('touchend', () => {
-      if (deltaY > 100) {
-        boxEl.style.transition = 'transform .2s ease-in';
-        boxEl.style.transform  = 'translateY(110%)';
-        boxEl.addEventListener('transitionend', () => {
-          boxEl.style.transition = '';
-          boxEl.style.transform  = '';
-          fecharFn(true);
-        }, { once: true });
-      } else {
-        boxEl.addEventListener('transitionend', () => {
-          boxEl.style.transition = '';
-        }, { once: true });
-        boxEl.style.transition = 'transform .25s cubic-bezier(.2,.8,.3,1)';
-        boxEl.style.transform  = '';
-      }
-    });
   }
 
   function fecharModal(skipAnim = false) {
@@ -848,7 +789,7 @@ window.pedido = (() => {
 
     // Máscara de telefone + lookup silencioso no blur
     const telInput = els.inputTelefone();
-    _aplicarMascaraTelefone(telInput);
+    _aplicarMascaraTelefone(telInput, _validarTelefoneInput);
     telInput.addEventListener('blur', _lookupClienteBlur);
 
     // Limpa erros inline ao corrigir os campos
