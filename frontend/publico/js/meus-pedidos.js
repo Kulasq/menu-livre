@@ -86,17 +86,18 @@
     } catch { /* silencioso */ }
   }
 
-  // ─── consultar via API ────────────────────────────────────
+  // ─── identificar via API ──────────────────────────────────
   async function _identificar(telefone) {
-    // Lookup read-only: telefone não cadastrado volta 200 com cliente=null
-    // (sem 400 no console). Quem cria cliente é o checkout, não esta tela.
-    const r = await fetch(`${CONFIG.API_URL}/api/clientes/lookup`, {
+    const r = await fetch(`${CONFIG.API_URL}/api/clientes/identificar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ telefone }),
     });
-    if (!r.ok) throw new Error('Erro ao identificar');
-    return r.json(); // { cliente: {...}|null, access_token }
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({}));
+      throw new Error(e.detail || 'Erro ao identificar');
+    }
+    return r.json();
   }
 
   // ─── carregar pedidos ──────────────────────────────────────
@@ -349,20 +350,21 @@
       btn.textContent = 'Aguardando…';
       try {
         const { cliente, access_token } = await _identificar(tel);
-        if (!cliente) {
+        _salvarSessao(cliente, access_token);
+        _mostrar('mp-carregando');
+        await _carregar();
+      } catch (err) {
+        const msg = err.message || '';
+        if (msg.toLowerCase().includes('nome obrigatório')) {
           // Telefone não cadastrado — mensagem amigável com botão para o cardápio
           _bannerHtml(
             'Não encontramos pedidos para esse telefone.' +
             '<a href="index.html" class="mp-banner-btn">Ver o cardápio</a>',
             'info'
           );
-          return;
+        } else {
+          _banner(msg || 'Erro ao identificar. Tente novamente.', 'erro');
         }
-        _salvarSessao(cliente, access_token);
-        _mostrar('mp-carregando');
-        await _carregar();
-      } catch (err) {
-        _banner(err.message || 'Erro ao identificar. Tente novamente.', 'erro');
       } finally {
         btn.disabled = false;
         btn.textContent = 'Ver meus pedidos';

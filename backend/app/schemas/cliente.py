@@ -8,10 +8,6 @@ class ClienteIdentificar(BaseModel):
     nome: str | None = None
 
 
-class ClienteLookup(BaseModel):
-    telefone: str
-
-
 class ClienteUpdate(BaseModel):
     nome: str | None = None
     endereco_padrao: str | None = None
@@ -32,14 +28,6 @@ class ClienteResponse(BaseModel):
 class ClienteSessionResponse(BaseModel):
     cliente: ClienteResponse
     access_token: str
-    token_type: str = "bearer"
-
-
-class ClienteLookupResponse(BaseModel):
-    # Consulta silenciosa por telefone: cliente novo devolve campos nulos (200),
-    # cliente existente devolve sessão completa — ver consultar_cliente().
-    cliente: ClienteResponse | None = None
-    access_token: str | None = None
     token_type: str = "bearer"
 
 
