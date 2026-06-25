@@ -120,6 +120,33 @@ def test_resumo_exclui_cancelados_do_total(client, usuario_admin):
     assert data["por_status"]["cancelado"] == 1
 
 
+def test_resumo_usa_dia_brt_nao_utc(client, usuario_admin, db_teste):
+    """O corte de 'hoje' segue o dia civil de Brasília (BRT), não meia-noite UTC.
+
+    Um pedido feito 1 segundo antes da meia-noite BRT de hoje é de ONTEM no Brasil
+    e NÃO pode aparecer no resumo; um feito exatamente na meia-noite BRT conta.
+    Isso fixa o corte no fuso local independente da hora em que o teste roda.
+    """
+    from datetime import timedelta
+    from app.models.pedido import Pedido
+    from app.tempo import hoje_brt, inicio_dia_utc
+
+    token = obter_token(client, usuario_admin)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    p_hoje = criar_pedido_teste(client, token, preco=30.0)
+    p_ontem = criar_pedido_teste(client, token, preco=99.0)
+
+    inicio_hoje_brt = inicio_dia_utc(hoje_brt())  # meia-noite BRT em UTC naive
+    db_teste.get(Pedido, p_hoje["id"]).criado_em = inicio_hoje_brt
+    db_teste.get(Pedido, p_ontem["id"]).criado_em = inicio_hoje_brt - timedelta(seconds=1)
+    db_teste.commit()
+
+    data = client.get("/api/admin/dashboard/resumo", headers=headers).json()
+    assert data["total_pedidos"] == 1          # só o de hoje (BRT)
+    assert data["total_vendas"] == 30.0        # o de ontem (99.0) ficou de fora
+
+
 def test_resumo_sem_autenticacao(client):
     response = client.get("/api/admin/dashboard/resumo")
     assert response.status_code == 403
