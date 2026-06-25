@@ -117,6 +117,40 @@ def identificar_cliente(dados: ClienteIdentificar, db: Session) -> dict:
     }
 
 
+def consultar_cliente(telefone: str, db: Session) -> dict:
+    """Consulta um cliente por telefone sem criar nada. Sempre retorna 200.
+
+    Usado pelo lookup silencioso do checkout e da tela "meus pedidos": telefone
+    ainda não cadastrado devolve ``cliente=None`` (sem o 400 que poluía o console
+    do navegador), telefone existente devolve cliente + token de sessão (para
+    carregar endereços salvos). NUNCA cria cliente — isso é responsabilidade do
+    ``identificar_cliente()`` no submit real, que exige nome.
+    """
+    vazio = {"cliente": None, "access_token": None, "token_type": "bearer"}
+
+    tel = normalizar_telefone(telefone)
+    if len(tel) < 10 or len(tel) > 13:
+        return vazio
+
+    cliente = db.query(Cliente).filter(Cliente.telefone == tel).first()
+    if not cliente:
+        return vazio
+
+    return {
+        "cliente": {
+            "id": cliente.id,
+            "nome": cliente.nome,
+            "telefone": cliente.telefone,
+            "endereco_padrao": cliente.endereco_padrao,
+            "total_pedidos": cliente.total_pedidos,
+            "segmento": cliente.segmento,
+            "criado_em": cliente.criado_em,
+        },
+        "access_token": criar_token_cliente(cliente.id),
+        "token_type": "bearer",
+    }
+
+
 def atualizar_cliente(cliente_id: int, dados: ClienteUpdate, db: Session) -> Cliente:
     cliente = db.get(Cliente, cliente_id)
     if not cliente:
