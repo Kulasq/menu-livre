@@ -660,6 +660,11 @@ a {
   to { opacity: 0; }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 @keyframes fadeScaleOut {
   from { opacity: 1; transform: scale(1); }
   to   { opacity: 0; transform: scale(.97); }
@@ -771,6 +776,7 @@ a {
    MODAL PRODUTO
    ============================================= */
 .modal-foto-wrap {
+  position: relative;
   width: 100%;
   max-height: 240px;
   overflow: hidden;
@@ -781,6 +787,84 @@ a {
   width: 100%;
   height: 240px;
   object-fit: cover;
+}
+
+/* Botão "ampliar" — fica acima do drag-handle (180px) para não virar gesto de fechar */
+.btn-ampliar-foto {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 6;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s, transform .15s;
+}
+
+.btn-ampliar-foto:hover { background: rgba(0, 0, 0, .72); }
+.btn-ampliar-foto:active { transform: scale(.92); }
+.btn-ampliar-foto:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Lightbox — foto em tela cheia */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 300; /* acima do .modal (200) para não ficar atrás dele */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .85);
+  padding: 24px;
+  animation: fadeIn .2s ease-out;
+}
+
+.lightbox.fechando { animation: fadeOut .2s ease-in forwards; }
+
+.lightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-lg); /* mesmo arredondamento do .modal-box */
+  animation: popIn .25s cubic-bezier(.34,1.3,.64,1);
+}
+
+.lightbox.fechando img { animation: popOut .2s ease-in forwards; }
+
+.lightbox-fechar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s;
+}
+
+.lightbox-fechar:hover { background: rgba(0, 0, 0, .72); }
+.lightbox-fechar:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .modal-corpo {
