@@ -37,6 +37,10 @@ window.cardapio = (() => {
     modalBtnAdicionar:() => document.getElementById('modal-btn-adicionar'),
     modalOverlay:     () => document.getElementById('modal-produto-overlay'),
     modalHandle:      () => document.getElementById('modal-produto-handle'),
+    btnAmpliar:       () => document.getElementById('btn-ampliar-foto'),
+    lightbox:         () => document.getElementById('lightbox-foto'),
+    lightboxImg:      () => document.getElementById('lightbox-foto-img'),
+    lightboxFechar:   () => document.getElementById('lightbox-fechar'),
   };
 
   // ─── utilitários ──────────────────────────────────────────
@@ -595,6 +599,44 @@ window.cardapio = (() => {
     }, { once: true });
   }
 
+  // ─── lightbox (foto ampliada) ─────────────────────────────
+  let _lightboxEsc = null;
+
+  function abrirLightbox() {
+    const foto = fotoUrl(_produtoAtual && _produtoAtual.foto_url);
+    if (!foto) return;
+    const lb = els.lightbox();
+    els.lightboxImg().src = foto;
+    els.lightboxImg().alt = _produtoAtual.nome || '';
+    lb.classList.remove('hidden', 'fechando'); // 'fechando' defensivo: evita travar se um fechamento anterior foi interrompido
+    els.lightboxFechar().focus();
+
+    // intercepta o ESC antes do handler global do modal (senão fecharia o modal inteiro)
+    _lightboxEsc = (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        fecharLightbox();
+      }
+    };
+    document.addEventListener('keydown', _lightboxEsc, true);
+  }
+
+  function fecharLightbox() {
+    const lb = els.lightbox();
+    if (_lightboxEsc) {
+      document.removeEventListener('keydown', _lightboxEsc, true);
+      _lightboxEsc = null;
+    }
+    if (lb.classList.contains('fechando')) return;
+    lb.classList.add('fechando');
+    lb.addEventListener('animationend', () => {
+      lb.classList.remove('fechando');
+      lb.classList.add('hidden');
+      els.lightboxImg().src = '';
+      if (els.modal() && !els.modal().classList.contains('hidden')) els.btnAmpliar().focus();
+    }, { once: true });
+  }
+
   function _renderModificadores(grupos) {
     const container = els.modalMods();
     container.innerHTML = '';
@@ -751,6 +793,11 @@ window.cardapio = (() => {
       document.querySelector('#modal-produto .modal-box'),
       (skip) => fecharModal(skip)
     );
+
+    // lightbox: botão dedicado (mobile) + clique na foto (desktop, sem drag-handle)
+    els.btnAmpliar().addEventListener('click', abrirLightbox);
+    els.modalFoto().addEventListener('click', abrirLightbox);
+    els.lightbox().addEventListener('click', () => fecharLightbox());
 
     els.modalQtyMenos().addEventListener('click', () => {
       if (_quantidade <= 1) return;
