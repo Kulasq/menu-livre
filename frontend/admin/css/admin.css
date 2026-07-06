@@ -1805,13 +1805,76 @@ textarea.form-input {
 }
 
 .horario-dia-campos {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   padding: 16px;
   background: var(--bg-card);
   border-top: 1px solid var(--borda);
 }
+
+.intervalos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.intervalo-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.intervalo-linha .form-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.intervalo-sep {
+  font-size: .85rem;
+  color: var(--texto-sec);
+  flex-shrink: 0;
+}
+
+.btn-remover-intervalo {
+  flex-shrink: 0;
+  align-self: stretch;   /* mesma altura dos inputs de horário */
+  width: 40px;
+  padding: 0;            /* remove o padding padrão do <button> */
+  border: 1px solid var(--borda);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--texto-sec);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.btn-remover-intervalo svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-remover-intervalo:hover {
+  background: var(--erro-bg, #fee2e2);
+  color: var(--erro, #dc2626);
+  border-color: var(--erro, #dc2626);
+}
+
+.btn-add-intervalo {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.btn-add-intervalo:hover { text-decoration: underline; }
 
 /* Ações do formulário */
 .form-acoes {
@@ -1926,7 +1989,6 @@ textarea.form-input {
   }
 
   .form-grid-2         { grid-template-columns: 1fr; }
-  .horario-dia-campos  { grid-template-columns: 1fr 1fr; }
 
   .stat-status-grid {
     grid-template-columns: repeat(2, 1fr);
