@@ -1838,19 +1838,23 @@ textarea.form-input {
 
 .btn-remover-intervalo {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  align-self: stretch;   /* mesma altura dos inputs de horário */
+  width: 40px;
+  padding: 0;            /* remove o padding padrão do <button> */
   border: 1px solid var(--borda);
   border-radius: var(--radius-md);
   background: var(--bg);
   color: var(--texto-sec);
-  font-size: 1.2rem;
-  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background .15s, color .15s, border-color .15s;
+}
+
+.btn-remover-intervalo svg {
+  width: 18px;
+  height: 18px;
 }
 
 .btn-remover-intervalo:hover {

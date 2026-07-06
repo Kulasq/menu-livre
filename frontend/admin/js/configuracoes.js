@@ -141,7 +141,7 @@ function _criarLinhaIntervalo(inicio = '18:00', fim = '23:00') {
     <input type="time" class="form-input intervalo-inicio" value="${inicio}" aria-label="Abertura" />
     <span class="intervalo-sep">às</span>
     <input type="time" class="form-input intervalo-fim" value="${fim}" aria-label="Fechamento" />
-    <button type="button" class="btn-remover-intervalo" aria-label="Remover horário">&times;</button>
+    <button type="button" class="btn-remover-intervalo" aria-label="Remover horário">${icons.excluir}</button>
   `
   return linha
 }
