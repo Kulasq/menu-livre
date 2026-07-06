@@ -103,14 +103,8 @@ function _buildHorarios() {
         <span class="horario-dia-nome">${label}</span>
       </div>
       <div class="horario-dia-campos hidden" id="dia-${key}-campos">
-        <div class="form-group">
-          <label class="form-label" for="dia-${key}-inicio">Abertura</label>
-          <input type="time" class="form-input" id="dia-${key}-inicio" value="18:00" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="dia-${key}-fim">Fechamento</label>
-          <input type="time" class="form-input" id="dia-${key}-fim" value="23:00" />
-        </div>
+        <div class="intervalos-lista" id="dia-${key}-intervalos"></div>
+        <button type="button" class="btn-add-intervalo" data-dia="${key}">+ Adicionar horário</button>
       </div>
     </div>
   `).join('')
@@ -118,8 +112,43 @@ function _buildHorarios() {
   lista.addEventListener('change', (e) => {
     const input = e.target.closest('.dia-toggle')
     if (!input) return
-    $(`#dia-${input.dataset.dia}-campos`).classList.toggle('hidden', !input.checked)
+    const key = input.dataset.dia
+    $(`#dia-${key}-campos`).classList.toggle('hidden', !input.checked)
+    // ao abrir um dia sem intervalos, garante ao menos uma linha
+    if (input.checked && $(`#dia-${key}-intervalos`).children.length === 0) {
+      _addIntervalo(key)
+    }
   })
+
+  lista.addEventListener('click', (e) => {
+    const add = e.target.closest('.btn-add-intervalo')
+    if (add) { _addIntervalo(add.dataset.dia); return }
+
+    const remover = e.target.closest('.btn-remover-intervalo')
+    if (remover) {
+      const container = remover.closest('.intervalos-lista')
+      // mantém no mínimo 1 intervalo por dia aberto
+      if (container.children.length > 1) remover.closest('.intervalo-linha').remove()
+    }
+  })
+}
+
+/** Cria uma linha de intervalo (início — fim — remover) como elemento DOM. */
+function _criarLinhaIntervalo(inicio = '18:00', fim = '23:00') {
+  const linha = document.createElement('div')
+  linha.className = 'intervalo-linha'
+  linha.innerHTML = `
+    <input type="time" class="form-input intervalo-inicio" value="${inicio}" aria-label="Abertura" />
+    <span class="intervalo-sep">às</span>
+    <input type="time" class="form-input intervalo-fim" value="${fim}" aria-label="Fechamento" />
+    <button type="button" class="btn-remover-intervalo" aria-label="Remover horário">&times;</button>
+  `
+  return linha
+}
+
+/** Adiciona uma linha de intervalo ao container do dia. */
+function _addIntervalo(key, inicio, fim) {
+  $(`#dia-${key}-intervalos`).appendChild(_criarLinhaIntervalo(inicio, fim))
 }
 
 // ── Cores ─────────────────────────────────────────────────────────────────────
@@ -326,11 +355,13 @@ function _preencherForm(c) {
       const toggle = $(`#dia-${key}-aberto`)
       toggle.checked = diaConfig.aberto
       $(`#dia-${key}-campos`).classList.toggle('hidden', !diaConfig.aberto)
-      const intervalo = diaConfig.horarios?.[0]
-      if (intervalo) {
-        $(`#dia-${key}-inicio`).value = intervalo.inicio
-        $(`#dia-${key}-fim`).value    = intervalo.fim
-      }
+
+      const container = $(`#dia-${key}-intervalos`)
+      container.innerHTML = ''
+      const intervalos = diaConfig.horarios || []
+      intervalos.forEach(iv => _addIntervalo(key, iv.inicio, iv.fim))
+      // dia aberto sem intervalos salvos: garante uma linha default para edição
+      if (diaConfig.aberto && container.children.length === 0) _addIntervalo(key)
     })
   }
 }
@@ -346,15 +377,33 @@ async function _salvarConfiguracoes(e) {
   }
 
   const horarios = {}
-  DIAS.forEach(({ key }) => {
+  for (const { key, label } of DIAS) {
     const aberto = $(`#dia-${key}-aberto`).checked
-    horarios[key] = {
-      aberto,
-      horarios: aberto
-        ? [{ inicio: $(`#dia-${key}-inicio`).value, fim: $(`#dia-${key}-fim`).value }]
-        : [],
+    if (!aberto) {
+      horarios[key] = { aberto: false, horarios: [] }
+      continue
     }
-  })
+
+    // coleta os intervalos preenchidos do dia
+    const intervalos = [...document.querySelectorAll(`#dia-${key}-intervalos .intervalo-linha`)]
+      .map(linha => ({
+        inicio: linha.querySelector('.intervalo-inicio').value,
+        fim:    linha.querySelector('.intervalo-fim').value,
+      }))
+      .filter(iv => iv.inicio && iv.fim)
+
+    if (intervalos.length === 0) {
+      toast.erro(`${label}: adicione ao menos um horário ou desmarque o dia.`)
+      return
+    }
+    if (intervalos.some(iv => iv.inicio >= iv.fim)) {
+      toast.erro(`${label}: o horário de abertura deve ser antes do fechamento.`)
+      return
+    }
+
+    intervalos.sort((a, b) => a.inicio.localeCompare(b.inicio))
+    horarios[key] = { aberto: true, horarios: intervalos }
+  }
 
   // Normaliza as cores para hex antes de enviar ao backend
   const cores = {}
